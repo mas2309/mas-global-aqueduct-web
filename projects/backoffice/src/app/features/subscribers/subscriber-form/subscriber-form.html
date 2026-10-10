@@ -1,0 +1,90 @@
+<section class="page narrow">
+  <header class="page-header">
+    <h1>
+      @if (editing() && existing.hasValue()) {
+        Editar suscriptor {{ formatCode(existing.value().code) }}
+      } @else {
+        {{ editing() ? 'Editar suscriptor' : 'Nuevo suscriptor' }}
+      }
+    </h1>
+  </header>
+
+  @if (existing.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando suscriptor" />
+  }
+
+  @if (existing.error()) {
+    <div class="state" role="alert">
+      <p>No encontramos este suscriptor.</p>
+      <a mat-stroked-button routerLink="/suscriptores">Volver al listado</a>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-card appearance="outlined">
+        <mat-card-content class="form-grid">
+          <mat-form-field appearance="outline" class="span">
+            <mat-label>Nombre completo o razón social</mat-label>
+            <input matInput formControlName="fullName" autocomplete="off" />
+            @if (form.controls.fullName.invalid) {
+              <mat-error>Ingresa el nombre (mínimo 2 caracteres)</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de documento (opcional)</mat-label>
+            <mat-select formControlName="documentType">
+              <mat-option value="">Sin documento</mat-option>
+              @for (type of documentTypes; track type) {
+                <mat-option [value]="type">{{ documentTypeLabels[type] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Número de documento</mat-label>
+            <input matInput formControlName="documentNumber" autocomplete="off" />
+            <mat-hint>Sin puntos ni espacios</mat-hint>
+            @if (form.controls.documentNumber.hasError('pattern')) {
+              <mat-error>Entre 3 y 20 letras o dígitos, sin puntos</mat-error>
+            } @else if (form.controls.documentNumber.hasError('duplicate')) {
+              <mat-error>Ya hay un suscriptor con este documento</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono (opcional)</mat-label>
+            <input matInput type="tel" formControlName="phone" />
+            @if (form.controls.phone.invalid) {
+              <mat-error>Entre 7 y 15 dígitos</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Correo (opcional)</mat-label>
+            <input matInput type="email" formControlName="email" />
+            @if (form.controls.email.invalid) {
+              <mat-error>El correo no es válido</mat-error>
+            }
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
+
+      <div aria-live="assertive">
+        @if (form.hasError('documentPair') && (form.touched || form.dirty)) {
+          <p class="error">
+            El tipo y el número de documento van juntos: completa los dos o deja ambos vacíos.
+          </p>
+        }
+      </div>
+
+      <div class="actions">
+        <a mat-button [routerLink]="editing() ? ['/suscriptores', id()] : '/suscriptores'"
+          >Cancelar</a
+        >
+        <button mat-flat-button type="submit" [disabled]="saving() || existing.isLoading()">
+          {{ editing() ? 'Guardar cambios' : 'Registrar suscriptor' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

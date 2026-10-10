@@ -34,6 +34,11 @@ export class SessionStore {
   readonly canAdministerOrganization = computed(
     () => this.isPlatformAdmin() || this.organization()?.role === 'ORG_ADMIN',
   );
+  /** Puede registrar y modificar datos del prestador actual; el rol de consulta solo lee. */
+  readonly canOperateOrganization = computed(() => {
+    const organization = this.organization();
+    return organization !== null && (this.isPlatformAdmin() || organization.role !== 'VIEWER');
+  });
 
   accessToken(): string | null {
     return this.state()?.accessToken ?? null;

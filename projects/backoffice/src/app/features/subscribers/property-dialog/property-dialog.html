@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>{{ data.property ? 'Editar predio' : 'Agregar predio' }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content class="content">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Dirección o ubicación</mat-label>
+      <input matInput formControlName="address" cdkFocusInitial />
+      <mat-hint>P. ej. Vereda El Hato, finca La Esperanza</mat-hint>
+      @if (form.controls.address.invalid) {
+        <mat-error>Ingresa la dirección (mínimo 3 caracteres)</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Vereda, barrio o sector (opcional)</mat-label>
+      <input matInput formControlName="sector" />
+      <mat-hint>Sirve para organizar las rutas de lectura</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Uso</mat-label>
+      <mat-select formControlName="usage">
+        @for (usage of usages; track usage) {
+          <mat-option [value]="usage">{{ usageLabels[usage] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    @if (isResidential()) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Estrato</mat-label>
+        <mat-select formControlName="stratum">
+          @for (stratum of strata; track stratum) {
+            <mat-option [value]="stratum">Estrato {{ stratum }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    <div aria-live="assertive">
+      @if (error(); as message) {
+        <p class="error">{{ message }}</p>
+      }
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">Guardar</button>
+  </mat-dialog-actions>
+</form>

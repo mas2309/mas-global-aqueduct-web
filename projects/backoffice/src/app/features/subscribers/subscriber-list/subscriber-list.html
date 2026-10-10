@@ -1,0 +1,119 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Suscriptores</h1>
+    @if (session.canOperateOrganization()) {
+      <a mat-flat-button routerLink="/suscriptores/nuevo">
+        <mat-icon>person_add</mat-icon>
+        Nuevo suscriptor
+      </a>
+    }
+  </header>
+
+  <form class="search" role="search" (ngSubmit)="search()">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Buscar por nombre, documento o código</mat-label>
+      <input
+        matInput
+        name="q"
+        type="search"
+        [ngModel]="searchText()"
+        (ngModelChange)="searchText.set($event)"
+        maxlength="100"
+      />
+      @if (searchText()) {
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="clear()"
+          aria-label="Limpiar búsqueda"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+    <button mat-stroked-button type="submit">
+      <mat-icon>search</mat-icon>
+      Buscar
+    </button>
+  </form>
+
+  @if (subscribers.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando suscriptores" />
+  }
+
+  @if (subscribers.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar los suscriptores.</p>
+      <button mat-stroked-button (click)="subscribers.reload()">Reintentar</button>
+    </div>
+  } @else if (subscribers.hasValue()) {
+    @if (subscribers.value().totalItems === 0) {
+      <div class="state">
+        <mat-icon aria-hidden="true">groups</mat-icon>
+        @if (query()) {
+          <p>Ningún suscriptor coincide con «{{ query() }}».</p>
+          <button mat-stroked-button (click)="clear()">Ver todos</button>
+        } @else {
+          <p>Aún no hay suscriptores registrados.</p>
+          @if (session.canOperateOrganization()) {
+            <a mat-flat-button routerLink="/suscriptores/nuevo">Registrar el primero</a>
+          }
+        }
+      </div>
+    } @else {
+      <div class="table-container">
+        <table mat-table [dataSource]="subscribers.value().items" aria-label="Suscriptores">
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef>Código</th>
+            <td mat-cell *matCellDef="let subscriber" class="code">
+              {{ formatCode(subscriber.code) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Nombre</th>
+            <td mat-cell *matCellDef="let subscriber">
+              <a class="name" [routerLink]="['/suscriptores', subscriber.id]">{{
+                subscriber.fullName
+              }}</a>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="document">
+            <th mat-header-cell *matHeaderCellDef>Documento</th>
+            <td mat-cell *matCellDef="let subscriber" [title]="documentTitle(subscriber)">
+              {{ documentOf(subscriber) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="phone">
+            <th mat-header-cell *matHeaderCellDef>Teléfono</th>
+            <td mat-cell *matCellDef="let subscriber">{{ subscriber.phone ?? '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let subscriber">
+              <span class="status" [class.inactive]="subscriber.status === 'INACTIVE'">
+                {{ subscriber.status === 'ACTIVE' ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="subscribers.value().totalItems"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="changePage($event)"
+        aria-label="Páginas de suscriptores"
+      />
+    }
+  }
+</section>

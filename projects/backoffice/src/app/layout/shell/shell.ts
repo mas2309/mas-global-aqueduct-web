@@ -60,6 +60,7 @@ export class Shell {
     const items: NavItem[] = [];
     if (this.session.organization()) {
       items.push({ path: '/inicio', label: 'Inicio', icon: 'home' });
+      items.push({ path: '/suscriptores', label: 'Suscriptores', icon: 'groups' });
     }
     if (this.session.organization() && this.session.canAdministerOrganization()) {
       items.push({ path: '/usuarios', label: 'Usuarios', icon: 'group' });

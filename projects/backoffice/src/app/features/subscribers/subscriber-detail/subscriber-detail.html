@@ -1,0 +1,190 @@
+<section class="page">
+  <a mat-button routerLink="/suscriptores" class="back">
+    <mat-icon>arrow_back</mat-icon>
+    Suscriptores
+  </a>
+
+  @if (subscriber.isLoading() && !subscriber.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando suscriptor" />
+  }
+
+  @if (subscriber.error()) {
+    <div class="state" role="alert">
+      <p>No encontramos este suscriptor.</p>
+      <a mat-stroked-button routerLink="/suscriptores">Volver al listado</a>
+    </div>
+  } @else if (subscriber.hasValue()) {
+    @let person = subscriber.value();
+    @let canOperate = session.canOperateOrganization();
+    <header class="page-header">
+      <div>
+        <h1>{{ person.fullName }}</h1>
+        <span class="muted">Código {{ formatCode(person.code) }}</span>
+      </div>
+      <div class="actions">
+        <span class="status" [class.inactive]="person.status === 'INACTIVE'">
+          {{ person.status === 'ACTIVE' ? 'Activo' : 'Inactivo' }}
+        </span>
+        @if (canOperate) {
+          <a mat-stroked-button [routerLink]="['/suscriptores', person.id, 'editar']">
+            <mat-icon>edit</mat-icon>
+            Editar
+          </a>
+          <button mat-stroked-button (click)="changeStatus(person)" [disabled]="busy()">
+            {{ person.status === 'ACTIVE' ? 'Desactivar' : 'Reactivar' }}
+          </button>
+        }
+      </div>
+    </header>
+
+    <mat-card appearance="outlined" class="contact">
+      <mat-card-content>
+        <dl class="data">
+          <dt>Documento</dt>
+          <dd>
+            @if (person.documentType) {
+              {{ documentTypeLabels[person.documentType] }} {{ person.documentNumber }}
+            } @else {
+              —
+            }
+          </dd>
+          <dt>Teléfono</dt>
+          <dd>{{ person.phone ?? '—' }}</dd>
+          <dt>Correo</dt>
+          <dd>{{ person.email ?? '—' }}</dd>
+        </dl>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="section-header">
+      <h2>Predios</h2>
+      @if (canOperate && person.status === 'ACTIVE') {
+        <button mat-flat-button (click)="openProperty()">
+          <mat-icon>add_home</mat-icon>
+          Agregar predio
+        </button>
+      }
+    </div>
+
+    @if (properties.isLoading() && !properties.hasValue()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Cargando predios" />
+    }
+
+    @if (properties.hasValue()) {
+      @for (property of properties.value(); track property.id) {
+        <mat-card appearance="outlined" class="property">
+          <mat-card-header>
+            <mat-icon mat-card-avatar aria-hidden="true">home</mat-icon>
+            <mat-card-title>{{ property.address }}</mat-card-title>
+            <mat-card-subtitle>
+              @if (property.sector) {
+                {{ property.sector }} ·
+              }
+              {{ usageLabels[property.usage] }}
+              @if (property.stratum) {
+                · Estrato {{ property.stratum }}
+              }
+            </mat-card-subtitle>
+            @if (canOperate) {
+              <button
+                mat-icon-button
+                class="edit-property"
+                (click)="openProperty(property)"
+                [attr.aria-label]="'Editar predio ' + property.address"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+            }
+          </mat-card-header>
+          <mat-card-content>
+            <ul class="services" [attr.aria-label]="'Servicios de ' + property.address">
+              @for (row of servicesOf(property); track row.serviceType) {
+                <li>
+                  <mat-icon aria-hidden="true" [class.off]="!row.connection">
+                    {{ serviceIcons[row.serviceType] }}
+                  </mat-icon>
+                  <div class="service-info">
+                    <span class="service-name">{{ serviceLabels[row.serviceType] }}</span>
+                    @if (row.connection; as connection) {
+                      <span class="muted">
+                        @if (isMetered(row.serviceType)) {
+                          {{
+                            connection.meterSerial
+                              ? 'Medidor ' + connection.meterSerial
+                              : 'Sin medidor'
+                          }}
+                        } @else {
+                          Conectado
+                        }
+                      </span>
+                    } @else {
+                      <span class="muted">No conectado</span>
+                    }
+                  </div>
+
+                  @if (row.connection; as connection) {
+                    @if (connection.status === 'SUSPENDED') {
+                      <span class="status suspended">Suspendido</span>
+                    }
+                    @if (canOperate) {
+                      <button
+                        mat-icon-button
+                        [matMenuTriggerFor]="serviceMenu"
+                        [disabled]="busy()"
+                        [attr.aria-label]="'Opciones de ' + serviceLabels[row.serviceType]"
+                      >
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                      <mat-menu #serviceMenu="matMenu">
+                        @if (isMetered(row.serviceType)) {
+                          <button
+                            mat-menu-item
+                            (click)="openMeter(property, row.serviceType, connection)"
+                          >
+                            <mat-icon>speed</mat-icon>
+                            <span>Cambiar medidor</span>
+                          </button>
+                        }
+                        @if (connection.status === 'ACTIVE') {
+                          <button mat-menu-item (click)="suspend(property, row.serviceType)">
+                            <mat-icon>block</mat-icon>
+                            <span>Suspender (corte)</span>
+                          </button>
+                        } @else {
+                          <button mat-menu-item (click)="reconnect(property, row.serviceType)">
+                            <mat-icon>check_circle</mat-icon>
+                            <span>Reconectar</span>
+                          </button>
+                        }
+                        <button mat-menu-item (click)="disconnect(property, row.serviceType)">
+                          <mat-icon>link_off</mat-icon>
+                          <span>Retirar del predio</span>
+                        </button>
+                      </mat-menu>
+                    }
+                  } @else if (canOperate) {
+                    <button
+                      mat-button
+                      (click)="connect(property, row.serviceType)"
+                      [disabled]="busy()"
+                    >
+                      Conectar
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          </mat-card-content>
+        </mat-card>
+      } @empty {
+        <div class="state">
+          <mat-icon aria-hidden="true">home</mat-icon>
+          <p>Este suscriptor aún no tiene predios.</p>
+          <p class="muted">
+            Agrega el predio donde recibe el servicio para conectar el acueducto y su medidor.
+          </p>
+        </div>
+      }
+    }
+  }
+</section>

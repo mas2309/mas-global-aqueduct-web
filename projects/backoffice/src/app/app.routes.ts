@@ -47,6 +47,44 @@ export const routes: Routes = [
             loadComponent: () => import('./features/home/home').then((m) => m.Home),
           },
           {
+            path: 'suscriptores',
+            canActivateChild: [organizationGuard],
+            children: [
+              {
+                path: '',
+                title: 'Suscriptores · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/subscribers/subscriber-list/subscriber-list').then(
+                    (m) => m.SubscriberList,
+                  ),
+              },
+              {
+                path: 'nuevo',
+                title: 'Nuevo suscriptor · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/subscribers/subscriber-form/subscriber-form').then(
+                    (m) => m.SubscriberForm,
+                  ),
+              },
+              {
+                path: ':id/editar',
+                title: 'Editar suscriptor · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/subscribers/subscriber-form/subscriber-form').then(
+                    (m) => m.SubscriberForm,
+                  ),
+              },
+              {
+                path: ':id',
+                title: 'Suscriptor · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/subscribers/subscriber-detail/subscriber-detail').then(
+                    (m) => m.SubscriberDetail,
+                  ),
+              },
+            ],
+          },
+          {
             path: 'usuarios',
             title: 'Usuarios · MAS Acueductos',
             canActivate: [organizationAdminGuard],
