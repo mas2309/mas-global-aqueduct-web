@@ -1,0 +1,47 @@
+{
+  "name": "mas-global-aqueduct-web",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve backoffice",
+    "build": "ng build backoffice",
+    "watch": "ng build backoffice --watch --configuration development",
+    "test": "ng test backoffice",
+    "test:ci": "ng test backoffice --watch=false --coverage",
+    "lint": "ng lint backoffice",
+    "format": "prettier --write \"projects/**/*.{ts,html,scss,json}\"",
+    "format:check": "prettier --check \"projects/**/*.{ts,html,scss,json}\"",
+    "verify": "npm run format:check && npm run lint && npm run test:ci && npm run build"
+  },
+  "private": true,
+  "packageManager": "npm@11.20.0",
+  "dependencies": {
+    "@angular/cdk": "22.1.7",
+    "@angular/common": "22.1.7",
+    "@angular/compiler": "22.1.7",
+    "@angular/core": "22.1.7",
+    "@angular/forms": "22.1.7",
+    "@angular/material": "22.1.7",
+    "@angular/platform-browser": "22.1.7",
+    "@angular/router": "22.1.7",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "22.1.7",
+    "@angular/cli": "22.1.7",
+    "@angular/compiler-cli": "22.1.7",
+    "@eslint/js": "10.0.1",
+    "@vitest/coverage-v8": "4.1.11",
+    "angular-eslint": "22.5.0",
+    "eslint": "10.11.0",
+    "jsdom": "28.1.0",
+    "prettier": "^3.8.1",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "8.70.1",
+    "vitest": "4.1.11"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0"
+  }
+}

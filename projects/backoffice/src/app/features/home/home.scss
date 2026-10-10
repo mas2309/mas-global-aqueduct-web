@@ -1,0 +1,37 @@
+.current,
+.admin {
+  margin-bottom: 16px;
+}
+
+.warning {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.section-title {
+  font: var(--mat-sys-title-medium);
+  margin: 24px 0 12px;
+}
+
+.upcoming {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--mat-sys-outline-variant);
+  background: var(--mat-sys-surface);
+
+  mat-icon {
+    color: var(--mat-sys-primary);
+  }
+}

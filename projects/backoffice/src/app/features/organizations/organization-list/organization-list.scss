@@ -1,0 +1,48 @@
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+}
+
+table {
+  width: 100%;
+}
+
+.name {
+  display: block;
+  font-weight: 500;
+  color: var(--mat-sys-primary);
+}
+
+.legal-name {
+  font: var(--mat-sys-body-small);
+}
+
+.service {
+  margin-right: 4px;
+  color: var(--mat-sys-secondary);
+}
+
+.status {
+  padding: 2px 10px;
+  border-radius: 12px;
+  font: var(--mat-sys-label-medium);
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+
+  &.suspended {
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+}

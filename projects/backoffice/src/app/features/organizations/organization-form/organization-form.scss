@@ -1,0 +1,33 @@
+mat-card {
+  margin-bottom: 16px;
+}
+
+mat-card-content {
+  padding-top: 12px;
+}
+
+.span {
+  grid-column: 1 / -1;
+}
+
+.services {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.service-icon {
+  vertical-align: middle;
+  margin-right: 4px;
+  color: var(--mat-sys-secondary);
+}
+
+.state {
+  padding: 40px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+}

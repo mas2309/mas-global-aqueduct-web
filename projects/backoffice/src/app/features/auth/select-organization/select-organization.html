@@ -1,0 +1,42 @@
+<section class="page narrow">
+  <header class="page-header">
+    <h1>¿Con qué prestador vas a trabajar?</h1>
+  </header>
+
+  @if (session.organizations().length === 0) {
+    <div class="empty">
+      <p>Aún no tienes acceso a ningún prestador.</p>
+      <p class="muted">
+        Pide al administrador de tu acueducto o empresa que te agregue como usuario.
+      </p>
+      @if (session.isPlatformAdmin()) {
+        <a mat-flat-button routerLink="/prestadores">Ir a la administración de prestadores</a>
+      }
+    </div>
+  } @else {
+    <mat-action-list aria-label="Prestadores disponibles">
+      @for (access of session.organizations(); track access.organizationId) {
+        <button
+          mat-list-item
+          (click)="select(access)"
+          [disabled]="selecting() !== null"
+          [activated]="session.organization()?.organizationId === access.organizationId"
+        >
+          <mat-icon matListItemIcon aria-hidden="true">
+            {{ access.inherited ? 'account_tree' : 'water_drop' }}
+          </mat-icon>
+          <span matListItemTitle>{{ access.name }}</span>
+          <span matListItemLine>
+            {{ roleLabels[access.role] }}
+            @if (access.inherited) {
+              · acceso por vinculación
+            }
+            @if (!access.active) {
+              · suspendido
+            }
+          </span>
+        </button>
+      }
+    </mat-action-list>
+  }
+</section>

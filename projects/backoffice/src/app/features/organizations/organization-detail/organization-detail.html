@@ -1,0 +1,141 @@
+<section class="page">
+  <a mat-button routerLink="/prestadores" class="back">
+    <mat-icon>arrow_back</mat-icon>
+    Prestadores
+  </a>
+
+  @if (organization.isLoading() && !organization.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando prestador" />
+  }
+
+  @if (organization.error()) {
+    <div class="state" role="alert">
+      <p>No encontramos este prestador.</p>
+      <a mat-stroked-button routerLink="/prestadores">Volver al listado</a>
+    </div>
+  } @else if (organization.hasValue()) {
+    @let org = organization.value();
+    <header class="page-header">
+      <div>
+        <h1>{{ displayName(org) }}</h1>
+        <span class="muted">{{ typeLabels[org.type] }} · NIT {{ org.nit }}</span>
+      </div>
+      <div class="actions">
+        <span class="status" [class.suspended]="org.status === 'SUSPENDED'">
+          {{ statusLabels[org.status] }}
+        </span>
+        <a mat-stroked-button [routerLink]="['/prestadores', org.id, 'editar']">
+          <mat-icon>edit</mat-icon>
+          Editar
+        </a>
+        <button mat-stroked-button (click)="changeStatus(org)" [disabled]="busy()">
+          {{ org.status === 'ACTIVE' ? 'Suspender' : 'Reactivar' }}
+        </button>
+        <button mat-flat-button (click)="operateAs(org)" [disabled]="busy()">
+          <mat-icon>login</mat-icon>
+          Operar como este prestador
+        </button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Datos generales</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <dl class="data">
+            <dt>Razón social</dt>
+            <dd>{{ org.legalName }}</dd>
+            <dt>Municipio (DANE)</dt>
+            <dd>{{ org.municipalityCode }}</dd>
+            <dt>Correo</dt>
+            <dd>{{ org.email ?? '—' }}</dd>
+            <dt>Teléfono</dt>
+            <dd>{{ org.phone ?? '—' }}</dd>
+          </dl>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Servicios</mat-card-title>
+          <mat-card-subtitle>Debe ofrecer al menos uno</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <ul class="services">
+            @for (service of serviceTypes; track service) {
+              @let enabled = org.services.includes(service);
+              <li>
+                <mat-icon aria-hidden="true">{{ serviceIcons[service] }}</mat-icon>
+                <mat-slide-toggle
+                  [checked]="enabled"
+                  [disabled]="busy() || (enabled && org.services.length === 1)"
+                  (change)="toggleService(org, service, $event.checked)"
+                >
+                  {{ serviceLabels[service] }}
+                </mat-slide-toggle>
+              </li>
+            }
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    @if (canAffiliate()) {
+      <mat-card appearance="outlined" class="affiliations">
+        <mat-card-header>
+          <mat-card-title>Prestadores vinculados</mat-card-title>
+          <mat-card-subtitle>
+            Los usuarios de esta empresa entran a los vinculados con su mismo rol.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (affiliations.hasValue() && affiliations.value().length > 0) {
+            <mat-list aria-label="Prestadores vinculados">
+              @for (affiliation of affiliations.value(); track affiliation.id) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon aria-hidden="true">account_tree</mat-icon>
+                  <a
+                    matListItemTitle
+                    [routerLink]="['/prestadores', affiliation.childOrganizationId]"
+                  >
+                    {{ nameOf(affiliation.childOrganizationId) }}
+                  </a>
+                  <button
+                    mat-button
+                    matListItemMeta
+                    (click)="endAffiliation(affiliation)"
+                    [disabled]="busy()"
+                  >
+                    Terminar
+                  </button>
+                </mat-list-item>
+              }
+            </mat-list>
+          } @else if (affiliations.hasValue()) {
+            <p class="muted">Aún no tiene prestadores vinculados.</p>
+          }
+
+          <div class="affiliate">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Prestador a vincular</mat-label>
+              <mat-select [ngModel]="selectedChild()" (ngModelChange)="selectedChild.set($event)">
+                @for (candidate of candidates(); track candidate.id) {
+                  <mat-option [value]="candidate.id">
+                    {{ displayName(candidate) }} · NIT {{ candidate.nit }}
+                  </mat-option>
+                } @empty {
+                  <mat-option disabled>No hay prestadores disponibles</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <button mat-flat-button (click)="affiliate()" [disabled]="!selectedChild() || busy()">
+              Vincular
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+</section>

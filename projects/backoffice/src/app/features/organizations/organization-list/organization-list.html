@@ -1,0 +1,90 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Prestadores vinculados</h1>
+    <a mat-flat-button routerLink="/prestadores/nuevo">
+      <mat-icon>add</mat-icon>
+      Vincular prestador
+    </a>
+  </header>
+
+  @if (organizations.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando prestadores" />
+  }
+
+  @if (organizations.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar los prestadores.</p>
+      <button mat-stroked-button (click)="organizations.reload()">Reintentar</button>
+    </div>
+  } @else if (organizations.hasValue()) {
+    @if (organizations.value().totalItems === 0) {
+      <div class="state">
+        <mat-icon aria-hidden="true">water_drop</mat-icon>
+        <p>Aún no hay prestadores vinculados.</p>
+        <a mat-flat-button routerLink="/prestadores/nuevo">Vincular el primero</a>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table mat-table [dataSource]="organizations.value().items" aria-label="Prestadores">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Prestador</th>
+            <td mat-cell *matCellDef="let organization">
+              <a class="name" [routerLink]="['/prestadores', organization.id]">
+                {{ displayName(organization) }}
+              </a>
+              @if (organization.tradeName) {
+                <span class="muted legal-name">{{ organization.legalName }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="nit">
+            <th mat-header-cell *matHeaderCellDef>NIT</th>
+            <td mat-cell *matCellDef="let organization">{{ organization.nit }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let organization">{{ typeLabel(organization) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="services">
+            <th mat-header-cell *matHeaderCellDef>Servicios</th>
+            <td mat-cell *matCellDef="let organization">
+              @for (service of organization.services; track service) {
+                <mat-icon
+                  class="service"
+                  [matTooltip]="serviceLabel(service)"
+                  [attr.aria-label]="serviceLabel(service)"
+                >
+                  {{ serviceIcon(service) }}
+                </mat-icon>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let organization">
+              <span class="status" [class.suspended]="organization.status === 'SUSPENDED'">
+                {{ statusLabel(organization) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="organizations.value().totalItems"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="changePage($event)"
+        aria-label="Páginas de prestadores"
+      />
+    }
+  }
+</section>

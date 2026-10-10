@@ -1,0 +1,85 @@
+@use '@angular/material' as mat;
+
+// Tema Material 3: azul agua. Se adapta al modo claro/oscuro del sistema.
+html {
+  color-scheme: light dark;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--mat-sys-surface-container-lowest);
+  color: var(--mat-sys-on-surface);
+}
+
+// Utilidades de diseño compartidas por las páginas
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.page.narrow {
+  max-width: 640px;
+}
+
+.error {
+  margin: 0 0 12px;
+  color: var(--mat-sys-error);
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0;
+    font: var(--mat-sys-headline-small);
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 4px 16px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+// Accesibilidad: foco siempre visible al navegar con teclado
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}

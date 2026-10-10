@@ -1,0 +1,137 @@
+<section class="page narrow">
+  <header class="page-header">
+    <h1>{{ editing() ? 'Editar prestador' : 'Vincular prestador' }}</h1>
+  </header>
+
+  @if (existing.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando prestador" />
+  }
+
+  @if (existing.error()) {
+    <div class="state" role="alert">
+      <p>No encontramos este prestador.</p>
+      <a mat-stroked-button routerLink="/prestadores">Volver al listado</a>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Identificación</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>NIT con dígito de verificación</mat-label>
+            <input matInput formControlName="nit" placeholder="900.123.456-8" inputmode="numeric" />
+            @if (editing()) {
+              <mat-hint>El NIT no se puede cambiar</mat-hint>
+            }
+            @if (form.controls.nit.hasError('required')) {
+              <mat-error>Ingresa el NIT</mat-error>
+            } @else if (form.controls.nit.hasError('nitFormat')) {
+              <mat-error
+                >Escribe el NIT con el dígito de verificación, p. ej. 900123456-8</mat-error
+              >
+            } @else if (form.controls.nit.getError('nitCheckDigit'); as checkDigit) {
+              <mat-error
+                >El dígito de verificación no corresponde (debería ser
+                {{ checkDigit.expected }})</mat-error
+              >
+            } @else if (form.controls.nit.hasError('duplicate')) {
+              <mat-error>Ya existe un prestador con este NIT</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo de prestador</mat-label>
+            <mat-select formControlName="type">
+              @for (type of types; track type) {
+                <mat-option [value]="type">{{ typeLabels[type] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="span">
+            <mat-label>Razón social</mat-label>
+            <input matInput formControlName="legalName" />
+            @if (form.controls.legalName.hasError('required')) {
+              <mat-error>Ingresa la razón social</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Nombre comercial (opcional)</mat-label>
+            <input matInput formControlName="tradeName" />
+            <mat-hint>Como lo conocen los usuarios</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Código DANE del municipio</mat-label>
+            <input matInput formControlName="municipalityCode" maxlength="5" inputmode="numeric" />
+            <mat-hint>5 dígitos, p. ej. 25899 (Zipaquirá)</mat-hint>
+            @if (form.controls.municipalityCode.invalid) {
+              <mat-error>Debe tener 5 dígitos</mat-error>
+            }
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Contacto (opcional)</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Correo</mat-label>
+            <input matInput type="email" formControlName="email" />
+            @if (form.controls.email.invalid) {
+              <mat-error>El correo no es válido</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Teléfono</mat-label>
+            <input matInput type="tel" formControlName="phone" />
+            @if (form.controls.phone.invalid) {
+              <mat-error>Entre 7 y 15 dígitos</mat-error>
+            }
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
+
+      @if (!editing()) {
+        <mat-card appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Servicios que presta</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <fieldset class="services">
+              <legend class="cdk-visually-hidden">Servicios que presta</legend>
+              @for (service of serviceTypes; track service) {
+                <mat-checkbox
+                  [checked]="services().has(service)"
+                  (change)="toggleService(service, $event.checked)"
+                >
+                  <mat-icon class="service-icon" aria-hidden="true">{{
+                    serviceIcons[service]
+                  }}</mat-icon>
+                  {{ serviceLabels[service] }}
+                </mat-checkbox>
+              }
+            </fieldset>
+            @if (services().size === 0) {
+              <p class="error" role="alert">Selecciona al menos un servicio.</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
+
+      <div class="actions">
+        <a mat-button [routerLink]="editing() ? ['/prestadores', id()] : '/prestadores'"
+          >Cancelar</a
+        >
+        <button mat-flat-button type="submit" [disabled]="saving() || existing.isLoading()">
+          {{ editing() ? 'Guardar cambios' : 'Vincular prestador' }}
+        </button>
+      </div>
+    </form>
+  }
+</section>

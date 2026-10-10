@@ -1,0 +1,92 @@
+import { Routes } from '@angular/router';
+import {
+  authGuard,
+  guestGuard,
+  organizationGuard,
+  passwordChangedGuard,
+  platformAdminGuard,
+} from './core/auth/guards';
+
+/** Rutas en español: son las que ve el usuario en la barra de direcciones. */
+export const routes: Routes = [
+  {
+    path: 'ingresar',
+    title: 'Ingresar · MAS Acueductos',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
+  },
+  {
+    path: '',
+    // Diferido: el login (lo primero que ve el usuario) no descarga el menú ni la barra superior
+    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'cambiar-clave',
+        title: 'Cambiar contraseña · MAS Acueductos',
+        loadComponent: () =>
+          import('./features/auth/change-password/change-password').then((m) => m.ChangePassword),
+      },
+      {
+        path: '',
+        canActivateChild: [passwordChangedGuard],
+        children: [
+          {
+            path: 'seleccionar-prestador',
+            title: 'Seleccionar prestador · MAS Acueductos',
+            loadComponent: () =>
+              import('./features/auth/select-organization/select-organization').then(
+                (m) => m.SelectOrganization,
+              ),
+          },
+          {
+            path: 'inicio',
+            title: 'Inicio · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () => import('./features/home/home').then((m) => m.Home),
+          },
+          {
+            path: 'prestadores',
+            canActivateChild: [platformAdminGuard],
+            children: [
+              {
+                path: '',
+                title: 'Prestadores · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/organizations/organization-list/organization-list').then(
+                    (m) => m.OrganizationList,
+                  ),
+              },
+              {
+                path: 'nuevo',
+                title: 'Vincular prestador · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/organizations/organization-form/organization-form').then(
+                    (m) => m.OrganizationForm,
+                  ),
+              },
+              {
+                path: ':id/editar',
+                title: 'Editar prestador · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/organizations/organization-form/organization-form').then(
+                    (m) => m.OrganizationForm,
+                  ),
+              },
+              {
+                path: ':id',
+                title: 'Prestador · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/organizations/organization-detail/organization-detail').then(
+                    (m) => m.OrganizationDetail,
+                  ),
+              },
+            ],
+          },
+          { path: '', pathMatch: 'full', redirectTo: 'inicio' },
+        ],
+      },
+    ],
+  },
+  { path: '**', redirectTo: '' },
+];

@@ -1,0 +1,55 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Hola, {{ firstName() }}</h1>
+  </header>
+
+  @if (session.organization(); as organization) {
+    <mat-card appearance="outlined" class="current">
+      <mat-card-header>
+        <mat-icon mat-card-avatar aria-hidden="true">water_drop</mat-icon>
+        <mat-card-title>{{ organization.name }}</mat-card-title>
+        <mat-card-subtitle>
+          Tu rol: {{ roleLabels[organization.role] }}
+          @if (organization.inherited) {
+            · acceso por vinculación con tu empresa
+          }
+        </mat-card-subtitle>
+      </mat-card-header>
+      @if (!organization.active) {
+        <mat-card-content>
+          <p class="warning" role="status">
+            Este prestador está suspendido: puedes consultar su información, pero no facturar ni
+            recaudar.
+          </p>
+        </mat-card-content>
+      }
+    </mat-card>
+  }
+
+  @if (session.isPlatformAdmin()) {
+    <mat-card appearance="outlined" class="admin">
+      <mat-card-header>
+        <mat-icon mat-card-avatar aria-hidden="true">admin_panel_settings</mat-icon>
+        <mat-card-title>Administración de plataforma</mat-card-title>
+        <mat-card-subtitle
+          >Vincula prestadores y organiza las ESP con sus acueductos.</mat-card-subtitle
+        >
+      </mat-card-header>
+      <mat-card-actions>
+        <a mat-button routerLink="/prestadores">Ver prestadores</a>
+        <a mat-button routerLink="/prestadores/nuevo">Vincular un prestador</a>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+  <h2 class="section-title">Próximamente</h2>
+  <div class="upcoming">
+    @for (module of upcoming; track module.title) {
+      <div class="tile">
+        <mat-icon aria-hidden="true">{{ module.icon }}</mat-icon>
+        <span>{{ module.title }}</span>
+        <span class="muted">{{ module.sprint }}</span>
+      </div>
+    }
+  </div>
+</section>
