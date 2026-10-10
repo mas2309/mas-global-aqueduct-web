@@ -33,6 +33,14 @@ describe('Shell', () => {
     expect(text).toContain('Acueducto El Hato');
     expect(text).toContain('Inicio');
     expect(text).not.toContain('Prestadores');
+    expect(text).not.toContain('Usuarios');
+  });
+
+  it('el administrador del prestador ve la gestión de usuarios', async () => {
+    context = setUpPage({ session: authResponse({ organization: access({ role: 'ORG_ADMIN' }) }) });
+    const fixture = await render();
+
+    expect(textOf(fixture.nativeElement)).toContain('Usuarios');
   });
 
   it('el administrador de plataforma ve la administración de prestadores', async () => {

@@ -61,6 +61,9 @@ export class Shell {
     if (this.session.organization()) {
       items.push({ path: '/inicio', label: 'Inicio', icon: 'home' });
     }
+    if (this.session.organization() && this.session.canAdministerOrganization()) {
+      items.push({ path: '/usuarios', label: 'Usuarios', icon: 'group' });
+    }
     if (this.session.isPlatformAdmin()) {
       items.push({ path: '/prestadores', label: 'Prestadores', icon: 'apartment' });
     }

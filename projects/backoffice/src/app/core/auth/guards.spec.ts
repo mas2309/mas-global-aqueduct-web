@@ -6,10 +6,11 @@ import {
   RouterStateSnapshot,
   UrlTree,
 } from '@angular/router';
-import { authResponse, MemoryStorage, user } from '../../../testing/fixtures';
+import { access, authResponse, MemoryStorage, user } from '../../../testing/fixtures';
 import {
   authGuard,
   guestGuard,
+  organizationAdminGuard,
   organizationGuard,
   passwordChangedGuard,
   platformAdminGuard,
@@ -62,6 +63,15 @@ describe('guards', () => {
     expect(run(organizationGuard)).toBe('/prestadores');
     store.start(authResponse());
     expect(run(organizationGuard)).toBe(true);
+  });
+
+  it('organizationAdminGuard exige administrar el prestador seleccionado', () => {
+    store.start(authResponse());
+    expect(run(organizationAdminGuard)).toBe('/inicio');
+    store.start(authResponse({ organization: null, user: user({ platformAdmin: true }) }));
+    expect(run(organizationAdminGuard)).toBe('/inicio');
+    store.start(authResponse({ organization: access({ role: 'ORG_ADMIN' }) }));
+    expect(run(organizationAdminGuard)).toBe(true);
   });
 
   it('platformAdminGuard solo deja pasar al administrador de plataforma', () => {

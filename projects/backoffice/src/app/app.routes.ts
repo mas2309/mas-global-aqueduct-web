@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import {
   authGuard,
   guestGuard,
+  organizationAdminGuard,
   organizationGuard,
   passwordChangedGuard,
   platformAdminGuard,
@@ -44,6 +45,13 @@ export const routes: Routes = [
             title: 'Inicio · MAS Acueductos',
             canActivate: [organizationGuard],
             loadComponent: () => import('./features/home/home').then((m) => m.Home),
+          },
+          {
+            path: 'usuarios',
+            title: 'Usuarios · MAS Acueductos',
+            canActivate: [organizationAdminGuard],
+            loadComponent: () =>
+              import('./features/members/member-list/member-list').then((m) => m.MemberList),
           },
           {
             path: 'prestadores',

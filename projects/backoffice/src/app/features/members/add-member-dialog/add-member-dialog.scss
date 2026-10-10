@@ -1,0 +1,20 @@
+mat-dialog-content {
+  min-width: min(420px, 80vw);
+}
+
+.section {
+  margin: 4px 0 12px;
+}
+
+.password {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font:
+    500 1.25rem/1.4 ui-monospace,
+    Consolas,
+    monospace;
+  letter-spacing: 0.05em;
+  text-align: center;
+  user-select: all;
+  background: var(--mat-sys-surface-container-high);
+}

@@ -1,0 +1,80 @@
+@if (created(); as result) {
+  <h2 mat-dialog-title>Cuenta creada</h2>
+  <mat-dialog-content>
+    <p>
+      <strong>{{ result.member.fullName }}</strong> ya puede ingresar a
+      {{ data.organizationName }} con <strong>{{ result.member.email }}</strong
+      >.
+    </p>
+    <p>Entrégale esta contraseña temporal. Deberá cambiarla en su primer ingreso:</p>
+    <p class="password" aria-label="Contraseña temporal">{{ result.password }}</p>
+    <p class="muted">Por seguridad no se volverá a mostrar.</p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-flat-button (click)="finish()" cdkFocusInitial>Listo</button>
+  </mat-dialog-actions>
+} @else {
+  <h2 mat-dialog-title>Agregar usuario</h2>
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <mat-dialog-content>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Correo electrónico</mat-label>
+        <input matInput type="email" formControlName="email" cdkFocusInitial />
+        @if (form.controls.email.hasError('required')) {
+          <mat-error>Ingresa el correo</mat-error>
+        } @else if (form.controls.email.invalid) {
+          <mat-error>El correo no es válido</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="role">
+          @for (role of roles; track role) {
+            <mat-option [value]="role">
+              {{ roleLabels[role] }} — {{ roleDescriptions[role] }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <p class="muted section">Si la persona aún no tiene cuenta en la plataforma:</p>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Nombre completo</mat-label>
+        <input matInput formControlName="fullName" />
+        @if (form.controls.fullName.invalid) {
+          <mat-error>Entre 2 y 150 caracteres</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contraseña temporal</mat-label>
+        <input matInput formControlName="password" autocomplete="off" />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          (click)="generatePassword()"
+          aria-label="Generar contraseña temporal"
+        >
+          <mat-icon>casino</mat-icon>
+        </button>
+        <mat-hint>Mínimo {{ minLength }} caracteres. Usa el dado para generar una.</mat-hint>
+        @if (form.controls.password.invalid) {
+          <mat-error>Debe tener al menos {{ minLength }} caracteres</mat-error>
+        }
+      </mat-form-field>
+
+      <div aria-live="assertive">
+        @if (error(); as message) {
+          <p class="error">{{ message }}</p>
+        }
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+      <button mat-flat-button type="submit" [disabled]="saving()">Agregar</button>
+    </mat-dialog-actions>
+  </form>
+}

@@ -1,0 +1,95 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Usuarios</h1>
+      <span class="muted"
+        >Quién puede entrar a {{ session.organization()?.name }} y con qué rol</span
+      >
+    </div>
+    <button mat-flat-button (click)="add()">
+      <mat-icon>person_add</mat-icon>
+      Agregar usuario
+    </button>
+  </header>
+
+  @if (members.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando usuarios" />
+  }
+
+  @if (members.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar los usuarios.</p>
+      <button mat-stroked-button (click)="members.reload()">Reintentar</button>
+    </div>
+  } @else if (members.hasValue()) {
+    @if (members.value().length === 0) {
+      <div class="state">
+        <mat-icon aria-hidden="true">group</mat-icon>
+        <p>Este prestador aún no tiene usuarios propios.</p>
+        <p class="muted">Agrega a quienes registran lecturas, facturan o administran.</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table mat-table [dataSource]="members.value()" aria-label="Usuarios del prestador">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Usuario</th>
+            <td mat-cell *matCellDef="let member">
+              <span class="name">
+                {{ member.fullName }}
+                @if (isCurrentUser(member)) {
+                  <span class="muted">(tú)</span>
+                }
+              </span>
+              <span class="muted email">{{ member.email }}</span>
+              @if (member.userStatus === 'DISABLED') {
+                <span class="disabled">Cuenta deshabilitada</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="role">
+            <th mat-header-cell *matHeaderCellDef>Rol</th>
+            <td mat-cell *matCellDef="let member">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="role">
+                <mat-select
+                  [value]="member.role"
+                  [disabled]="busy()"
+                  (selectionChange)="changeRole(member, $event.value)"
+                  [attr.aria-label]="'Rol de ' + member.fullName"
+                >
+                  @for (role of roles; track role) {
+                    <mat-option [value]="role">{{ roleLabel(role) }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="since">
+            <th mat-header-cell *matHeaderCellDef>Desde</th>
+            <td mat-cell *matCellDef="let member">{{ member.memberSince | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <span class="cdk-visually-hidden">Acciones</span>
+            </th>
+            <td mat-cell *matCellDef="let member" class="actions-cell">
+              <button
+                mat-icon-button
+                (click)="remove(member)"
+                [disabled]="busy()"
+                [attr.aria-label]="'Quitar acceso a ' + member.fullName"
+              >
+                <mat-icon>person_remove</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        </table>
+      </div>
+    }
+  }
+</section>

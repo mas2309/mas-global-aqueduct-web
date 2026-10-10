@@ -32,5 +32,14 @@ export const organizationGuard: CanActivateFn = () => {
   );
 };
 
+/** Administrar los usuarios del prestador actual: su administrador o el de plataforma operando en él. */
+export const organizationAdminGuard: CanActivateFn = () => {
+  const store = inject(SessionStore);
+  return (
+    (store.organization() !== null && store.canAdministerOrganization()) ||
+    inject(Router).parseUrl('/inicio')
+  );
+};
+
 export const platformAdminGuard: CanActivateFn = () =>
   inject(SessionStore).isPlatformAdmin() || inject(Router).parseUrl('/inicio');
