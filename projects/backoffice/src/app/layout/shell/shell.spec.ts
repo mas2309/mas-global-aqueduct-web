@@ -32,6 +32,8 @@ describe('Shell', () => {
 
     expect(text).toContain('Acueducto El Hato');
     expect(text).toContain('Inicio');
+    expect(text).toContain('Lecturas');
+    expect(text).toContain('Tarifas');
     expect(text).not.toContain('Prestadores');
     expect(text).not.toContain('Usuarios');
   });

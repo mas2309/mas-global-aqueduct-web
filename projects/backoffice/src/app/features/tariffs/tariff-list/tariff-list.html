@@ -1,0 +1,201 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Tarifas</h1>
+    @if (session.canAdministerOrganization() && selected(); as service) {
+      <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="{ servicio: service }">
+        <mat-icon>add</mat-icon>
+        Nueva tarifa
+      </a>
+    }
+  </header>
+
+  @if (services().length > 1) {
+    <mat-button-toggle-group
+      class="services"
+      [value]="selected()"
+      (change)="select($event.value)"
+      aria-label="Servicio"
+    >
+      @for (service of services(); track service) {
+        <mat-button-toggle [value]="service">
+          <mat-icon aria-hidden="true">{{ serviceIcons[service] }}</mat-icon>
+          {{ serviceLabels[service] }}
+        </mat-button-toggle>
+      }
+    </mat-button-toggle-group>
+  }
+
+  @if (tariffs.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando tarifas" />
+  }
+
+  @if (tariffs.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar las tarifas.</p>
+      <button mat-stroked-button (click)="tariffs.reload()">Reintentar</button>
+    </div>
+  } @else if (tariffs.hasValue() && selected(); as service) {
+    @let unit = unitOf(service);
+
+    @if (current(); as tariff) {
+      <mat-card appearance="outlined" class="tariff current">
+        <mat-card-header>
+          <mat-icon mat-card-avatar aria-hidden="true">{{ serviceIcons[service] }}</mat-icon>
+          <mat-card-title
+            >Tarifa vigente de {{ serviceLabels[service].toLowerCase() }}</mat-card-title
+          >
+          <mat-card-subtitle>Desde el {{ tariff.validFrom | date: 'longDate' }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngTemplateOutlet="detail; context: { $implicit: tariff, unit: unit }" />
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <div class="state">
+        <mat-icon aria-hidden="true">payments</mat-icon>
+        <p>{{ serviceLabels[service] }} aún no tiene una tarifa vigente.</p>
+        <p class="muted">Sin tarifa no se puede calcular el valor de las facturas.</p>
+        @if (session.canAdministerOrganization()) {
+          <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="{ servicio: service }">
+            Definir la tarifa
+          </a>
+        }
+      </div>
+    }
+
+    @for (tariff of upcoming(); track tariff.id) {
+      <mat-card appearance="outlined" class="tariff">
+        <mat-card-header>
+          <mat-icon mat-card-avatar aria-hidden="true">schedule</mat-icon>
+          <mat-card-title>Tarifa programada</mat-card-title>
+          <mat-card-subtitle
+            >Empieza el {{ tariff.validFrom | date: 'longDate' }}</mat-card-subtitle
+          >
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngTemplateOutlet="detail; context: { $implicit: tariff, unit: unit }" />
+        </mat-card-content>
+        @if (session.canAdministerOrganization()) {
+          <mat-card-actions align="end">
+            <button mat-button (click)="remove(tariff)">Eliminar</button>
+          </mat-card-actions>
+        }
+      </mat-card>
+    }
+
+    @if (current()) {
+      <mat-card appearance="outlined" class="simulator">
+        <mat-card-header>
+          <mat-card-title>Simulador</mat-card-title>
+          <mat-card-subtitle>Cuánto pagaría un predio con la tarifa vigente</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <form class="simulator-form" (ngSubmit)="simulate()">
+            @if (isMetered(service)) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Consumo ({{ unit }})</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  name="consumption"
+                  min="0"
+                  [ngModel]="consumption()"
+                  (ngModelChange)="consumption.set(+$event)"
+                />
+              </mat-form-field>
+            }
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>Uso</mat-label>
+              <mat-select name="usage" [ngModel]="usage()" (ngModelChange)="usage.set($event)">
+                @for (option of usages; track option) {
+                  <mat-option [value]="option">{{ usageLabels[option] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (usage() === 'RESIDENTIAL') {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Estrato</mat-label>
+                <mat-select
+                  name="stratum"
+                  [ngModel]="stratum()"
+                  (ngModelChange)="stratum.set($event)"
+                >
+                  @for (option of strata; track option) {
+                    <mat-option [value]="option">{{ option }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            <button mat-stroked-button type="submit" [disabled]="estimating()">Calcular</button>
+          </form>
+
+          @if (estimate(); as charge) {
+            <dl class="charge" aria-live="polite">
+              <dt>Cargo fijo</dt>
+              <dd>{{ charge.fixedCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+              @for (block of charge.blocks; track $index) {
+                <dt>
+                  {{ block.units }} {{ unit }} ×
+                  {{ block.pricePerUnit | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                </dt>
+                <dd>{{ block.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+              }
+              @if (charge.adjustment !== 0) {
+                <dt>
+                  {{ charge.adjustment < 0 ? 'Subsidio' : 'Contribución' }}
+                  ({{ charge.adjustmentPercent }} %)
+                </dt>
+                <dd>{{ charge.adjustment | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+              }
+              <dt class="total">Total</dt>
+              <dd class="total">
+                {{ charge.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+              </dd>
+            </dl>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+
+    @if (previous().length > 0) {
+      <h2 class="section-title">Tarifas anteriores</h2>
+      <ul class="history">
+        @for (tariff of previous(); track tariff.id) {
+          <li>
+            Desde el {{ tariff.validFrom | date: 'longDate' }} · cargo fijo
+            {{ tariff.fixedCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>
+
+<ng-template #detail let-tariff let-unit="unit">
+  <table class="blocks">
+    <caption class="cdk-visually-hidden">
+      Valores de la tarifa
+    </caption>
+    <tbody>
+      <tr>
+        <th scope="row">Cargo fijo mensual</th>
+        <td>{{ tariff.fixedCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+      </tr>
+      @for (block of tariff.blocks; track $index) {
+        <tr>
+          <th scope="row">{{ blockLabel(tariff.blocks, $index, unit) }}</th>
+          <td>
+            {{ block.pricePerUnit | currency: 'COP' : 'symbol-narrow' : '1.0-0' }} por {{ unit }}
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+  @if (tariff.adjustments.length > 0) {
+    <ul class="adjustments" aria-label="Subsidios y contribuciones">
+      @for (adjustment of tariff.adjustments; track $index) {
+        <li>{{ adjustmentLabel(adjustment) }}</li>
+      }
+    </ul>
+  }
+</ng-template>

@@ -1,0 +1,137 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Lecturas</h1>
+    <div class="actions">
+      @if (session.canAdministerOrganization() && periods.hasValue()) {
+        @if (latest(); as last) {
+          @if (last.status === 'OPEN') {
+            <button mat-stroked-button (click)="closePeriod(last)">
+              <mat-icon>lock</mat-icon>
+              Cerrar {{ periodLabel(last) }}
+            </button>
+          } @else {
+            <button mat-flat-button (click)="openPeriod()">
+              <mat-icon>add</mat-icon>
+              Abrir {{ nextLabel(last) }}
+            </button>
+          }
+        }
+      }
+    </div>
+  </header>
+
+  @if (periods.isLoading() && !periods.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando periodos" />
+  }
+
+  @if (periods.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar los periodos.</p>
+      <button mat-stroked-button (click)="periods.reload()">Reintentar</button>
+    </div>
+  } @else if (periods.hasValue() && periods.value().length === 0) {
+    <div class="state">
+      <mat-icon aria-hidden="true">calendar_month</mat-icon>
+      <p>Aún no hay periodos de facturación.</p>
+      <p class="muted">
+        Las lecturas se registran por periodo mensual. Abre el primero para empezar.
+      </p>
+      @if (session.canAdministerOrganization()) {
+        <button mat-flat-button (click)="openPeriod()">Abrir el primer periodo</button>
+      } @else {
+        <p class="muted">Pídele al administrador del prestador que lo abra.</p>
+      }
+    </div>
+  } @else if (periods.hasValue()) {
+    <div class="filters">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="period">
+        <mat-label>Periodo</mat-label>
+        <mat-select [ngModel]="periodId()" (ngModelChange)="periodId.set($event)">
+          @for (option of periods.value(); track option.id) {
+            <mat-option [value]="option.id">
+              {{ periodLabel(option) }} · {{ option.status === 'OPEN' ? 'Abierto' : 'Cerrado' }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (services().length > 1) {
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="service">
+          <mat-label>Servicio</mat-label>
+          <mat-select [ngModel]="service()" (ngModelChange)="service.set($event)">
+            @for (option of services(); track option) {
+              <mat-option [value]="option">{{ serviceLabels[option] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search">
+        <mat-label>Buscar por nombre, código, sector o medidor</mat-label>
+        <input
+          matInput
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+        />
+      </mat-form-field>
+
+      <mat-slide-toggle [checked]="onlyPending()" (change)="onlyPending.set($event.checked)">
+        Solo pendientes
+      </mat-slide-toggle>
+    </div>
+
+    @if (services().length === 0 && !route.isLoading()) {
+      <div class="state">
+        <p>Este prestador no ofrece servicios con medidor.</p>
+      </div>
+    }
+
+    @if (route.isLoading() && !route.hasValue()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Cargando la ruta de lectura" />
+    }
+
+    @if (route.error()) {
+      <div class="state" role="alert">
+        <p>No pudimos cargar la ruta de lectura.</p>
+        <button mat-stroked-button (click)="route.reload()">Reintentar</button>
+      </div>
+    } @else if (route.hasValue() && period(); as current) {
+      <p class="progress" aria-live="polite">
+        <strong>{{ done() }} de {{ total() }}</strong> medidores leídos
+        @if (unusual() > 0) {
+          · <span class="unusual">{{ unusual() }} con consumo inusual</span>
+        }
+        @if (current.status === 'CLOSED') {
+          · Periodo cerrado: solo consulta
+        }
+      </p>
+
+      @if (total() === 0) {
+        <div class="state">
+          <mat-icon aria-hidden="true">speed</mat-icon>
+          <p>No hay medidores por leer.</p>
+          <p class="muted">
+            Conecta el servicio a los predios de tus suscriptores para que aparezcan en la ruta.
+          </p>
+        </div>
+      } @else {
+        <div class="route" role="list" aria-label="Ruta de lectura">
+          @for (entry of entries(); track entry.propertyId) {
+            <aq-reading-row
+              role="listitem"
+              [entry]="entry"
+              [periodId]="current.id"
+              [serviceType]="service()!"
+              [unit]="unit()"
+              [editable]="editable()"
+              (changed)="onChanged(entry, $event)"
+            />
+          } @empty {
+            <p class="muted empty">Ningún medidor coincide con el filtro.</p>
+          }
+        </div>
+      }
+    }
+  }
+</section>

@@ -1,0 +1,124 @@
+@let item = entry();
+@let reading = saved();
+
+<div class="who">
+  <a class="name" [routerLink]="['/suscriptores', item.subscriberId]">
+    <span class="code">{{ formatCode(item.subscriberCode) }}</span>
+    {{ item.subscriberName }}
+  </a>
+  <span class="muted place">
+    {{ item.address }}
+    @if (item.sector) {
+      · {{ item.sector }}
+    }
+    · {{ item.meterSerial ? 'Medidor ' + item.meterSerial : 'Sin medidor' }}
+  </span>
+</div>
+
+<div class="previous">
+  @if (editable() && needsInitial()) {
+    <label>
+      <span class="label">{{
+        meterReplaced() ? 'Inicial medidor nuevo' : 'Lectura anterior'
+      }}</span>
+      <input
+        type="number"
+        min="0"
+        step="any"
+        inputmode="decimal"
+        [ngModel]="initial()"
+        (ngModelChange)="initial.set(+$event)"
+        (keydown.enter)="save()"
+        [attr.aria-label]="'Lectura anterior de ' + item.subscriberName"
+      />
+    </label>
+  } @else {
+    <span class="label">Anterior</span>
+    <span class="value">{{ reading?.previousReading ?? item.previousReading ?? '—' }}</span>
+  }
+</div>
+
+<div class="current">
+  @if (editable()) {
+    <label>
+      <span class="label">Actual</span>
+      <input
+        type="number"
+        min="0"
+        step="any"
+        inputmode="decimal"
+        [ngModel]="current()"
+        (ngModelChange)="current.set($event === null || $event === '' ? null : +$event)"
+        (keydown.enter)="save()"
+        [attr.aria-label]="'Lectura actual de ' + item.subscriberName"
+      />
+    </label>
+  } @else {
+    <span class="label">Actual</span>
+    <span class="value">{{ reading?.currentReading ?? '—' }}</span>
+  }
+</div>
+
+<div class="result" aria-live="polite">
+  @if (reading && !dirty()) {
+    <span class="consumption" [class.unusual]="reading.unusual">
+      {{ reading.consumption }} {{ unit() }}
+    </span>
+    @if (reading.unusual) {
+      <mat-icon
+        class="warning"
+        matTooltip="Consumo mayor al doble de su promedio: verifica la lectura o una posible fuga"
+        aria-label="Consumo inusual"
+      >
+        warning
+      </mat-icon>
+    } @else {
+      <mat-icon class="ok" aria-label="Lectura guardada">check_circle</mat-icon>
+    }
+    @if (reading.meterReplaced) {
+      <span class="muted tag">Medidor nuevo</span>
+    }
+  } @else if (!reading) {
+    <span class="muted">Pendiente</span>
+  }
+</div>
+
+@if (editable()) {
+  <div class="buttons">
+    <button
+      mat-icon-button
+      type="button"
+      (click)="toggleMeterReplaced()"
+      [class.active]="meterReplaced()"
+      [attr.aria-pressed]="meterReplaced()"
+      matTooltip="El medidor se cambió en este periodo"
+      [attr.aria-label]="'Cambio de medidor de ' + item.subscriberName"
+    >
+      <mat-icon>published_with_changes</mat-icon>
+    </button>
+    @if (reading) {
+      <button
+        mat-icon-button
+        type="button"
+        (click)="remove()"
+        [disabled]="saving()"
+        matTooltip="Eliminar la lectura"
+        [attr.aria-label]="'Eliminar lectura de ' + item.subscriberName"
+      >
+        <mat-icon>delete</mat-icon>
+      </button>
+    }
+    <button
+      mat-flat-button
+      type="button"
+      (click)="save()"
+      [disabled]="saving() || current() === null || !dirty()"
+    >
+      Guardar
+    </button>
+  </div>
+}
+
+@if (error(); as message) {
+  <p class="error row-error" role="alert">{{ message }}</p>
+}

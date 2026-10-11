@@ -1,0 +1,157 @@
+<section class="page narrow">
+  <header class="page-header">
+    <h1>Nueva tarifa de {{ serviceLabel() }}</h1>
+  </header>
+
+  <p class="muted intro">
+    La tarifa anterior no se modifica: esta empieza a aplicar desde la fecha de vigencia y lo ya
+    facturado conserva sus valores.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <mat-card appearance="outlined">
+      <mat-card-content class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Vigente desde</mat-label>
+          <input matInput type="date" formControlName="validFrom" />
+          @if (form.controls.validFrom.invalid) {
+            <mat-error>Indica la fecha de vigencia</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Cargo fijo mensual</mat-label>
+          <span matTextPrefix>$&nbsp;</span>
+          <input matInput type="number" min="0" formControlName="fixedCharge" inputmode="numeric" />
+          @if (form.controls.fixedCharge.invalid) {
+            <mat-error>Debe ser cero o más</mat-error>
+          }
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    @if (metered()) {
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Rangos de consumo</mat-card-title>
+          <mat-card-subtitle>
+            Cada rango cobra su precio solo a los {{ unit() }} que caen dentro de él.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content formArrayName="blocks">
+          @for (block of blocks.controls; track block; let index = $index) {
+            <div class="row" [formGroupName]="index">
+              <span class="from">Más de {{ lowerLimit(index) }} hasta</span>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="limit">
+                <mat-label>{{ unit() }}</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  formControlName="upTo"
+                  [attr.aria-label]="'Límite del rango ' + (index + 1)"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price">
+                <mat-label>Precio por {{ unit() }}</mat-label>
+                <span matTextPrefix>$&nbsp;</span>
+                <input matInput type="number" min="0" formControlName="pricePerUnit" />
+              </mat-form-field>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="removeBlock(index)"
+                [attr.aria-label]="'Quitar rango ' + (index + 1)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+        </mat-card-content>
+        <mat-card-content>
+          <div class="row">
+            <span class="from">
+              {{ blocks.length === 0 ? 'Todo el consumo' : 'Más de ' + lowerLimit(blocks.length) }}
+            </span>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price">
+              <mat-label>Precio por {{ unit() }}</mat-label>
+              <span matTextPrefix>$&nbsp;</span>
+              <input matInput type="number" min="0" formControlName="lastPrice" />
+            </mat-form-field>
+          </div>
+          <button mat-button type="button" (click)="addBlock()">
+            <mat-icon>add</mat-icon>
+            Agregar rango
+          </button>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Subsidios y contribuciones (opcional)</mat-card-title>
+        <mat-card-subtitle>
+          Porcentaje que se descuenta o se suma según el uso y el estrato del predio.
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content formArrayName="adjustments">
+        @for (adjustment of adjustments.controls; track adjustment; let index = $index) {
+          <div class="row" [formGroupName]="index">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="usage">
+              <mat-label>Uso</mat-label>
+              <mat-select formControlName="usage">
+                @for (usage of usages; track usage) {
+                  <mat-option [value]="usage">{{ usageLabels[usage] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            @if (adjustment.controls.usage.value === 'RESIDENTIAL') {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="stratum">
+                <mat-label>Estrato</mat-label>
+                <mat-select formControlName="stratum">
+                  @for (stratum of strata; track stratum) {
+                    <mat-option [value]="stratum">{{ stratum }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="kind">
+              <mat-label>Tipo</mat-label>
+              <mat-select formControlName="kind">
+                <mat-option value="SUBSIDY">Subsidio</mat-option>
+                <mat-option value="CONTRIBUTION">Contribución</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="percent">
+              <mat-label>%</mat-label>
+              <input matInput type="number" min="0" max="100" formControlName="percent" />
+            </mat-form-field>
+            <button
+              mat-icon-button
+              type="button"
+              (click)="removeAdjustment(index)"
+              [attr.aria-label]="'Quitar ajuste ' + (index + 1)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        }
+        <button mat-button type="button" (click)="addAdjustment()">
+          <mat-icon>add</mat-icon>
+          Agregar subsidio o contribución
+        </button>
+      </mat-card-content>
+    </mat-card>
+
+    <div aria-live="assertive">
+      @if (error(); as message) {
+        <p class="error">{{ message }}</p>
+      }
+    </div>
+
+    <div class="actions">
+      <a mat-button routerLink="/tarifas" [queryParams]="{ servicio: servicio() }">Cancelar</a>
+      <button mat-flat-button type="submit" [disabled]="saving()">Guardar tarifa</button>
+    </div>
+  </form>
+</section>

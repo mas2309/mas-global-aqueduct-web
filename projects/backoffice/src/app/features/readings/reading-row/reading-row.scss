@@ -1,0 +1,109 @@
+// La fila es una rejilla que en pantallas angostas se apila como tarjeta
+:host {
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) 120px 120px minmax(110px, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+@media (max-width: 800px) {
+  :host {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .who,
+  .result,
+  .buttons {
+    grid-column: 1 / -1;
+  }
+}
+
+.who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 500;
+  color: var(--mat-sys-on-surface);
+  text-decoration: none;
+}
+
+.code {
+  margin-right: 6px;
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.place {
+  font: var(--mat-sys-body-small);
+}
+
+.label {
+  display: block;
+  font: var(--mat-sys-label-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 6px;
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.consumption {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+
+  &.unusual {
+    color: var(--mat-sys-error);
+  }
+}
+
+.ok {
+  color: var(--mat-sys-primary);
+}
+
+.warning {
+  color: var(--mat-sys-error);
+}
+
+.tag {
+  font: var(--mat-sys-label-small);
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.active {
+  color: var(--mat-sys-tertiary);
+  background: var(--mat-sys-tertiary-container);
+}
+
+.row-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}

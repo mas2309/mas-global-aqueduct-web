@@ -85,6 +85,27 @@ export const routes: Routes = [
             ],
           },
           {
+            path: 'lecturas',
+            title: 'Lecturas · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/readings/readings/readings').then((m) => m.Readings),
+          },
+          {
+            path: 'tarifas',
+            title: 'Tarifas · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/tariffs/tariff-list/tariff-list').then((m) => m.TariffList),
+          },
+          {
+            path: 'tarifas/nueva',
+            title: 'Nueva tarifa · MAS Acueductos',
+            canActivate: [organizationAdminGuard],
+            loadComponent: () =>
+              import('./features/tariffs/tariff-form/tariff-form').then((m) => m.TariffForm),
+          },
+          {
             path: 'usuarios',
             title: 'Usuarios · MAS Acueductos',
             canActivate: [organizationAdminGuard],

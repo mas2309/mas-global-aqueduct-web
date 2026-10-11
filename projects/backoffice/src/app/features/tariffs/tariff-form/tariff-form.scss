@@ -1,0 +1,42 @@
+.intro {
+  margin: -8px 0 16px;
+}
+
+mat-card {
+  margin-bottom: 16px;
+}
+
+mat-card-content {
+  padding-top: 12px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.from {
+  min-width: 150px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.limit {
+  width: 110px;
+}
+
+.price {
+  width: 180px;
+}
+
+.usage,
+.kind {
+  width: 150px;
+}
+
+.stratum,
+.percent {
+  width: 100px;
+}

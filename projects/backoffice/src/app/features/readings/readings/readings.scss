@@ -1,0 +1,46 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.period {
+  width: 230px;
+}
+
+.service {
+  width: 180px;
+}
+
+.search {
+  flex: 1;
+  min-width: 240px;
+}
+
+.progress {
+  margin: 0 0 12px;
+  color: var(--mat-sys-on-surface-variant);
+
+  strong {
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+.unusual {
+  color: var(--mat-sys-error);
+}
+
+.route {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  background: var(--mat-sys-surface);
+  overflow: hidden;
+}
+
+.empty {
+  padding: 24px;
+  margin: 0;
+  text-align: center;
+}
