@@ -1,0 +1,77 @@
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.tile {
+  flex: 1;
+  min-width: 200px;
+  padding: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-body-medium);
+  }
+
+  dd {
+    margin: 4px 0 0;
+    font: var(--mat-sys-headline-small);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.filters {
+  margin-bottom: 16px;
+}
+
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+}
+
+table {
+  width: 100%;
+}
+
+.subscriber a {
+  font-weight: 500;
+  color: var(--mat-sys-primary);
+}
+
+.detail {
+  display: block;
+  font: var(--mat-sys-body-small);
+}
+
+.amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pending {
+  font-weight: 500;
+}
+
+.progress {
+  min-width: 140px;
+
+  mat-progress-bar {
+    margin-bottom: 4px;
+  }
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+}

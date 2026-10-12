@@ -108,6 +108,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'financiaciones',
+            title: 'Financiaciones · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/invoices/plan-overview/plan-overview').then((m) => m.PlanOverview),
+          },
+          {
             path: 'tarifas',
             title: 'Tarifas · MAS Acueductos',
             canActivate: [organizationGuard],

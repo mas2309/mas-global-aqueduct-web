@@ -1,4 +1,4 @@
-import { ServiceType } from '../organizations/organization.models';
+import { Page, ServiceType } from '../organizations/organization.models';
 
 /** Contratos de /api/v1/invoices, /installment-plans y /billing-settings (módulo billing del backend). */
 
@@ -105,4 +105,19 @@ export const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {
 /** Solo la factura más reciente de una acometida, mientras no esté pagada, se puede cobrar o modificar. */
 export function isOpen(invoice: Invoice): boolean {
   return invoice.state === 'PENDING' || invoice.state === 'OVERDUE';
+}
+
+/** Una financiación en la vista global, con su suscriptor. */
+export interface PlanSummary {
+  plan: InstallmentPlan;
+  subscriberCode: number;
+  subscriberName: string;
+}
+
+/** Vista global de las financiaciones del prestador. */
+export interface PlanOverview {
+  activePlans: number;
+  /** Lo que falta por facturar entre todas las activas. */
+  pendingAmount: number;
+  plans: Page<PlanSummary>;
 }

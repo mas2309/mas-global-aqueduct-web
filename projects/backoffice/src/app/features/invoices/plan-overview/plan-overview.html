@@ -1,0 +1,126 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Financiaciones</h1>
+  </header>
+
+  @if (overview.hasValue()) {
+    <dl class="summary">
+      <div class="tile">
+        <dt>Financiaciones activas</dt>
+        <dd>{{ overview.value().activePlans }}</dd>
+      </div>
+      <div class="tile">
+        <dt>Falta por cobrar</dt>
+        <dd>{{ overview.value().pendingAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+      </div>
+    </dl>
+  }
+
+  <div class="filters">
+    <mat-button-toggle-group
+      [value]="status()"
+      (change)="filterBy($event.value)"
+      aria-label="Estado de las financiaciones"
+    >
+      <mat-button-toggle value="ACTIVE">Activas</mat-button-toggle>
+      <mat-button-toggle value="COMPLETED">Terminadas</mat-button-toggle>
+      <mat-button-toggle value="CANCELLED">Canceladas</mat-button-toggle>
+      <mat-button-toggle value="ALL">Todas</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  @if (overview.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando financiaciones" />
+  }
+
+  @if (overview.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar las financiaciones.</p>
+      <button mat-stroked-button (click)="overview.reload()">Reintentar</button>
+    </div>
+  } @else if (overview.hasValue()) {
+    @let plans = overview.value().plans;
+    @if (plans.totalItems === 0) {
+      <div class="state">
+        <mat-icon aria-hidden="true">event_repeat</mat-icon>
+        <p>No hay financiaciones con este filtro.</p>
+        <p class="muted">
+          Se crean desde la ficha del suscriptor, para cobrar por cuotas una matrícula, un medidor o
+          una deuda.
+        </p>
+        <a mat-stroked-button routerLink="/suscriptores">Ir a suscriptores</a>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table mat-table [dataSource]="plans.items" aria-label="Financiaciones">
+          <ng-container matColumnDef="subscriber">
+            <th mat-header-cell *matHeaderCellDef>Suscriptor</th>
+            <td mat-cell *matCellDef="let row" class="subscriber">
+              <a [routerLink]="['/suscriptores', row.plan.subscriberId]">{{ subscriberOf(row) }}</a>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Concepto</th>
+            <td mat-cell *matCellDef="let row">{{ row.plan.description }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="total">
+            <th mat-header-cell *matHeaderCellDef>Total</th>
+            <td mat-cell *matCellDef="let row" class="amount">
+              {{ row.plan.totalAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+              <span class="muted detail">
+                {{ row.plan.installments }} cuotas de
+                {{ row.plan.installmentAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="progress">
+            <th mat-header-cell *matHeaderCellDef>Avance</th>
+            <td mat-cell *matCellDef="let row" class="progress">
+              <mat-progress-bar
+                mode="determinate"
+                [value]="percentOf(row)"
+                [attr.aria-label]="'Avance de ' + row.plan.description"
+              />
+              <span class="muted detail">
+                {{ row.plan.billed }} de {{ row.plan.installments }} cobradas
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="pending">
+            <th mat-header-cell *matHeaderCellDef>Falta</th>
+            <td mat-cell *matCellDef="let row" class="amount pending">
+              @if (row.plan.status === 'ACTIVE') {
+                {{ row.plan.pendingAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+              } @else {
+                —
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let row">
+              <span class="chip" [attr.data-state]="row.plan.status">{{ statusOf(row) }}</span>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="plans.totalItems"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="changePage($event)"
+        aria-label="Páginas de financiaciones"
+      />
+    }
+  }
+</section>

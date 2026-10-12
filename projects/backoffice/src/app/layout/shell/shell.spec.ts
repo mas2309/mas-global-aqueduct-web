@@ -34,6 +34,7 @@ describe('Shell', () => {
     expect(text).toContain('Inicio');
     expect(text).toContain('Lecturas');
     expect(text).toContain('Facturas');
+    expect(text).toContain('Financiaciones');
     expect(text).toContain('Tarifas');
     expect(text).not.toContain('Prestadores');
     expect(text).not.toContain('Usuarios');
