@@ -17,6 +17,7 @@
   } @else if (invoice.hasValue()) {
     @let bill = invoice.value();
     @let unit = unitOf(bill.serviceType);
+    @let metered = meteredServices.has(bill.serviceType);
     @let canCollect = isOpen(bill) && session.canOperateOrganization();
 
     <header class="page-header">
@@ -41,11 +42,13 @@
           </dd>
           <dt>Predio</dt>
           <dd>{{ bill.address }}</dd>
-          <dt>Lectura</dt>
-          <dd>
-            {{ bill.previousReading }} → {{ bill.currentReading }} =
-            <strong>{{ bill.consumption }} {{ unit }}</strong>
-          </dd>
+          @if (metered) {
+            <dt>Lectura</dt>
+            <dd>
+              {{ bill.previousReading }} → {{ bill.currentReading }} =
+              <strong>{{ bill.consumption }} {{ unit }}</strong>
+            </dd>
+          }
           <dt>Pagar hasta</dt>
           <dd>{{ bill.dueDate | date: 'longDate' }}</dd>
           @if (bill.paymentMethod) {
@@ -66,10 +69,12 @@
             Conceptos de la factura
           </caption>
           <tbody>
-            <tr>
-              <th scope="row">Consumo ({{ bill.consumption }} {{ unit }})</th>
-              <td>{{ bill.consumptionCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
-            </tr>
+            @if (metered) {
+              <tr>
+                <th scope="row">Consumo ({{ bill.consumption }} {{ unit }})</th>
+                <td>{{ bill.consumptionCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+              </tr>
+            }
             <tr>
               <th scope="row">Cargo fijo</th>
               <td>{{ bill.fixedCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>

@@ -92,6 +92,14 @@ describe('InvoiceList', () => {
     expect(textOf(element)).not.toContain('Plazo y recargo');
   });
 
+  it('las facturas de servicios sin medidor no muestran consumo', async () => {
+    await open();
+    await load([invoice({ serviceType: 'SANITATION', readingId: null, consumption: 0 })]);
+
+    expect(textOf(element)).toContain('—');
+    expect(textOf(element)).not.toContain('0 m³');
+  });
+
   it('filtra por estado, año y texto, volviendo a la primera página', async () => {
     await open();
     await load([invoice()], 45);

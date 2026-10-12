@@ -88,6 +88,28 @@ describe('InvoiceDetail', () => {
     expect(button('Pago en efectivo')).toBeDefined();
   });
 
+  it('un servicio sin medidor no muestra lectura ni consumo', async () => {
+    await open(
+      invoice({
+        serviceType: 'SANITATION',
+        readingId: null,
+        previousReading: 0,
+        currentReading: 0,
+        consumption: 0,
+        consumptionCharge: 0,
+        fixedCharge: 12000,
+        total: 12000,
+      }),
+    );
+    const text = textOf(element);
+
+    expect(text).toContain('Aseo');
+    expect(text).toContain('Cargo fijo');
+    expect(text).toContain('$12,000');
+    expect(text).not.toContain('Lectura');
+    expect(text).not.toContain('Consumo');
+  });
+
   it('registra el pago y deja la factura en solo consulta', async () => {
     await open(invoice({ adjustment: 3000, adjustmentPercent: 20 }));
 

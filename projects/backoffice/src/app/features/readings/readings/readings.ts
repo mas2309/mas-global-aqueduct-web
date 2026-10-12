@@ -74,6 +74,12 @@ export class Readings {
       (service) => offered.includes(service) && METERED_SERVICES.has(service),
     );
   });
+  /** Aseo, alcantarillado: no tienen lectura y se facturan al cerrar el periodo. */
+  private readonly hasUnmeteredServices = computed(
+    () =>
+      this.organization.hasValue() &&
+      this.organization.value().services.some((service) => !METERED_SERVICES.has(service)),
+  );
   protected readonly service = signal<ServiceType | null>(null);
 
   protected readonly periods = httpResource<BillingPeriod[]>(() => PERIODS_URL);
@@ -211,7 +217,10 @@ export class Readings {
       title: `Cerrar ${periodLabel(period)}`,
       message:
         (pending > 0 ? `Quedan ${pending} medidores sin lectura. ` : '') +
-        'Al cerrar, las lecturas quedan en firme y ya no se pueden modificar.',
+        'Al cerrar, las lecturas quedan en firme y ya no se pueden modificar.' +
+        (this.hasUnmeteredServices()
+          ? ' También se facturan los servicios sin medidor (aseo, alcantarillado).'
+          : ''),
       confirmLabel: 'Cerrar periodo',
       danger: true,
     })
@@ -224,6 +233,7 @@ export class Readings {
         error: (error: unknown) =>
           this.notifier.apiError(error, {
             403: 'Solo el administrador del prestador abre y cierra periodos.',
+            422: 'Falta la tarifa vigente de un servicio sin medidor (aseo o alcantarillado): defínela antes de cerrar.',
           }),
       });
   }

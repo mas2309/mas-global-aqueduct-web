@@ -12,7 +12,7 @@ import { SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { saveFile } from '../../../shared/ui/save-file';
 import { periodLabel } from '../../readings/reading.models';
-import { formatCode } from '../../subscribers/subscriber.models';
+import { formatCode, METERED_SERVICES } from '../../subscribers/subscriber.models';
 import { unitOf } from '../../tariffs/tariff.models';
 import { InvoicePayments } from '../invoice-payments';
 import {
@@ -60,6 +60,7 @@ export class InvoiceDetail {
   protected readonly periodLabel = periodLabel;
   protected readonly formatCode = formatCode;
   protected readonly unitOf = unitOf;
+  protected readonly meteredServices = METERED_SERVICES;
   protected readonly isOpen = isOpen;
 
   protected download(invoice: Invoice): void {

@@ -18,6 +18,7 @@ import { SessionStore } from '../../../core/auth/session-store';
 import { Notifier } from '../../../core/ui/notifier';
 import { Page } from '../../organizations/organization.models';
 import { periodLabel } from '../../readings/reading.models';
+import { METERED_SERVICES } from '../../subscribers/subscriber.models';
 import { unitOf } from '../../tariffs/tariff.models';
 import { BillingSettingsDialog } from '../billing-settings-dialog/billing-settings-dialog';
 import { InvoicePayments } from '../invoice-payments';
@@ -124,7 +125,9 @@ export class InvoiceList {
   }
 
   protected consumptionOf(invoice: Invoice): string {
-    return `${invoice.consumption} ${unitOf(invoice.serviceType)}`;
+    return METERED_SERVICES.has(invoice.serviceType)
+      ? `${invoice.consumption} ${unitOf(invoice.serviceType)}`
+      : '—';
   }
 
   protected canCollect(invoice: Invoice): boolean {

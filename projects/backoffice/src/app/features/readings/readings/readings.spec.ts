@@ -269,6 +269,9 @@ describe('Readings', () => {
     expect(openDialog.mock.calls[0][1]?.data).toMatchObject({
       message: expect.stringContaining('Quedan 1 medidores sin lectura'),
     });
+    expect(openDialog.mock.calls[0][1]?.data).toMatchObject({
+      message: expect.stringContaining('servicios sin medidor'),
+    });
     const request = context.http.expectOne(`${PERIODS_URL}/${PERIOD_ID}/close`);
     expect(request.request.method).toBe('POST');
     request.flush(period({ status: 'CLOSED' }));

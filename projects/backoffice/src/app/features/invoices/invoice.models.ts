@@ -22,7 +22,8 @@ export interface Invoice {
   periodId: string;
   year: number;
   month: number;
-  readingId: string;
+  /** `null` en los servicios sin medidor, que se facturan al cerrar el periodo. */
+  readingId: string | null;
   propertyId: string;
   subscriberId: string;
   subscriberCode: number;
