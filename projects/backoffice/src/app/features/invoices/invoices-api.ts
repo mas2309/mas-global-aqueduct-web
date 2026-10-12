@@ -22,6 +22,11 @@ export class InvoicesApi {
     return this.http.post<Invoice>(`${INVOICES_URL}/${invoiceId}/pay`, { method });
   }
 
+  /** Deshace un pago registrado por error. Solo el administrador, con motivo, y solo en la factura más reciente. */
+  reversePayment(invoiceId: string, reason: string): Observable<Invoice> {
+    return this.http.post<Invoice>(`${INVOICES_URL}/${invoiceId}/reverse-payment`, { reason });
+  }
+
   /** Con valor cero se quitan los otros cobros. */
   changeOtherCharges(
     invoiceId: string,
@@ -45,6 +50,13 @@ export class InvoicesApi {
   /** La factura en PDF, para descargarla o imprimirla. */
   pdf(invoiceId: string): Observable<Blob> {
     return this.http.get(`${INVOICES_URL}/${invoiceId}/pdf`, { responseType: 'blob' });
+  }
+
+  /** Todas las facturas de un periodo en un solo PDF, una por página. */
+  periodPdf(periodId: string): Observable<Blob> {
+    return this.http.get(`/api/v1/billing-periods/${periodId}/invoices/pdf`, {
+      responseType: 'blob',
+    });
   }
 
   updateSettings(settings: BillingSettings): Observable<BillingSettings> {

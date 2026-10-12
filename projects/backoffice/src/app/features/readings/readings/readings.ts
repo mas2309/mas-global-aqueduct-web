@@ -23,7 +23,9 @@ import { SessionStore } from '../../../core/auth/session-store';
 import { SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
+import { saveFile } from '../../../shared/ui/save-file';
 import { Invoice } from '../../invoices/invoice.models';
+import { InvoicesApi } from '../../invoices/invoices-api';
 import { Organization, SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
 import { METERED_SERVICES } from '../../subscribers/subscriber.models';
 import { CURRENT_ORGANIZATION_URL } from '../../subscribers/subscribers-api';
@@ -59,6 +61,7 @@ import { PERIODS_URL, ReadingsApi } from '../readings-api';
 })
 export class Readings {
   private readonly api = inject(ReadingsApi);
+  private readonly invoicesApi = inject(InvoicesApi);
   private readonly dialog = inject(MatDialog);
   private readonly notifier = inject(Notifier);
   protected readonly session = inject(SessionStore);
@@ -223,6 +226,16 @@ export class Readings {
             403: 'Solo el administrador del prestador abre y cierra periodos.',
           }),
       });
+  }
+
+  /** Todas las facturas del periodo (de todos los servicios) en un PDF, para imprimirlas y repartirlas. */
+  protected downloadInvoices(period: BillingPeriod): void {
+    this.invoicesApi.periodPdf(period.id).subscribe({
+      next: (pdf) =>
+        saveFile(pdf, `facturas-${period.year}-${String(period.month).padStart(2, '0')}.pdf`),
+      error: (error: unknown) =>
+        this.notifier.apiError(error, { 422: 'Este periodo aún no tiene facturas.' }),
+    });
   }
 
   protected invoiceOf(entry: RouteEntry): Invoice | null {

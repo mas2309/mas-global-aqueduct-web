@@ -138,6 +138,12 @@
         <mat-icon>picture_as_pdf</mat-icon>
         Descargar PDF
       </button>
+      @if (bill.state === 'PAID' && session.canAdministerOrganization()) {
+        <button mat-button (click)="reversePayment(bill)">
+          <mat-icon>undo</mat-icon>
+          Reversar pago
+        </button>
+      }
       @if (canCollect) {
         <button mat-button (click)="editOtherCharges(bill)">
           <mat-icon>add_card</mat-icon>

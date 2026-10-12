@@ -8,6 +8,7 @@ import { OrganizationRole } from '../../../core/auth/auth.models';
 import { Invoice } from '../invoice.models';
 import { INVOICES_URL } from '../invoices-api';
 import { OtherChargesDialog } from '../other-charges-dialog/other-charges-dialog';
+import { ReversePaymentDialog } from '../reverse-payment-dialog/reverse-payment-dialog';
 import { InvoiceDetail } from './invoice-detail';
 
 const INVOICE_URL = `${INVOICES_URL}/${INVOICE_ID}`;
@@ -136,6 +137,34 @@ describe('InvoiceDetail', () => {
     expect(document.body.textContent).toContain('Otros cobros actualizados');
   });
 
+  it('el administrador reversa un pago y la factura vuelve a quedar pendiente', async () => {
+    const paid = invoice({ state: 'PAID', paymentMethod: 'CASH', paidAt: '2026-10-12T15:00:00Z' });
+    await open(paid, 'ORG_ADMIN');
+
+    dialogResult = undefined;
+    button('Reversar pago')?.click();
+    await settle();
+    expect(textOf(element)).toContain('Pagada');
+
+    dialogResult = invoice();
+    button('Reversar pago')?.click();
+    await settle();
+
+    expect(document.body.textContent).toContain('Pago de la factura n.º 12 reversado');
+    expect(textOf(element)).toContain('Pendiente');
+    expect(button('Reversar pago')).toBeUndefined();
+    expect(button('Pago en efectivo')).toBeDefined();
+  });
+
+  it('solo el administrador ve la opción de reversar, y solo en facturas pagadas', async () => {
+    await open(invoice({ state: 'PAID', paymentMethod: 'CASH' }), 'OPERATOR');
+    expect(button('Reversar pago')).toBeUndefined();
+    TestBed.resetTestingModule();
+
+    await open(invoice(), 'ORG_ADMIN');
+    expect(button('Reversar pago')).toBeUndefined();
+  });
+
   it('descarga el PDF con el número de la factura, y avisa si falla', async () => {
     await open(invoice(), 'VIEWER');
     const createObjectURL = vi.fn(() => 'blob:factura');
@@ -239,6 +268,64 @@ describe('OtherChargesDialog', () => {
     await settle();
 
     expect(textOf(element)).toContain('ya está pagada o está incluida en una posterior');
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+});
+
+describe('ReversePaymentDialog', () => {
+  const dialogRef = { close: vi.fn() };
+  const url = `${INVOICE_URL}/reverse-payment`;
+  const paid = invoice({ state: 'PAID', paymentMethod: 'CASH' });
+  let context: PageTestContext;
+  let element: HTMLElement;
+
+  afterEach(() => context.http.verify());
+
+  async function render(): Promise<void> {
+    dialogRef.close.mockReset();
+    context = setUpPage({
+      providers: [
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: MAT_DIALOG_DATA, useValue: paid },
+      ],
+    });
+    element = TestBed.createComponent(ReversePaymentDialog).nativeElement;
+    await settle();
+  }
+
+  it('exige el motivo y lo envía con el reverso', async () => {
+    await render();
+    expect(textOf(element)).toContain(
+      'La factura n.º 12 de María Gómez volverá a quedar pendiente',
+    );
+
+    type(element, 'input[formcontrolname=reason]', '   ');
+    click(element, 'button[type=submit]');
+    await settle();
+    expect(textOf(element)).toContain('Indica por qué se reversa el pago');
+    context.http.expectNone(url);
+
+    type(element, 'input[formcontrolname=reason]', ' Se cobró al predio equivocado ');
+    click(element, 'button[type=submit]');
+    const request = context.http.expectOne(url);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ reason: 'Se cobró al predio equivocado' });
+    request.flush(invoice());
+
+    expect(dialogRef.close).toHaveBeenCalledWith(invoice());
+  });
+
+  it('muestra el rechazo del servidor', async () => {
+    await render();
+
+    type(element, 'input[formcontrolname=reason]', 'Error de digitación');
+    click(element, 'button[type=submit]');
+    context.http
+      .expectOne(url)
+      .flush({ status: 422 }, { status: 422, statusText: 'Unprocessable' });
+    await settle();
+
+    expect(textOf(element)).toContain('ya tiene una factura posterior');
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
 });

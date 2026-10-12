@@ -124,6 +124,40 @@ describe('Readings', () => {
     expect(element.querySelectorAll('aq-reading-row input').length).toBeGreaterThan(0);
   });
 
+  it('descarga todas las facturas del periodo en un PDF', async () => {
+    await open([period()], [pending, read], {
+      role: 'VIEWER',
+      invoices: [invoice({ propertyId: OTHER_PROPERTY })],
+    });
+    const createObjectURL = vi.fn(() => 'blob:facturas');
+    vi.stubGlobal('URL', { createObjectURL, revokeObjectURL: vi.fn() });
+    let fileName = '';
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      fileName = this.download;
+    });
+    const print = [...element.querySelectorAll<HTMLButtonElement>('button')].find((candidate) =>
+      textOf(candidate).includes('Imprimir facturas'),
+    );
+
+    print?.click();
+    const pdf = new Blob(['%PDF'], { type: 'application/pdf' });
+    context.http.expectOne(`${INVOICES_OF_PERIOD_URL}/pdf`).flush(pdf);
+    expect(createObjectURL).toHaveBeenCalledWith(pdf);
+    expect(fileName).toBe('facturas-2026-10.pdf');
+
+    print?.click();
+    context.http
+      .expectOne(`${INVOICES_OF_PERIOD_URL}/pdf`)
+      .flush(new Blob(), { status: 422, statusText: 'Unprocessable' });
+    await settle();
+    expect(anchorClick).toHaveBeenCalledTimes(1);
+
+    vi.unstubAllGlobals();
+    anchorClick.mockRestore();
+  });
+
   it('sin tarifa vigente no deja digitar y lleva a definirla', async () => {
     await open([period()], [pending], { tariffs: [tariff({ inEffect: false })] });
 

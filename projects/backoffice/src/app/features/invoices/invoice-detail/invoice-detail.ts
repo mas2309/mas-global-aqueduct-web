@@ -24,6 +24,7 @@ import {
 } from '../invoice.models';
 import { INVOICES_URL, InvoicesApi } from '../invoices-api';
 import { OtherChargesDialog } from '../other-charges-dialog/other-charges-dialog';
+import { ReversePaymentDialog } from '../reverse-payment-dialog/reverse-payment-dialog';
 
 /** Una factura con el desglose de lo que cobra, y las acciones de recaudo y otros cobros. */
 @Component({
@@ -73,6 +74,21 @@ export class InvoiceDetail {
       next: (paid) => this.invoice.set(paid),
       error: () => undefined,
     });
+  }
+
+  protected reversePayment(invoice: Invoice): void {
+    this.dialog
+      .open<ReversePaymentDialog, Invoice, Invoice>(ReversePaymentDialog, {
+        data: invoice,
+        width: '480px',
+      })
+      .afterClosed()
+      .subscribe((reopened) => {
+        if (reopened) {
+          this.invoice.set(reopened);
+          this.notifier.success(`Pago de la factura n.º ${invoice.number} reversado`);
+        }
+      });
   }
 
   protected editOtherCharges(invoice: Invoice): void {
