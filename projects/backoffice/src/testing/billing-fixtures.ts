@@ -1,3 +1,4 @@
+import { InstallmentPlan, Invoice } from '../app/features/invoices/invoice.models';
 import { BillingPeriod, Reading, RouteEntry } from '../app/features/readings/reading.models';
 import { Tariff } from '../app/features/tariffs/tariff.models';
 import { PROPERTY_ID, SUBSCRIBER_ID } from './subscriber-fixtures';
@@ -66,6 +67,61 @@ export function routeEntry(overrides: Partial<RouteEntry> = {}): RouteEntry {
     connectionStatus: 'ACTIVE',
     previousReading: 120,
     reading: null,
+    ...overrides,
+  };
+}
+
+export const INVOICE_ID = '99999999-9999-9999-9999-999999999999';
+export const PLAN_ID = '88888888-8888-8888-8888-888888888888';
+
+export function invoice(overrides: Partial<Invoice> = {}): Invoice {
+  return {
+    id: INVOICE_ID,
+    number: 12,
+    periodId: PERIOD_ID,
+    year: 2026,
+    month: 10,
+    readingId: READING_ID,
+    propertyId: PROPERTY_ID,
+    subscriberId: SUBSCRIBER_ID,
+    subscriberCode: 42,
+    subscriberName: 'María Gómez',
+    address: 'Vereda El Hato, casa 12',
+    serviceType: 'WATER',
+    previousReading: 120,
+    currentReading: 135,
+    consumption: 15,
+    fixedCharge: 8000,
+    consumptionCharge: 17500,
+    adjustmentPercent: 0,
+    adjustment: 0,
+    previousDebt: 0,
+    lateFee: 0,
+    otherCharges: 0,
+    otherChargesDescription: null,
+    installment: null,
+    total: 25500,
+    dueDate: '2026-11-20',
+    state: 'PENDING',
+    paymentMethod: null,
+    paidAt: null,
+    issuedAt: '2026-10-05T00:00:00Z',
+    ...overrides,
+  };
+}
+
+export function plan(overrides: Partial<InstallmentPlan> = {}): InstallmentPlan {
+  return {
+    id: PLAN_ID,
+    subscriberId: SUBSCRIBER_ID,
+    description: 'Medidor nuevo',
+    totalAmount: 120000,
+    installments: 6,
+    billed: 2,
+    installmentAmount: 20000,
+    pendingAmount: 80000,
+    status: 'ACTIVE',
+    createdAt: '2026-08-01T00:00:00Z',
     ...overrides,
   };
 }

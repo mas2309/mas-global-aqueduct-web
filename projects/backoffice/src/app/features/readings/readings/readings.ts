@@ -1,3 +1,4 @@
+import { CurrencyPipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -16,15 +17,18 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { RouterLink } from '@angular/router';
 import { filter, Observable, switchMap } from 'rxjs';
 import { SessionStore } from '../../../core/auth/session-store';
 import { SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
+import { Invoice } from '../../invoices/invoice.models';
 import { Organization, SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
 import { METERED_SERVICES } from '../../subscribers/subscriber.models';
 import { CURRENT_ORGANIZATION_URL } from '../../subscribers/subscribers-api';
-import { unitOf } from '../../tariffs/tariff.models';
+import { Tariff, unitOf } from '../../tariffs/tariff.models';
+import { TARIFFS_URL } from '../../tariffs/tariffs-api';
 import { FirstPeriod, OpenPeriodDialog } from '../open-period-dialog/open-period-dialog';
 import { ReadingRow } from '../reading-row/reading-row';
 import { BillingPeriod, nextPeriod, periodLabel, Reading, RouteEntry } from '../reading.models';
@@ -37,7 +41,9 @@ import { PERIODS_URL, ReadingsApi } from '../readings-api';
 @Component({
   selector: 'aq-readings',
   imports: [
+    CurrencyPipe,
     FormsModule,
+    RouterLink,
     ReadingRow,
     MatButtonModule,
     MatIconModule,
@@ -111,8 +117,37 @@ export class Readings {
   protected readonly unusual = computed(() =>
     this.route.hasValue() ? this.route.value().filter((entry) => entry.reading?.unusual).length : 0,
   );
+  /** Sin tarifa vigente no se puede facturar la lectura, así que el servidor tampoco la registra. */
+  private readonly tariffs = httpResource<Tariff[]>(() => {
+    const serviceType = this.service();
+    return serviceType ? { url: TARIFFS_URL, params: { serviceType } } : undefined;
+  });
+  protected readonly missingTariff = computed(
+    () => this.tariffs.hasValue() && !this.tariffs.value().some((tariff) => tariff.inEffect),
+  );
+
+  /** Cada lectura genera su factura: se muestran junto a la ruta. */
+  private readonly invoices = httpResource<Invoice[]>(() => {
+    const periodId = this.periodId();
+    return periodId ? `${PERIODS_URL}/${periodId}/invoices` : undefined;
+  });
+  private readonly invoiceByProperty = computed(() => {
+    const all = this.invoices.hasValue() ? this.invoices.value() : [];
+    return new Map(
+      all
+        .filter((invoice) => invoice.serviceType === this.service())
+        .map((invoice) => [invoice.propertyId, invoice]),
+    );
+  });
+  protected readonly billed = computed(() =>
+    [...this.invoiceByProperty().values()].reduce((sum, invoice) => sum + invoice.total, 0),
+  );
+
   protected readonly editable = computed(
-    () => this.period()?.status === 'OPEN' && this.session.canOperateOrganization(),
+    () =>
+      this.period()?.status === 'OPEN' &&
+      this.session.canOperateOrganization() &&
+      !this.missingTariff(),
   );
   protected readonly unit = computed(() => unitOf(this.service() ?? 'WATER'));
 
@@ -190,8 +225,13 @@ export class Readings {
       });
   }
 
-  /** Actualiza la fila en memoria: no se recarga toda la ruta por cada lectura. */
+  protected invoiceOf(entry: RouteEntry): Invoice | null {
+    return entry.reading ? (this.invoiceByProperty().get(entry.propertyId) ?? null) : null;
+  }
+
+  /** Actualiza la fila en memoria (no se recarga toda la ruta por cada lectura) y trae la factura generada. */
   protected onChanged(entry: RouteEntry, reading: Reading | null): void {
+    this.invoices.reload();
     this.route.value.update((entries) =>
       (entries ?? []).map((item) =>
         item.propertyId === entry.propertyId ? { ...item, reading } : item,

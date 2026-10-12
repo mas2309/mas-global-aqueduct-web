@@ -9,6 +9,7 @@ import {
   subscriber,
   SUBSCRIBER_ID,
 } from '../../../../testing/subscriber-fixtures';
+import { PLANS_URL } from '../../invoices/invoices-api';
 import { ServiceType } from '../../organizations/organization.models';
 import { Property, PropertyService, Subscriber } from '../subscriber.models';
 import { CURRENT_ORGANIZATION_URL, PROPERTIES_URL, SUBSCRIBERS_URL } from '../subscribers-api';
@@ -66,6 +67,9 @@ describe('SubscriberDetail', () => {
     context.http
       .expectOne(CURRENT_ORGANIZATION_URL)
       .flush(organization({ services: ['WATER', 'SANITATION'] }));
+    await settle();
+    // La ficha incluye las financiaciones del suscriptor
+    context.http.expectOne(`${PLANS_URL}?subscriberId=${SUBSCRIBER_ID}`).flush([]);
     await settle();
   }
 

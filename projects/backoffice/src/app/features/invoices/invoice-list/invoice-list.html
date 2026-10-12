@@ -1,0 +1,175 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Facturas</h1>
+    @if (session.canAdministerOrganization()) {
+      <button mat-stroked-button (click)="openSettings()">
+        <mat-icon>settings</mat-icon>
+        Plazo y recargo
+      </button>
+    }
+  </header>
+
+  <div class="filters">
+    <mat-button-toggle-group
+      [value]="state()"
+      (change)="filterBy($event.value)"
+      aria-label="Estado de las facturas"
+    >
+      <mat-button-toggle value="ALL">Todas</mat-button-toggle>
+      <mat-button-toggle value="PENDING">Pendientes</mat-button-toggle>
+      <mat-button-toggle value="OVERDUE">Vencidas</mat-button-toggle>
+      <mat-button-toggle value="PAID">Pagadas</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="year">
+      <mat-label>Año</mat-label>
+      <mat-select [ngModel]="year()" (ngModelChange)="filterByYear($event)">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (option of years; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <form class="search" role="search" (ngSubmit)="search()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Buscar por suscriptor, código o número</mat-label>
+        <input
+          matInput
+          name="q"
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          maxlength="100"
+        />
+        @if (searchText()) {
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="clear()"
+            aria-label="Limpiar búsqueda"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <button mat-stroked-button type="submit">
+        <mat-icon>search</mat-icon>
+        Buscar
+      </button>
+    </form>
+  </div>
+
+  @if (suscriptor()) {
+    <p class="muted scope">
+      Mostrando solo las facturas de un suscriptor.
+      <a routerLink="/facturas">Ver todas</a>
+    </p>
+  }
+
+  @if (invoices.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando facturas" />
+  }
+
+  @if (invoices.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar las facturas.</p>
+      <button mat-stroked-button (click)="invoices.reload()">Reintentar</button>
+    </div>
+  } @else if (invoices.hasValue()) {
+    @if (invoices.value().totalItems === 0) {
+      <div class="state">
+        <mat-icon aria-hidden="true">receipt_long</mat-icon>
+        <p>No hay facturas con estos filtros.</p>
+        <p class="muted">
+          Las facturas se generan solas al registrar las lecturas de cada periodo.
+        </p>
+        <a mat-stroked-button routerLink="/lecturas">Ir a lecturas</a>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table mat-table [dataSource]="invoices.value().items" aria-label="Facturas">
+          <ng-container matColumnDef="number">
+            <th mat-header-cell *matHeaderCellDef>N.º</th>
+            <td mat-cell *matCellDef="let invoice" class="number">
+              <a [routerLink]="['/facturas', invoice.id]">{{ invoice.number }}</a>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="subscriber">
+            <th mat-header-cell *matHeaderCellDef>Suscriptor</th>
+            <td mat-cell *matCellDef="let invoice">
+              <span class="name">{{ invoice.subscriberName }}</span>
+              <span class="muted detail">{{ invoice.address }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="period">
+            <th mat-header-cell *matHeaderCellDef>Periodo</th>
+            <td mat-cell *matCellDef="let invoice">{{ periodOf(invoice) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="consumption">
+            <th mat-header-cell *matHeaderCellDef>Consumo</th>
+            <td mat-cell *matCellDef="let invoice" class="amount">{{ consumptionOf(invoice) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="total">
+            <th mat-header-cell *matHeaderCellDef>Total</th>
+            <td mat-cell *matCellDef="let invoice" class="amount total">
+              {{ invoice.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="state">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let invoice">
+              <span class="chip" [attr.data-state]="invoice.state">
+                {{ stateOf(invoice) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <span class="cdk-visually-hidden">Acciones</span>
+            </th>
+            <td mat-cell *matCellDef="let invoice" class="actions-cell">
+              @if (canCollect(invoice)) {
+                <button
+                  mat-icon-button
+                  (click)="pay(invoice, 'CASH')"
+                  matTooltip="Registrar pago en efectivo"
+                  [attr.aria-label]="'Pago en efectivo de la factura ' + invoice.number"
+                >
+                  <mat-icon>payments</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  (click)="pay(invoice, 'BANK')"
+                  matTooltip="Registrar pago por banco"
+                  [attr.aria-label]="'Pago por banco de la factura ' + invoice.number"
+                >
+                  <mat-icon>account_balance</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="invoices.value().totalItems"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="changePage($event)"
+        aria-label="Páginas de facturas"
+      />
+    }
+  }
+</section>

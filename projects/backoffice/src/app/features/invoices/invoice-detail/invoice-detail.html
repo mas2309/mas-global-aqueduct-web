@@ -1,0 +1,157 @@
+<section class="page narrow">
+  <a mat-button routerLink="/facturas" class="back">
+    <mat-icon>arrow_back</mat-icon>
+    Facturas
+  </a>
+
+  @if (invoice.isLoading() && !invoice.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando factura" />
+  }
+
+  @if (invoice.error()) {
+    <div class="state" role="alert">
+      <p>No encontramos esta factura.</p>
+      <p class="muted">Si se eliminó su lectura, la factura también se retiró.</p>
+      <a mat-stroked-button routerLink="/facturas">Volver al listado</a>
+    </div>
+  } @else if (invoice.hasValue()) {
+    @let bill = invoice.value();
+    @let unit = unitOf(bill.serviceType);
+    @let canCollect = isOpen(bill) && session.canOperateOrganization();
+
+    <header class="page-header">
+      <div>
+        <h1>Factura n.º {{ bill.number }}</h1>
+        <span class="muted">
+          {{ serviceLabels[bill.serviceType] }} · {{ periodLabel(bill) }} · emitida el
+          {{ bill.issuedAt | date: 'longDate' }}
+        </span>
+      </div>
+      <span class="chip" [attr.data-state]="bill.state">{{ stateLabels[bill.state] }}</span>
+    </header>
+
+    <mat-card appearance="outlined">
+      <mat-card-content>
+        <dl class="data">
+          <dt>Suscriptor</dt>
+          <dd>
+            <a [routerLink]="['/suscriptores', bill.subscriberId]">
+              {{ formatCode(bill.subscriberCode) }} · {{ bill.subscriberName }}
+            </a>
+          </dd>
+          <dt>Predio</dt>
+          <dd>{{ bill.address }}</dd>
+          <dt>Lectura</dt>
+          <dd>
+            {{ bill.previousReading }} → {{ bill.currentReading }} =
+            <strong>{{ bill.consumption }} {{ unit }}</strong>
+          </dd>
+          <dt>Pagar hasta</dt>
+          <dd>{{ bill.dueDate | date: 'longDate' }}</dd>
+          @if (bill.paymentMethod) {
+            <dt>Pago</dt>
+            <dd>{{ methodLabels[bill.paymentMethod] }} · {{ bill.paidAt | date: 'longDate' }}</dd>
+          }
+        </dl>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Desglose</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table class="breakdown">
+          <caption class="cdk-visually-hidden">
+            Conceptos de la factura
+          </caption>
+          <tbody>
+            <tr>
+              <th scope="row">Consumo ({{ bill.consumption }} {{ unit }})</th>
+              <td>{{ bill.consumptionCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+            </tr>
+            <tr>
+              <th scope="row">Cargo fijo</th>
+              <td>{{ bill.fixedCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+            </tr>
+            @if (bill.adjustment !== 0) {
+              <tr>
+                <th scope="row">
+                  {{ bill.adjustment < 0 ? 'Subsidio' : 'Contribución' }} ({{
+                    bill.adjustmentPercent
+                  }}
+                  %)
+                </th>
+                <td>{{ bill.adjustment | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+              </tr>
+            }
+            @if (bill.installment; as installment) {
+              <tr>
+                <th scope="row">
+                  {{ installment.description }} (cuota {{ installment.number }} de
+                  {{ installment.count }})
+                </th>
+                <td>{{ installment.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+              </tr>
+            }
+            @if (bill.otherCharges > 0) {
+              <tr>
+                <th scope="row">
+                  Otros cobros
+                  @if (bill.otherChargesDescription) {
+                    ({{ bill.otherChargesDescription }})
+                  }
+                </th>
+                <td>{{ bill.otherCharges | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+              </tr>
+            }
+            @if (bill.previousDebt > 0) {
+              <tr class="debt">
+                <th scope="row">Deuda anterior</th>
+                <td>{{ bill.previousDebt | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+              </tr>
+            }
+            @if (bill.lateFee > 0) {
+              <tr class="debt">
+                <th scope="row">Recargo por no pago</th>
+                <td>{{ bill.lateFee | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+              </tr>
+            }
+            <tr class="total">
+              <th scope="row">Total</th>
+              <td>{{ bill.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    @if (bill.state === 'CARRIED') {
+      <p class="muted note">
+        Esta factura no se pagó y su total pasó como deuda anterior a la factura siguiente del
+        predio. Se salda al pagar esa.
+      </p>
+    }
+
+    <div class="actions">
+      <button mat-button (click)="download(bill)">
+        <mat-icon>picture_as_pdf</mat-icon>
+        Descargar PDF
+      </button>
+      @if (canCollect) {
+        <button mat-button (click)="editOtherCharges(bill)">
+          <mat-icon>add_card</mat-icon>
+          Otros cobros
+        </button>
+        <button mat-stroked-button (click)="pay(bill, 'BANK')">
+          <mat-icon>account_balance</mat-icon>
+          Pago por banco
+        </button>
+        <button mat-flat-button (click)="pay(bill, 'CASH')">
+          <mat-icon>payments</mat-icon>
+          Pago en efectivo
+        </button>
+      }
+    </div>
+  }
+</section>

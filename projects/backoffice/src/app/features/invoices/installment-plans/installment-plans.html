@@ -1,0 +1,48 @@
+<div class="section-header">
+  <h2>Financiaciones</h2>
+  <div class="actions">
+    <a mat-button routerLink="/facturas" [queryParams]="{ suscriptor: subscriberId() }">
+      <mat-icon>receipt_long</mat-icon>
+      Ver sus facturas
+    </a>
+    @if (editable()) {
+      <button mat-stroked-button (click)="add()">
+        <mat-icon>add</mat-icon>
+        Nueva financiación
+      </button>
+    }
+  </div>
+</div>
+
+@if (plans.error()) {
+  <p class="muted" role="alert">No pudimos cargar las financiaciones.</p>
+} @else if (plans.hasValue()) {
+  @for (plan of plans.value(); track plan.id) {
+    <div class="plan">
+      <div class="what">
+        <strong>{{ plan.description }}</strong>
+        <span class="muted">
+          {{ plan.totalAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }} en
+          {{ plan.installments }} cuotas de
+          {{ plan.installmentAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+        </span>
+      </div>
+      <div class="progress">
+        <span>{{ plan.billed }} de {{ plan.installments }} cobradas</span>
+        @if (plan.status === 'ACTIVE') {
+          <span class="muted">
+            Faltan {{ plan.pendingAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+          </span>
+        }
+      </div>
+      <span class="chip" [attr.data-state]="plan.status">{{ statusLabels[plan.status] }}</span>
+      @if (editable() && plan.status === 'ACTIVE') {
+        <button mat-button (click)="cancel(plan)">Cancelar</button>
+      }
+    </div>
+  } @empty {
+    <p class="muted">
+      Sin financiaciones. Úsalas para cobrar por cuotas una matrícula, un medidor o una deuda.
+    </p>
+  }
+}

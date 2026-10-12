@@ -78,6 +78,15 @@
     @if (reading.meterReplaced) {
       <span class="muted tag">Medidor nuevo</span>
     }
+    @if (invoice(); as bill) {
+      <a
+        class="bill"
+        [routerLink]="['/facturas', bill.id]"
+        [attr.aria-label]="'Factura de ' + item.subscriberName"
+      >
+        {{ bill.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+      </a>
+    }
   } @else if (!reading) {
     <span class="muted">Pendiente</span>
   }

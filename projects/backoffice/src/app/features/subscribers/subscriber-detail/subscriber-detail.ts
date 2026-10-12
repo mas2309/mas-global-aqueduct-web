@@ -12,6 +12,7 @@ import { SessionStore } from '../../../core/auth/session-store';
 import { SERVICE_ICONS, SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
+import { InstallmentPlans } from '../../invoices/installment-plans/installment-plans';
 import { Organization, SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
 import { MeterDialog, MeterDialogData } from '../meter-dialog/meter-dialog';
 import { PropertyDialog, PropertyDialogData } from '../property-dialog/property-dialog';
@@ -37,6 +38,7 @@ interface ServiceRow {
   selector: 'aq-subscriber-detail',
   imports: [
     RouterLink,
+    InstallmentPlans,
     MatCardModule,
     MatButtonModule,
     MatIconModule,

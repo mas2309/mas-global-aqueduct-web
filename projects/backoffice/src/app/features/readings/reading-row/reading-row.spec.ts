@@ -159,7 +159,7 @@ describe('ReadingRow', () => {
       .expectOne(`${READINGS_URL}/${READING_ID}`)
       .flush({ status: 422 }, { status: 422, statusText: 'Unprocessable' });
     await settle();
-    expect(textOf(element)).toContain('El periodo ya está cerrado');
+    expect(textOf(element)).toContain('No se puede eliminar');
     expect(changed).toEqual([]);
   });
 

@@ -186,5 +186,10 @@
         </div>
       }
     }
+
+    <aq-installment-plans
+      [subscriberId]="person.id"
+      [editable]="canOperate && person.status === 'ACTIVE'"
+    />
   }
 </section>

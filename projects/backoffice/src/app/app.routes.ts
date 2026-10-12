@@ -92,6 +92,22 @@ export const routes: Routes = [
               import('./features/readings/readings/readings').then((m) => m.Readings),
           },
           {
+            path: 'facturas',
+            title: 'Facturas · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/invoices/invoice-list/invoice-list').then((m) => m.InvoiceList),
+          },
+          {
+            path: 'facturas/:id',
+            title: 'Factura · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/invoices/invoice-detail/invoice-detail').then(
+                (m) => m.InvoiceDetail,
+              ),
+          },
+          {
             path: 'tarifas',
             title: 'Tarifas · MAS Acueductos',
             canActivate: [organizationGuard],

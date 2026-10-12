@@ -2,18 +2,29 @@ import { WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
-import { period, PERIOD_ID, reading, routeEntry } from '../../../../testing/billing-fixtures';
+import {
+  invoice,
+  period,
+  PERIOD_ID,
+  reading,
+  routeEntry,
+  tariff,
+} from '../../../../testing/billing-fixtures';
 import { access, authResponse, organization } from '../../../../testing/fixtures';
 import { click, PageTestContext, settle, setUpPage, textOf } from '../../../../testing/setup';
 import { OrganizationRole } from '../../../core/auth/auth.models';
+import { Invoice } from '../../invoices/invoice.models';
 import { ServiceType } from '../../organizations/organization.models';
 import { CURRENT_ORGANIZATION_URL } from '../../subscribers/subscribers-api';
+import { Tariff } from '../../tariffs/tariff.models';
+import { TARIFFS_URL } from '../../tariffs/tariffs-api';
 import { OpenPeriodDialog } from '../open-period-dialog/open-period-dialog';
 import { BillingPeriod, Reading, RouteEntry } from '../reading.models';
 import { PERIODS_URL } from '../readings-api';
 import { Readings } from './readings';
 
 const ROUTE_URL = `${PERIODS_URL}/${PERIOD_ID}/route?serviceType=WATER`;
+const INVOICES_OF_PERIOD_URL = `${PERIODS_URL}/${PERIOD_ID}/invoices`;
 const OTHER_PROPERTY = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 
 const pending = routeEntry();
@@ -47,7 +58,12 @@ describe('Readings', () => {
   async function open(
     periods: BillingPeriod[] | null,
     route: RouteEntry[] | null = [pending, read],
-    options: { role?: OrganizationRole; services?: ServiceType[] } = {},
+    options: {
+      role?: OrganizationRole;
+      services?: ServiceType[];
+      tariffs?: Tariff[];
+      invoices?: Invoice[];
+    } = {},
   ): Promise<void> {
     dialogResult = true;
     context = setUpPage({
@@ -71,9 +87,19 @@ describe('Readings', () => {
     }
     await settle();
     await settle();
-    if (periods?.length && (options.services ?? ['WATER']).includes('WATER')) {
-      await flushRoute(route);
+    const metered = (options.services ?? ['WATER']).includes('WATER');
+    if (metered) {
+      context.http
+        .expectOne(`${TARIFFS_URL}?serviceType=WATER`)
+        .flush(options.tariffs ?? [tariff()]);
     }
+    if (periods?.length) {
+      context.http.expectOne(INVOICES_OF_PERIOD_URL).flush(options.invoices ?? []);
+      if (metered) {
+        await flushRoute(route);
+      }
+    }
+    await settle();
   }
 
   async function flushRoute(route: RouteEntry[] | null): Promise<void> {
@@ -98,6 +124,14 @@ describe('Readings', () => {
     expect(element.querySelectorAll('aq-reading-row input').length).toBeGreaterThan(0);
   });
 
+  it('sin tarifa vigente no deja digitar y lleva a definirla', async () => {
+    await open([period()], [pending], { tariffs: [tariff({ inEffect: false })] });
+
+    expect(textOf(element)).toContain('Acueducto no tiene una tarifa vigente');
+    expect(element.querySelector('a[href="/tarifas?servicio=WATER"]')).not.toBeNull();
+    expect(element.querySelector('aq-reading-row input')).toBeNull();
+  });
+
   it('filtra por texto y por pendientes', async () => {
     await open([period()]);
 
@@ -120,9 +154,18 @@ describe('Readings', () => {
 
     actions.onChanged(pending, reading());
     await settle();
+    // La lectura generó su factura: se trae y se muestra en la fila
+    context.http.expectOne(INVOICES_OF_PERIOD_URL).flush([invoice()]);
+    await settle();
     expect(textOf(element)).toContain('2 de 2 medidores leídos');
+    expect(textOf(element)).toContain('Facturado $25,500');
+    expect(element.querySelector('aq-reading-row a.bill')?.getAttribute('href')).toBe(
+      `/facturas/${invoice().id}`,
+    );
 
     actions.onChanged(read, null);
+    await settle();
+    context.http.expectOne(INVOICES_OF_PERIOD_URL).flush([invoice()]);
     await settle();
     expect(textOf(element)).toContain('1 de 2 medidores leídos');
     expect(textOf(element)).not.toContain('con consumo inusual');
@@ -145,6 +188,7 @@ describe('Readings', () => {
     context.http
       .expectOne(PERIODS_URL)
       .flush([opened, period({ status: 'CLOSED', closedAt: '2026-11-01T00:00:00Z' })]);
+    context.http.expectOne(`${PERIODS_URL}/november/invoices`).flush([]);
     context.http.expectOne(`${PERIODS_URL}/november/route?serviceType=WATER`).flush([pending]);
     await settle();
 

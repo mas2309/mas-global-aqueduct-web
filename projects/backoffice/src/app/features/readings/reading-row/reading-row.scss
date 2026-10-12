@@ -107,3 +107,11 @@ input {
   grid-column: 1 / -1;
   margin: 0;
 }
+
+.bill {
+  margin-left: auto;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--mat-sys-primary);
+}

@@ -1,0 +1,40 @@
+:host {
+  display: block;
+  margin-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  h2 {
+    margin: 0;
+    font: var(--mat-sys-title-large);
+  }
+}
+
+.plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+}
+
+.what,
+.progress {
+  display: flex;
+  flex-direction: column;
+}
+
+.what {
+  flex: 1;
+  min-width: 200px;
+}

@@ -1,3 +1,4 @@
+import { CurrencyPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { problemMessage, toProblem } from '../../../core/api/problem';
+import { Invoice } from '../../invoices/invoice.models';
 import { ServiceType } from '../../organizations/organization.models';
 import { formatCode } from '../../subscribers/subscriber.models';
 import { Reading, RouteEntry } from '../reading.models';
@@ -26,7 +28,14 @@ import { ReadingsApi } from '../readings-api';
  */
 @Component({
   selector: 'aq-reading-row',
-  imports: [FormsModule, RouterLink, MatButtonModule, MatIconModule, MatTooltipModule],
+  imports: [
+    CurrencyPipe,
+    FormsModule,
+    RouterLink,
+    MatButtonModule,
+    MatIconModule,
+    MatTooltipModule,
+  ],
   templateUrl: './reading-row.html',
   styleUrl: './reading-row.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +49,8 @@ export class ReadingRow {
   readonly unit = input('m³');
   /** Periodo abierto y rol con permiso: se puede digitar. */
   readonly editable = input(false);
+  /** Factura generada por la lectura guardada, si ya se cargó. */
+  readonly invoice = input<Invoice | null>(null);
 
   /** Lectura guardada o eliminada (`null`). */
   readonly changed = output<Reading | null>();
@@ -110,7 +121,9 @@ export class ReadingRow {
           this.error.set(
             problemMessage(toProblem(error), {
               403: 'Tu rol solo permite consultar.',
-              422: this.lowerThanPrevious(),
+              422:
+                'No se pudo guardar: la lectura es menor que la anterior, su factura ya está pagada o ' +
+                'el servicio no tiene tarifa vigente.',
             }),
           );
         },
@@ -130,7 +143,11 @@ export class ReadingRow {
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        this.error.set(problemMessage(toProblem(error), { 422: 'El periodo ya está cerrado.' }));
+        this.error.set(
+          problemMessage(toProblem(error), {
+            422: 'No se puede eliminar: el periodo está cerrado o su factura ya está pagada.',
+          }),
+        );
       },
     });
   }

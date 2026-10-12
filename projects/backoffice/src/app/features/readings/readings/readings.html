@@ -102,10 +102,26 @@
         @if (unusual() > 0) {
           · <span class="unusual">{{ unusual() }} con consumo inusual</span>
         }
+        @if (billed() > 0) {
+          · Facturado {{ billed() | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+        }
         @if (current.status === 'CLOSED') {
           · Periodo cerrado: solo consulta
         }
       </p>
+
+      @if (missingTariff() && current.status === 'OPEN') {
+        <div class="state warning" role="alert">
+          <mat-icon aria-hidden="true">payments</mat-icon>
+          <p>{{ serviceLabels[service()!] }} no tiene una tarifa vigente.</p>
+          <p class="muted">
+            Cada lectura genera su factura, así que primero hay que definir la tarifa del servicio.
+          </p>
+          <a mat-flat-button routerLink="/tarifas" [queryParams]="{ servicio: service() }">
+            Ir a tarifas
+          </a>
+        </div>
+      }
 
       @if (total() === 0) {
         <div class="state">
@@ -125,6 +141,7 @@
               [serviceType]="service()!"
               [unit]="unit()"
               [editable]="editable()"
+              [invoice]="invoiceOf(entry)"
               (changed)="onChanged(entry, $event)"
             />
           } @empty {
