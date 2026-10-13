@@ -24,6 +24,70 @@
         </mat-card-content>
       }
     </mat-card>
+
+    @if (summary.error()) {
+      <p class="muted" role="alert">
+        No pudimos cargar las cifras.
+        <button mat-button (click)="summary.reload()">Reintentar</button>
+      </p>
+    } @else if (summary.hasValue()) {
+      @let figures = summary.value();
+      <dl class="summary">
+        <div class="tile">
+          <dt>Último periodo facturado</dt>
+          @if (figures.billed; as billed) {
+            <dd>{{ billed.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+            <span class="muted">
+              {{ periodLabel(billed) }} ·
+              {{ billed.invoices === 1 ? '1 factura' : billed.invoices + ' facturas' }}
+            </span>
+          } @else {
+            <dd>—</dd>
+            <span class="muted">Aún no hay facturas: se generan al registrar las lecturas</span>
+          }
+        </div>
+        <div class="tile">
+          <dt>Recaudado este mes</dt>
+          <dd>{{ figures.collected.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+          <span class="muted">
+            {{
+              figures.collected.payments === 1 ? '1 pago' : figures.collected.payments + ' pagos'
+            }}
+          </span>
+        </div>
+        <div class="tile">
+          <dt>Por cobrar</dt>
+          <dd>{{ figures.outstanding.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+          <span class="muted">
+            @if (figures.outstanding.invoices === 0) {
+              Nadie debe
+            } @else {
+              {{
+                figures.outstanding.subscribers === 1
+                  ? '1 suscriptor'
+                  : figures.outstanding.subscribers + ' suscriptores'
+              }}
+              · vencido
+              {{ figures.outstanding.overdueAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+            }
+          </span>
+        </div>
+      </dl>
+      <div class="shortcuts">
+        <a mat-stroked-button routerLink="/lecturas">
+          <mat-icon>speed</mat-icon>
+          Registrar lecturas
+        </a>
+        <a mat-stroked-button routerLink="/facturas">
+          <mat-icon>receipt_long</mat-icon>
+          Ver facturas
+        </a>
+        <a mat-stroked-button routerLink="/informes">
+          <mat-icon>bar_chart</mat-icon>
+          Recaudo e informes
+        </a>
+      </div>
+    }
   }
 
   @if (session.isPlatformAdmin()) {
@@ -41,15 +105,4 @@
       </mat-card-actions>
     </mat-card>
   }
-
-  <h2 class="section-title">Próximamente</h2>
-  <div class="upcoming">
-    @for (module of upcoming; track module.title) {
-      <div class="tile">
-        <mat-icon aria-hidden="true">{{ module.icon }}</mat-icon>
-        <span>{{ module.title }}</span>
-        <span class="muted">{{ module.sprint }}</span>
-      </div>
-    }
-  </div>
 </section>

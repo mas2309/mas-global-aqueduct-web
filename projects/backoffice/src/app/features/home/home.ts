@@ -1,3 +1,5 @@
+import { CurrencyPipe } from '@angular/common';
+import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -5,18 +7,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { SessionStore } from '../../core/auth/session-store';
 import { ROLE_LABELS } from '../../core/i18n/labels';
+import { periodLabel } from '../readings/reading.models';
+import { BillingSummary, REPORTS_URL } from '../reports/report.models';
 
-/** Próximos módulos según el plan de trabajo, para que el equipo vea hacia dónde va la plataforma. */
-const UPCOMING = [
-  { icon: 'groups', title: 'Suscriptores y predios', sprint: 'Sprint 2' },
-  { icon: 'speed', title: 'Tarifas y lecturas', sprint: 'Sprint 3' },
-  { icon: 'receipt_long', title: 'Facturación', sprint: 'Sprint 4' },
-  { icon: 'qr_code_2', title: 'Portal QR y pagos en línea', sprint: 'Sprint 5' },
-];
-
+/** Inicio: el prestador de la sesión y cómo va su facturación, su recaudo y su cartera. */
 @Component({
   selector: 'aq-home',
-  imports: [MatCardModule, MatIconModule, MatButtonModule, RouterLink],
+  imports: [CurrencyPipe, MatCardModule, MatIconModule, MatButtonModule, RouterLink],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +21,11 @@ const UPCOMING = [
 export class Home {
   protected readonly session = inject(SessionStore);
   protected readonly roleLabels = ROLE_LABELS;
-  protected readonly upcoming = UPCOMING;
+  protected readonly periodLabel = periodLabel;
   protected readonly firstName = computed(() => this.session.user()?.fullName.split(' ')[0] ?? '');
+
+  /** Solo con un prestador seleccionado; se vuelve a consultar al cambiar de prestador. */
+  protected readonly summary = httpResource<BillingSummary>(() =>
+    this.session.organization()?.organizationId ? `${REPORTS_URL}/summary` : undefined,
+  );
 }

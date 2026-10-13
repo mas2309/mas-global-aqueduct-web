@@ -115,6 +115,15 @@ export const routes: Routes = [
               import('./features/invoices/plan-overview/plan-overview').then((m) => m.PlanOverview),
           },
           {
+            path: 'informes',
+            title: 'Informes · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/reports/collections-report/collections-report').then(
+                (m) => m.CollectionsReport,
+              ),
+          },
+          {
             path: 'tarifas',
             title: 'Tarifas · MAS Acueductos',
             canActivate: [organizationGuard],

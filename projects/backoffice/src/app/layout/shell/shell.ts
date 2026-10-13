@@ -65,6 +65,7 @@ export class Shell {
       items.push({ path: '/facturas', label: 'Facturas', icon: 'receipt_long' });
       items.push({ path: '/financiaciones', label: 'Financiaciones', icon: 'event_repeat' });
       items.push({ path: '/tarifas', label: 'Tarifas', icon: 'payments' });
+      items.push({ path: '/informes', label: 'Informes', icon: 'bar_chart' });
     }
     if (this.session.organization() && this.session.canAdministerOrganization()) {
       items.push({ path: '/usuarios', label: 'Usuarios', icon: 'group' });
