@@ -24,7 +24,7 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2 mat-dialog-title>Plazo de pago y recargo</h2>
+    <h2 mat-dialog-title>Plazo, recargo y nota de las facturas</h2>
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <mat-dialog-content>
         <p class="muted">
@@ -46,6 +46,11 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
           @if (form.controls.lateFee.invalid) {
             <mat-error>Debe ser cero o más</mat-error>
           }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nota en las facturas</mat-label>
+          <textarea matInput formControlName="invoiceNote" maxlength="300" rows="3"></textarea>
+          <mat-hint>Aviso al pie de todas las facturas: cortes, reuniones. Opcional</mat-hint>
         </mat-form-field>
         <div aria-live="assertive">
           @if (error(); as message) {
@@ -76,6 +81,7 @@ export class BillingSettingsDialog {
   protected readonly form = inject(NonNullableFormBuilder).group({
     paymentDueDay: [20, [Validators.required, Validators.min(1), Validators.max(31)]],
     lateFee: [0, [Validators.required, Validators.min(0)]],
+    invoiceNote: ['', Validators.maxLength(300)],
   });
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -83,7 +89,8 @@ export class BillingSettingsDialog {
   constructor() {
     effect(() => {
       if (this.current.hasValue()) {
-        this.form.setValue(this.current.value());
+        const { paymentDueDay, lateFee, invoiceNote } = this.current.value();
+        this.form.setValue({ paymentDueDay, lateFee, invoiceNote: invoiceNote ?? '' });
       }
     });
   }
@@ -95,7 +102,8 @@ export class BillingSettingsDialog {
     }
     this.saving.set(true);
     this.error.set(null);
-    this.api.updateSettings(this.form.getRawValue()).subscribe({
+    const { invoiceNote, ...rules } = this.form.getRawValue();
+    this.api.updateSettings({ ...rules, invoiceNote: invoiceNote.trim() || null }).subscribe({
       next: (settings) => this.dialogRef.close(settings),
       error: (error: unknown) => {
         this.saving.set(false);

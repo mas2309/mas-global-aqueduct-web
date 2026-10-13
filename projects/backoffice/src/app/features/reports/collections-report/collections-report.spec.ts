@@ -138,6 +138,62 @@ describe('CollectionsReport', () => {
     expect(button('Recaudo para Excel')?.disabled).toBe(true);
   });
 
+  it('muestra los mayores deudores solo cuando se piden', async () => {
+    await open();
+    expectCollections(TODAY, TODAY).flush(report([]));
+    await settle();
+    const debtorsUrl = `${REPORTS_URL}/top-debtors`;
+
+    button('Ver los 10 que más deben')?.click();
+    await settle();
+    context.http.expectOne(debtorsUrl).flush(null, { status: 500, statusText: 'Server Error' });
+    await settle();
+    expect(textOf(element)).toContain('No pudimos cargar los deudores');
+
+    button('Reintentar')?.click();
+    await settle();
+    context.http.expectOne(debtorsUrl).flush([
+      {
+        subscriberId: 'a',
+        subscriberCode: 42,
+        subscriberName: 'María Gómez',
+        invoices: 2,
+        amount: 90000,
+        overdueAmount: 43500,
+      },
+      {
+        subscriberId: 'b',
+        subscriberCode: 7,
+        subscriberName: 'Pedro Rojas',
+        invoices: 1,
+        amount: 18000,
+        overdueAmount: 0,
+      },
+    ]);
+    await settle();
+    const text = textOf(element);
+
+    expect(text).toContain('María Gómez');
+    expect(text).toContain('2 facturas · vencido $43,500');
+    expect(text).toContain('$90,000');
+    expect(text).toContain('Pedro Rojas');
+    expect(text).toContain('1 factura');
+    expect(element.querySelector('a[href="/facturas?suscriptor=a"]')).not.toBeNull();
+  });
+
+  it('avisa cuando nadie debe', async () => {
+    await open();
+    expectCollections(TODAY, TODAY).flush(report([]));
+    await settle();
+
+    button('Ver los 10 que más deben')?.click();
+    await settle();
+    context.http.expectOne(`${REPORTS_URL}/top-debtors`).flush([]);
+    await settle();
+
+    expect(textOf(element)).toContain('Nadie debe');
+  });
+
   it('muestra los pagos reversados solo cuando se piden', async () => {
     await open();
     expectCollections(TODAY, TODAY).flush(report([]));

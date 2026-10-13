@@ -121,6 +121,43 @@
     }
   }
 
+  <h2 class="section-title reversals-title">Mayores deudores</h2>
+  @if (!showDebtors()) {
+    <button mat-stroked-button (click)="showDebtors.set(true)">
+      <mat-icon>leaderboard</mat-icon>
+      Ver los 10 que más deben
+    </button>
+  } @else if (debtors.error()) {
+    <p class="muted" role="alert">
+      No pudimos cargar los deudores.
+      <button mat-button (click)="debtors.reload()">Reintentar</button>
+    </p>
+  } @else if (debtors.hasValue()) {
+    @if (debtors.value().length === 0) {
+      <p class="muted">Nadie debe: no hay facturas por cobrar.</p>
+    } @else {
+      <ol class="debtors">
+        @for (debtor of debtors.value(); track debtor.subscriberId) {
+          <li>
+            <a [routerLink]="['/facturas']" [queryParams]="{ suscriptor: debtor.subscriberId }">
+              {{ debtor.subscriberName }}
+            </a>
+            <span class="muted">
+              {{ debtor.invoices === 1 ? '1 factura' : debtor.invoices + ' facturas' }}
+              @if (debtor.overdueAmount > 0) {
+                · vencido
+                {{ debtor.overdueAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+              }
+            </span>
+            <strong class="amount">
+              {{ debtor.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+            </strong>
+          </li>
+        }
+      </ol>
+    }
+  }
+
   <h2 class="section-title reversals-title">Pagos reversados</h2>
   @if (!showReversals()) {
     <button mat-stroked-button [disabled]="!validRange()" (click)="showReversals.set(true)">

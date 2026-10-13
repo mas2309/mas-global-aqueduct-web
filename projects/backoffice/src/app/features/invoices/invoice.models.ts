@@ -87,6 +87,8 @@ export interface BillingSettings {
   paymentDueDay: number;
   /** Recargo que se cobra cuando la factura anterior no se pagó. */
   lateFee: number;
+  /** Aviso que sale al pie de todas las facturas; `null` si no hay. */
+  invoiceNote?: string | null;
 }
 
 export const INVOICE_STATE_LABELS: Record<InvoiceState, string> = {

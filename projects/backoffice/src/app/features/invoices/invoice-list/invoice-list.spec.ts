@@ -138,6 +138,48 @@ describe('InvoiceList', () => {
     expect(textOf(element)).toContain('Mostrando solo las facturas de un suscriptor');
   });
 
+  it('descarga para Excel las facturas con los filtros actuales', async () => {
+    await open('OPERATOR', SUBSCRIBER_ID);
+    expectSearch({ subscriberId: SUBSCRIBER_ID }).flush(page([invoice()]));
+    actions.filterBy('OVERDUE');
+    actions.filterByYear(2025);
+    type(element, 'input[type=search]', 'gómez');
+    click(element, 'form.search button[type=submit]');
+    await settle();
+    expectSearch({ state: 'OVERDUE' }).flush(page([invoice()]));
+    const names: string[] = [];
+    vi.stubGlobal('URL', { createObjectURL: () => 'blob:file', revokeObjectURL: () => undefined });
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      names.push(this.download);
+    });
+    const exportButton = [...element.querySelectorAll<HTMLButtonElement>('button')].find(
+      (candidate) => textOf(candidate).includes('Para Excel'),
+    );
+
+    exportButton?.click();
+    const request = context.http.expectOne(
+      (candidate) => candidate.url === `${INVOICES_URL}/export`,
+    );
+    expect(request.request.params.get('state')).toBe('OVERDUE');
+    expect(request.request.params.get('year')).toBe('2025');
+    expect(request.request.params.get('q')).toBe('gómez');
+    expect(request.request.params.get('subscriberId')).toBe(SUBSCRIBER_ID);
+    request.flush(new Blob(['csv']));
+    expect(names).toEqual(['facturas.csv']);
+
+    exportButton?.click();
+    context.http
+      .expectOne((candidate) => candidate.url === `${INVOICES_URL}/export`)
+      .flush(new Blob(), { status: 500, statusText: 'Server Error' });
+    await settle();
+    expect(names).toHaveLength(1);
+
+    vi.unstubAllGlobals();
+    anchorClick.mockRestore();
+  });
+
   it('registra el pago y recarga el listado', async () => {
     await open();
     await load([invoice()]);
@@ -222,7 +264,7 @@ describe('BillingSettingsDialog', () => {
     click(element, 'button[type=submit]');
     const request = context.http.expectOne(BILLING_SETTINGS_URL);
     expect(request.request.method).toBe('PUT');
-    expect(request.request.body).toEqual({ paymentDueDay: 15, lateFee: 3000 });
+    expect(request.request.body).toEqual({ paymentDueDay: 15, lateFee: 3000, invoiceNote: null });
     request.flush({ paymentDueDay: 15, lateFee: 3000 });
 
     expect(dialogRef.close).toHaveBeenCalledWith({ paymentDueDay: 15, lateFee: 3000 });

@@ -81,6 +81,44 @@ describe('SubscriberList', () => {
     expectSearch(null).flush(page([subscriber()]));
   });
 
+  it('descarga para Excel los suscriptores de la búsqueda', async () => {
+    await open('VIEWER');
+    expectSearch(null).flush(page([subscriber()]));
+    await settle();
+    const names: string[] = [];
+    vi.stubGlobal('URL', { createObjectURL: () => 'blob:file', revokeObjectURL: () => undefined });
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      names.push(this.download);
+    });
+    const exportButton = [...element.querySelectorAll<HTMLButtonElement>('button')].find(
+      (candidate) => textOf(candidate).includes('Para Excel'),
+    );
+
+    exportButton?.click();
+    const all = context.http.expectOne((request) => request.url === `${SUBSCRIBERS_URL}/export`);
+    expect(all.request.params.has('q')).toBe(false);
+    all.flush(new Blob(['csv']));
+    expect(names).toEqual(['suscriptores.csv']);
+
+    type(element, 'input[type=search]', 'gómez');
+    element.querySelector<HTMLButtonElement>('form.search button[type=submit]')?.click();
+    await settle();
+    expectSearch('gómez').flush(page([subscriber()]));
+    exportButton?.click();
+    const filtered = context.http.expectOne(
+      (request) => request.url === `${SUBSCRIBERS_URL}/export`,
+    );
+    expect(filtered.request.params.get('q')).toBe('gómez');
+    filtered.flush(new Blob(), { status: 500, statusText: 'Server Error' });
+    await settle();
+    expect(names).toHaveLength(1);
+
+    vi.unstubAllGlobals();
+    anchorClick.mockRestore();
+  });
+
   it('cambia de página', async () => {
     await open();
     expectSearch(null).flush(page([subscriber()], 45));

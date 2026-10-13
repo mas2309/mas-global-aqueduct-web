@@ -2,6 +2,10 @@
   <header class="page-header">
     <h1>Suscriptores</h1>
     <div class="actions">
+      <button mat-button (click)="export()">
+        <mat-icon>download</mat-icon>
+        Para Excel
+      </button>
       @if (session.canAdministerOrganization()) {
         <a mat-button routerLink="/suscriptores/importar">
           <mat-icon>upload_file</mat-icon>

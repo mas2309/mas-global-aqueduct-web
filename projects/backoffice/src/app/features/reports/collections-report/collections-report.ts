@@ -16,6 +16,7 @@ import { PAYMENT_METHOD_LABELS } from '../../invoices/invoice.models';
 import { periodLabel } from '../../readings/reading.models';
 import {
   CollectionEntry,
+  Debtor,
   Collections,
   isoDate,
   PaymentReversal,
@@ -80,6 +81,14 @@ export class CollectionsReport {
     };
   });
   protected readonly methodLabels = PAYMENT_METHOD_LABELS;
+
+  /** Los que más deben a hoy; se consultan solo cuando se piden. */
+  protected readonly showDebtors = signal(false);
+  protected readonly debtors = httpResource<Debtor[]>(() =>
+    this.showDebtors() && this.session.organization()?.organizationId
+      ? `${REPORTS_URL}/top-debtors`
+      : undefined,
+  );
 
   protected readonly columns = ['paidAt', 'invoice', 'subscriber', 'period', 'method', 'amount'];
 

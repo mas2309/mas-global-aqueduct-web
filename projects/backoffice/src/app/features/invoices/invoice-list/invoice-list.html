@@ -1,12 +1,18 @@
 <section class="page">
   <header class="page-header">
     <h1>Facturas</h1>
-    @if (session.canAdministerOrganization()) {
-      <button mat-stroked-button (click)="openSettings()">
-        <mat-icon>settings</mat-icon>
-        Plazo y recargo
+    <div class="actions">
+      <button mat-button (click)="export()">
+        <mat-icon>download</mat-icon>
+        Para Excel
       </button>
-    }
+      @if (session.canAdministerOrganization()) {
+        <button mat-stroked-button (click)="openSettings()">
+          <mat-icon>settings</mat-icon>
+          Plazo y recargo
+        </button>
+      }
+    </div>
   </header>
 
   <div class="filters">

@@ -63,3 +63,14 @@ export interface ConsolidatedSummary {
   /** `billed` suma el último periodo facturado de cada prestador, que puede no ser el mismo mes. */
   totals: { billed: number; collected: number; outstanding: number; overdue: number };
 }
+
+/** Lo que debe un suscriptor entre todos sus predios y servicios. */
+export interface Debtor {
+  subscriberId: string;
+  subscriberCode: number;
+  subscriberName: string;
+  invoices: number;
+  amount: number;
+  /** La parte de `amount` ya vencida. */
+  overdueAmount: number;
+}

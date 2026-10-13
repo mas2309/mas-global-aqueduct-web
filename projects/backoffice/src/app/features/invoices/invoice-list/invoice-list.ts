@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { httpResource } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,6 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { SessionStore } from '../../../core/auth/session-store';
 import { Notifier } from '../../../core/ui/notifier';
+import { saveFile } from '../../../shared/ui/save-file';
 import { Page } from '../../organizations/organization.models';
 import { periodLabel } from '../../readings/reading.models';
 import { METERED_SERVICES } from '../../subscribers/subscriber.models';
@@ -60,6 +61,7 @@ type StateFilter = InvoiceState | 'ALL';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InvoiceList {
+  private readonly http = inject(HttpClient);
   private readonly dialog = inject(MatDialog);
   private readonly payments = inject(InvoicePayments);
   private readonly notifier = inject(Notifier);
@@ -142,6 +144,30 @@ export class InvoiceList {
   protected filterByYear(year: number | null): void {
     this.pageIndex.set(0);
     this.year.set(year);
+  }
+
+  /** Descarga para Excel las facturas que cumplen los filtros actuales (todas las páginas). */
+  protected export(): void {
+    const params: Record<string, string | number> = {};
+    const state = this.state();
+    if (state !== 'ALL') {
+      params['state'] = state;
+    }
+    const year = this.year();
+    if (year !== null) {
+      params['year'] = year;
+    }
+    if (this.query()) {
+      params['q'] = this.query();
+    }
+    const subscriberId = this.suscriptor();
+    if (subscriberId) {
+      params['subscriberId'] = subscriberId;
+    }
+    this.http.get(`${INVOICES_URL}/export`, { params, responseType: 'blob' }).subscribe({
+      next: (file) => saveFile(file, 'facturas.csv'),
+      error: (error: unknown) => this.notifier.apiError(error),
+    });
   }
 
   protected search(): void {

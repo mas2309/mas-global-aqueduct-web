@@ -1,4 +1,4 @@
-import { httpResource } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { SessionStore } from '../../../core/auth/session-store';
+import { Notifier } from '../../../core/ui/notifier';
+import { saveFile } from '../../../shared/ui/save-file';
 import { Page } from '../../organizations/organization.models';
 import { DOCUMENT_TYPE_LABELS, formatCode, Subscriber } from '../subscriber.models';
 import { SUBSCRIBERS_URL } from '../subscribers-api';
@@ -32,6 +34,8 @@ import { SUBSCRIBERS_URL } from '../subscribers-api';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SubscriberList {
+  private readonly http = inject(HttpClient);
+  private readonly notifier = inject(Notifier);
   protected readonly session = inject(SessionStore);
 
   /** Texto en el cuadro de búsqueda; se aplica al enviar, no en cada tecla (conexiones lentas). */
@@ -68,6 +72,15 @@ export class SubscriberList {
 
   protected documentTitle(subscriber: Subscriber): string {
     return subscriber.documentType ? DOCUMENT_TYPE_LABELS[subscriber.documentType] : '';
+  }
+
+  /** Descarga para Excel los suscriptores que coinciden con la búsqueda (todos si no hay texto). */
+  protected export(): void {
+    const params: Record<string, string> = this.query() ? { q: this.query() } : {};
+    this.http.get(`${SUBSCRIBERS_URL}/export`, { params, responseType: 'blob' }).subscribe({
+      next: (file) => saveFile(file, 'suscriptores.csv'),
+      error: (error: unknown) => this.notifier.apiError(error),
+    });
   }
 
   protected search(): void {
