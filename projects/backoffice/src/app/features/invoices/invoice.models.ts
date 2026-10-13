@@ -89,6 +89,10 @@ export interface BillingSettings {
   lateFee: number;
   /** Aviso que sale al pie de todas las facturas; `null` si no hay. */
   invoiceNote?: string | null;
+  /** Línea de la cabecera de la factura, bajo el nombre; `null` si no hay. */
+  invoiceHeader?: string | null;
+  /** El prestador ya subió su logo. Solo lectura: el logo se cambia con su propia operación. */
+  hasLogo?: boolean;
 }
 
 export const INVOICE_STATE_LABELS: Record<InvoiceState, string> = {

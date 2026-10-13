@@ -264,7 +264,12 @@ describe('BillingSettingsDialog', () => {
     click(element, 'button[type=submit]');
     const request = context.http.expectOne(BILLING_SETTINGS_URL);
     expect(request.request.method).toBe('PUT');
-    expect(request.request.body).toEqual({ paymentDueDay: 15, lateFee: 3000, invoiceNote: null });
+    expect(request.request.body).toEqual({
+      paymentDueDay: 15,
+      lateFee: 3000,
+      invoiceNote: null,
+      invoiceHeader: null,
+    });
     request.flush({ paymentDueDay: 15, lateFee: 3000 });
 
     expect(dialogRef.close).toHaveBeenCalledWith({ paymentDueDay: 15, lateFee: 3000 });
@@ -289,6 +294,51 @@ describe('BillingSettingsDialog', () => {
     expect(textOf(element)).toContain(
       'Solo el administrador del prestador cambia esta configuración',
     );
+    expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+
+  it('sube, cambia y quita el logo sin esperar a guardar', async () => {
+    await render();
+    const logoUrl = `${BILLING_SETTINGS_URL}/logo`;
+    const picker = element.querySelector<HTMLInputElement>('input[type=file]')!;
+    function choose(file: File | null): void {
+      Object.defineProperty(picker, 'files', { value: file ? [file] : [], configurable: true });
+      picker.dispatchEvent(new Event('change'));
+    }
+    expect(textOf(element)).toContain('Las facturas salen sin logo');
+
+    choose(null);
+    choose(new File(['%PDF'], 'logo.pdf', { type: 'application/pdf' }));
+    await settle();
+    expect(textOf(element)).toContain('El logo debe ser una imagen PNG o JPG');
+    context.http.expectNone(logoUrl);
+
+    const image = new File(['png'], 'logo.png', { type: 'image/png' });
+    choose(image);
+    const upload = context.http.expectOne(logoUrl);
+    expect(upload.request.method).toBe('PUT');
+    expect((upload.request.body as FormData).get('file')).toBe(image);
+    upload.flush({ paymentDueDay: 15, lateFee: 2000, hasLogo: true });
+    await settle();
+    expect(textOf(element)).toContain('Las facturas salen con tu logo');
+    expect(textOf(element)).toContain('Cambiar logo');
+
+    const remove = [...element.querySelectorAll<HTMLButtonElement>('button')].find((candidate) =>
+      textOf(candidate).includes('Quitar logo'),
+    );
+    remove?.click();
+    context.http
+      .expectOne(logoUrl)
+      .flush({ status: 403 }, { status: 403, statusText: 'Forbidden' });
+    await settle();
+    expect(textOf(element)).toContain('Solo el administrador del prestador');
+
+    remove?.click();
+    const removal = context.http.expectOne(logoUrl);
+    expect(removal.request.method).toBe('DELETE');
+    removal.flush({ paymentDueDay: 15, lateFee: 2000, hasLogo: false });
+    await settle();
+    expect(textOf(element)).toContain('Las facturas salen sin logo');
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
 });

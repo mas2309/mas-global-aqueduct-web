@@ -100,4 +100,15 @@ export class InvoicesApi {
   updateSettings(settings: BillingSettings): Observable<BillingSettings> {
     return this.http.put<BillingSettings>(BILLING_SETTINGS_URL, settings);
   }
+
+  /** Logo de la cabecera de las facturas (PNG o JPG); reemplaza el anterior. */
+  uploadLogo(file: File): Observable<BillingSettings> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.put<BillingSettings>(`${BILLING_SETTINGS_URL}/logo`, form);
+  }
+
+  removeLogo(): Observable<BillingSettings> {
+    return this.http.delete<BillingSettings>(`${BILLING_SETTINGS_URL}/logo`);
+  }
 }
