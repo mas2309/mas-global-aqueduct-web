@@ -63,8 +63,8 @@ describe('InstallmentPlans', () => {
     expect(text).toContain('Faltan $80,000');
     expect(text).toContain('Terminada');
     expect(element.querySelector(`a[href="/facturas?suscriptor=${SUBSCRIBER_ID}"]`)).not.toBeNull();
-    // Solo la activa se puede cancelar
-    expect(element.querySelectorAll('.plan button')).toHaveLength(1);
+    // Solo la activa tiene acciones: pago anticipado y cancelar
+    expect(element.querySelectorAll('.plan button')).toHaveLength(2);
   });
 
   it('crea una financiación desde el diálogo', async () => {
@@ -98,6 +98,44 @@ describe('InstallmentPlans', () => {
     await load([plan({ status: 'CANCELLED' })]);
     expect(document.body.textContent).toContain('Financiación cancelada');
     expect(textOf(element)).toContain('Cancelada');
+  });
+
+  it('registra el pago anticipado y lo deshace', async () => {
+    await open([plan({ globalChargeId: 'charge' })]);
+    expect(textOf(element)).toContain('Cobro global');
+
+    dialogResult = false;
+    button('Pago anticipado')?.click();
+    context.http.expectNone(`${PLANS_URL}/${PLAN_ID}/prepay`);
+
+    dialogResult = true;
+    button('Pago anticipado')?.click();
+    context.http
+      .expectOne(`${PLANS_URL}/${PLAN_ID}/prepay`)
+      .flush({ status: 409 }, { status: 409, statusText: 'Conflict' });
+    await settle();
+    expect(document.body.textContent).toContain('Esta financiación ya no está activa');
+
+    button('Pago anticipado')?.click();
+    context.http.expectOne(`${PLANS_URL}/${PLAN_ID}/prepay`).flush(plan({ status: 'PREPAID' }));
+    await settle();
+    await load([plan({ status: 'PREPAID' })]);
+    expect(document.body.textContent).toContain('Pago anticipado registrado');
+    expect(textOf(element)).toContain('Pagada por anticipado');
+    expect(button('Cancelar')).toBeUndefined();
+
+    button('Deshacer pago anticipado')?.click();
+    context.http
+      .expectOne(`${PLANS_URL}/${PLAN_ID}/revert-prepayment`)
+      .flush({ status: 409 }, { status: 409, statusText: 'Conflict' });
+    await settle();
+    expect(document.body.textContent).toContain('no tiene un pago anticipado');
+
+    button('Deshacer pago anticipado')?.click();
+    context.http.expectOne(`${PLANS_URL}/${PLAN_ID}/revert-prepayment`).flush(plan());
+    await settle();
+    await load([plan()]);
+    expect(document.body.textContent).toContain('Pago anticipado deshecho');
   });
 
   it('avisa si la cancelación es rechazada', async () => {

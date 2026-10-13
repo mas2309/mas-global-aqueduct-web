@@ -79,4 +79,47 @@ export class InstallmentPlans {
           }),
       });
   }
+
+  /** El suscriptor pagó de una vez lo que faltaba: la financiación deja de cobrarse en sus facturas. */
+  protected prepay(plan: InstallmentPlan): void {
+    const data: ConfirmDialogData = {
+      title: `Pago anticipado de «${plan.description}»`,
+      message:
+        'Úsalo cuando el suscriptor ya pagó de una vez lo que faltaba. La financiación deja de cobrarse ' +
+        'en sus facturas; se puede deshacer si fue un error. Recuerda registrar el dinero en Ingresos y gastos.',
+      confirmLabel: 'Registrar pago anticipado',
+    };
+    this.dialog
+      .open(ConfirmDialog, { data, width: '440px' })
+      .afterClosed()
+      .pipe(
+        filter((confirmed) => confirmed === true),
+        switchMap(() => this.api.prepayPlan(plan.id)),
+      )
+      .subscribe({
+        next: () => {
+          this.plans.reload();
+          this.notifier.success('Pago anticipado registrado');
+        },
+        error: (error: unknown) =>
+          this.notifier.apiError(error, {
+            403: 'Tu rol solo permite consultar.',
+            409: 'Esta financiación ya no está activa.',
+          }),
+      });
+  }
+
+  protected revertPrepayment(plan: InstallmentPlan): void {
+    this.api.revertPrepayment(plan.id).subscribe({
+      next: () => {
+        this.plans.reload();
+        this.notifier.success('Pago anticipado deshecho: la financiación vuelve a cobrarse');
+      },
+      error: (error: unknown) =>
+        this.notifier.apiError(error, {
+          403: 'Tu rol solo permite consultar.',
+          409: 'Esta financiación no tiene un pago anticipado.',
+        }),
+    });
+  }
 }

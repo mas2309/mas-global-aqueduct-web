@@ -1,0 +1,50 @@
+.back {
+  margin-bottom: 8px;
+}
+
+.charge {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  align-items: start;
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+
+  h2 {
+    margin: 0;
+    font: var(--mat-sys-title-medium);
+  }
+}
+
+.what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  grid-column: 1 / -1;
+  gap: 4px;
+}
+
+.actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+}

@@ -139,6 +139,15 @@ export const routes: Routes = [
               import('./features/finance/movement-list/movement-list').then((m) => m.MovementList),
           },
           {
+            path: 'cobros-globales',
+            title: 'Cobros globales · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/invoices/global-charges/global-charges').then(
+                (m) => m.GlobalCharges,
+              ),
+          },
+          {
             path: 'tarifas',
             title: 'Tarifas · MAS Acueductos',
             canActivate: [organizationGuard],

@@ -36,8 +36,15 @@
         }
       </div>
       <span class="chip" [attr.data-state]="plan.status">{{ statusLabels[plan.status] }}</span>
+      @if (plan.globalChargeId) {
+        <span class="muted">Cobro global</span>
+      }
       @if (editable() && plan.status === 'ACTIVE') {
+        <button mat-button (click)="prepay(plan)">Pago anticipado</button>
         <button mat-button (click)="cancel(plan)">Cancelar</button>
+      }
+      @if (editable() && plan.status === 'PREPAID') {
+        <button mat-button (click)="revertPrepayment(plan)">Deshacer pago anticipado</button>
       }
     </div>
   } @empty {

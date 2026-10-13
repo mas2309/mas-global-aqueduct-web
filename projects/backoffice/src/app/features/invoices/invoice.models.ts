@@ -44,7 +44,8 @@ export interface Invoice {
   lateFee: number;
   otherCharges: number;
   otherChargesDescription: string | null;
-  installment: InvoiceInstallment | null;
+  /** Cuotas de financiación cobradas en la factura; vacío si no hay. */
+  installments: InvoiceInstallment[];
   total: number;
   /** Fecha ISO `yyyy-MM-dd`. */
   dueDate: string;
@@ -54,7 +55,8 @@ export interface Invoice {
   issuedAt: string;
 }
 
-export type PlanStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+/** `PREPAID`: el suscriptor pagó por anticipado las cuotas que faltaban; deja de cobrarse en sus facturas. */
+export type PlanStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'PREPAID';
 
 /** Financiación de un suscriptor: se cobra una cuota en cada factura. */
 export interface InstallmentPlan {
@@ -68,6 +70,8 @@ export interface InstallmentPlan {
   installmentAmount: number;
   pendingAmount: number;
   status: PlanStatus;
+  /** Cobro global del que hace parte; `null` si es una financiación propia del suscriptor. */
+  globalChargeId: string | null;
   createdAt: string;
 }
 
@@ -101,6 +105,7 @@ export const PLAN_STATUS_LABELS: Record<PlanStatus, string> = {
   ACTIVE: 'Activa',
   COMPLETED: 'Terminada',
   CANCELLED: 'Cancelada',
+  PREPAID: 'Pagada por anticipado',
 };
 
 /** Solo la factura más reciente de una acometida, mientras no esté pagada, se puede cobrar o modificar. */
@@ -121,4 +126,26 @@ export interface PlanOverview {
   /** Lo que falta por facturar entre todas las activas. */
   pendingAmount: number;
   plans: Page<PlanSummary>;
+}
+
+/** Cobro global: una cuota extraordinaria para todos los suscriptores activos, con su avance. */
+export interface GlobalCharge {
+  id: string;
+  description: string;
+  /** Lo que paga cada suscriptor. */
+  amount: number;
+  installments: number;
+  active: boolean;
+  subscribers: number;
+  billedInstallments: number;
+  totalAmount: number;
+  /** Lo que falta por facturar a quienes lo siguen debiendo. */
+  pendingAmount: number;
+  createdAt: string;
+}
+
+export interface GlobalChargeRequest {
+  description: string;
+  amount: number;
+  installments: number;
 }

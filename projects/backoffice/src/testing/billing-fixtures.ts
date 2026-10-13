@@ -99,7 +99,7 @@ export function invoice(overrides: Partial<Invoice> = {}): Invoice {
     lateFee: 0,
     otherCharges: 0,
     otherChargesDescription: null,
-    installment: null,
+    installments: [],
     total: 25500,
     dueDate: '2026-11-20',
     state: 'PENDING',
@@ -121,6 +121,7 @@ export function plan(overrides: Partial<InstallmentPlan> = {}): InstallmentPlan 
     installmentAmount: 20000,
     pendingAmount: 80000,
     status: 'ACTIVE',
+    globalChargeId: null,
     createdAt: '2026-08-01T00:00:00Z',
     ...overrides,
   };

@@ -1,0 +1,78 @@
+<section class="page">
+  <a mat-button routerLink="/financiaciones" class="back">
+    <mat-icon>arrow_back</mat-icon>
+    Financiaciones
+  </a>
+
+  <header class="page-header">
+    <h1>Cobros globales</h1>
+    @if (session.canAdministerOrganization()) {
+      <button mat-flat-button (click)="create()">
+        <mat-icon>add</mat-icon>
+        Nuevo cobro global
+      </button>
+    }
+  </header>
+
+  @if (charges.isLoading() && !charges.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando cobros globales" />
+  }
+
+  @if (charges.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar los cobros globales.</p>
+      <button mat-stroked-button (click)="charges.reload()">Reintentar</button>
+    </div>
+  } @else if (charges.hasValue()) {
+    @for (charge of charges.value(); track charge.id) {
+      <article class="charge">
+        <div class="what">
+          <h2>{{ charge.description }}</h2>
+          <span class="muted">
+            {{ charge.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }} por suscriptor en
+            {{ charge.installments === 1 ? '1 cuota' : charge.installments + ' cuotas' }} · creado
+            el {{ charge.createdAt | date: 'longDate' }}
+          </span>
+        </div>
+        <span class="chip" [attr.data-state]="charge.active ? 'ACTIVE' : 'CANCELLED'">
+          {{ charge.active ? 'Activo' : 'Cancelado' }}
+        </span>
+        <div class="progress">
+          <mat-progress-bar
+            mode="determinate"
+            [value]="percentOf(charge)"
+            [attr.aria-label]="'Avance de ' + charge.description"
+          />
+          <span class="muted">
+            {{ charge.subscribers }} suscriptores · {{ charge.billedInstallments }} cuotas
+            facturadas · total
+            {{ charge.totalAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+            @if (charge.active) {
+              · falta
+              {{ charge.pendingAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+            }
+          </span>
+        </div>
+        @if (session.canAdministerOrganization()) {
+          <div class="actions">
+            @if (charge.active) {
+              <button mat-button (click)="cancel(charge)">Cancelar</button>
+            }
+            @if (charge.billedInstallments === 0) {
+              <button mat-button (click)="remove(charge)">Eliminar</button>
+            }
+          </div>
+        }
+      </article>
+    } @empty {
+      <div class="state">
+        <mat-icon aria-hidden="true">groups</mat-icon>
+        <p>Aún no hay cobros globales.</p>
+        <p class="muted">
+          Sirven para cobrarles a todos los suscriptores activos una cuota extraordinaria, como un
+          aporte para una obra, en una o varias facturas.
+        </p>
+      </div>
+    }
+  }
+</section>

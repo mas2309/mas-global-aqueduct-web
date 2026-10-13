@@ -90,7 +90,7 @@
                 <td>{{ bill.adjustment | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
               </tr>
             }
-            @if (bill.installment; as installment) {
+            @for (installment of bill.installments; track installment.planId) {
               <tr>
                 <th scope="row">
                   {{ installment.description }} (cuota {{ installment.number }} de

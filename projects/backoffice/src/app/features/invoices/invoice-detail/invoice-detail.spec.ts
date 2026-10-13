@@ -57,13 +57,10 @@ describe('InvoiceDetail', () => {
       invoice({
         adjustmentPercent: -50,
         adjustment: -4000,
-        installment: {
-          planId: PLAN_ID,
-          description: 'Medidor nuevo',
-          number: 2,
-          count: 6,
-          amount: 20000,
-        },
+        installments: [
+          { planId: PLAN_ID, description: 'Medidor nuevo', number: 2, count: 6, amount: 20000 },
+          { planId: 'saldo', description: 'Saldo anterior', number: 1, count: 1, amount: 9000 },
+        ],
         otherCharges: 5000,
         otherChargesDescription: 'Reconexión',
         previousDebt: 30000,
@@ -80,6 +77,7 @@ describe('InvoiceDetail', () => {
     expect(text).toContain('120 → 135 = 15 m³');
     expect(text).toContain('Subsidio (-50 %)');
     expect(text).toContain('Medidor nuevo (cuota 2 de 6)');
+    expect(text).toContain('Saldo anterior (cuota 1 de 1)');
     expect(text).toContain('Otros cobros (Reconexión)');
     expect(text).toContain('Deuda anterior');
     expect(text).toContain('Recargo por no pago');
