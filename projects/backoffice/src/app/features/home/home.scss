@@ -45,3 +45,53 @@
   gap: 12px;
   margin-bottom: 24px;
 }
+
+.section-title {
+  margin: 8px 0 12px;
+  font: var(--mat-sys-title-medium);
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+}
+
+.affiliates {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  thead th {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  tbody th {
+    font-weight: 500;
+  }
+
+  .amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .detail {
+    display: block;
+    font: var(--mat-sys-body-small);
+  }
+
+  tfoot th,
+  tfoot td {
+    border-bottom: 0;
+    font-weight: 500;
+  }
+}

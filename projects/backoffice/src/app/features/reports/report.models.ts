@@ -54,3 +54,12 @@ export interface PaymentReversal {
   reason: string;
   reversedAt: string;
 }
+
+/** Tablero de una ESP o municipio: sus cifras, las de cada prestador vinculado y la suma de todos. */
+export interface ConsolidatedSummary {
+  own: BillingSummary;
+  /** Vacío si el prestador no tiene vinculados. */
+  affiliates: { organizationId: string; name: string; summary: BillingSummary }[];
+  /** `billed` suma el último periodo facturado de cada prestador, que puede no ser el mismo mes. */
+  totals: { billed: number; collected: number; outstanding: number; overdue: number };
+}

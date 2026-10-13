@@ -31,7 +31,7 @@
         <button mat-button (click)="summary.reload()">Reintentar</button>
       </p>
     } @else if (summary.hasValue()) {
-      @let figures = summary.value();
+      @let figures = summary.value().own;
       <dl class="summary">
         <div class="tile">
           <dt>Último periodo facturado</dt>
@@ -87,6 +87,80 @@
           Recaudo e informes
         </a>
       </div>
+
+      @if (summary.value().affiliates.length > 0) {
+        @let totals = summary.value().totals;
+        <h2 class="section-title">Prestadores vinculados</h2>
+        <div class="table-container">
+          <table class="affiliates">
+            <caption class="cdk-visually-hidden">
+              Cifras de cada prestador vinculado
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Prestador</th>
+                <th scope="col" class="amount">Último periodo facturado</th>
+                <th scope="col" class="amount">Recaudado este mes</th>
+                <th scope="col" class="amount">Por cobrar</th>
+                <th scope="col" class="amount">Vencido</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (affiliate of summary.value().affiliates; track affiliate.organizationId) {
+                <tr>
+                  <th scope="row">{{ affiliate.name }}</th>
+                  <td class="amount">
+                    @if (affiliate.summary.billed; as billed) {
+                      {{ billed.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                      <span class="muted detail">{{ periodLabel(billed) }}</span>
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="amount">
+                    {{
+                      affiliate.summary.collected.amount
+                        | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                    }}
+                  </td>
+                  <td class="amount">
+                    {{
+                      affiliate.summary.outstanding.amount
+                        | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                    }}
+                  </td>
+                  <td class="amount">
+                    {{
+                      affiliate.summary.outstanding.overdueAmount
+                        | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                    }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row">Total, con {{ organization.name }}</th>
+                <td class="amount">
+                  {{ totals.billed | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                </td>
+                <td class="amount">
+                  {{ totals.collected | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                </td>
+                <td class="amount">
+                  {{ totals.outstanding | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                </td>
+                <td class="amount">
+                  {{ totals.overdue | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p class="muted">
+          Para trabajar con un prestador vinculado, elígelo en el selector de la barra superior.
+        </p>
+      }
     }
   }
 
