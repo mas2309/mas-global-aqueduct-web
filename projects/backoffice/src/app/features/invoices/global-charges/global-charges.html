@@ -56,6 +56,7 @@
         @if (session.canAdministerOrganization()) {
           <div class="actions">
             @if (charge.active) {
+              <button mat-button (click)="addSubscriber(charge)">Agregar suscriptor</button>
               <button mat-button (click)="cancel(charge)">Cancelar</button>
             }
             @if (charge.billedInstallments === 0) {

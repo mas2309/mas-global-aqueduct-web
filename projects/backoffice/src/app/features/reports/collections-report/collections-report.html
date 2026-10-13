@@ -121,6 +121,94 @@
     }
   }
 
+  <h2 class="section-title reversals-title">Consumo por rango de tarifa</h2>
+  <div class="filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Periodo</mat-label>
+      <input
+        matInput
+        type="month"
+        name="rangesMonth"
+        [ngModel]="rangesMonth()"
+        (ngModelChange)="rangesMonth.set($event)"
+      />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Servicio</mat-label>
+      <mat-select [ngModel]="rangesService()" (ngModelChange)="rangesService.set($event)">
+        @for (service of meteredServices; track service) {
+          <mat-option [value]="service">{{ serviceLabels[service] }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (!showRanges()) {
+      <button mat-stroked-button [disabled]="!rangesMonth()" (click)="showRanges.set(true)">
+        <mat-icon>stacked_bar_chart</mat-icon>
+        Ver consumo por rango
+      </button>
+    }
+  </div>
+  @if (showRanges()) {
+    @if (ranges.error()) {
+      <p class="muted" role="alert">
+        No pudimos cargar el consumo por rango.
+        <button mat-button (click)="ranges.reload()">Reintentar</button>
+      </p>
+    } @else if (ranges.hasValue()) {
+      @if (rangeTotals().invoices === 0) {
+        <p class="muted">No hay facturas de ese servicio en el periodo.</p>
+      } @else {
+        <div class="table-container">
+          <table class="ranges">
+            <caption class="cdk-visually-hidden">
+              Facturas del periodo según el rango de la tarifa en que cae su consumo
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Rango</th>
+                <th scope="col" class="amount">Precio</th>
+                <th scope="col" class="amount">Suscriptores</th>
+                <th scope="col" class="amount">Facturas</th>
+                <th scope="col" class="amount">Consumo</th>
+                <th scope="col" class="amount">Valor del consumo</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (range of ranges.value(); track $index) {
+                <tr>
+                  <th scope="row">{{ rangeLabel(range) }}</th>
+                  <td class="amount">
+                    @if (range.pricePerUnit !== null) {
+                      {{ range.pricePerUnit | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="amount">{{ range.subscribers }}</td>
+                  <td class="amount">
+                    {{ range.invoices }}
+                    <span class="muted"
+                      >({{ share(range.invoices, rangeTotals().invoices) }} %)</span
+                    >
+                  </td>
+                  <td class="amount">{{ range.consumption }} {{ rangesUnit() }}</td>
+                  <td class="amount">
+                    {{ range.charge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                    <span class="muted">({{ share(range.charge, rangeTotals().charge) }} %)</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">
+          Los rangos y precios son los de la tarifa vigente hoy; el valor es el que se facturó en el
+          periodo.
+        </p>
+      }
+    }
+  }
+
   <h2 class="section-title reversals-title">Mayores deudores</h2>
   @if (!showDebtors()) {
     <button mat-stroked-button (click)="showDebtors.set(true)">

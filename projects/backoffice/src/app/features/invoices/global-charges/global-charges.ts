@@ -10,6 +10,7 @@ import { filter, Observable, switchMap } from 'rxjs';
 import { SessionStore } from '../../../core/auth/session-store';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
+import { ChargeSubscriberDialog } from '../charge-subscriber-dialog/charge-subscriber-dialog';
 import { GlobalChargeDialog } from '../global-charge-dialog/global-charge-dialog';
 import { GlobalCharge } from '../invoice.models';
 import { GLOBAL_CHARGES_URL, InvoicesApi } from '../invoices-api';
@@ -59,6 +60,22 @@ export class GlobalCharges {
           this.notifier.success(
             `Cobro creado para ${created.subscribers} suscriptores: la primera cuota va en su próxima factura`,
           );
+        }
+      });
+  }
+
+  /** Para quien se registró después de crear el cobro. */
+  protected addSubscriber(charge: GlobalCharge): void {
+    this.dialog
+      .open<ChargeSubscriberDialog, GlobalCharge, boolean>(ChargeSubscriberDialog, {
+        data: charge,
+        width: '520px',
+      })
+      .afterClosed()
+      .subscribe((added) => {
+        if (added) {
+          this.charges.reload();
+          this.notifier.success('Suscriptor agregado al cobro');
         }
       });
   }

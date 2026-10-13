@@ -1,0 +1,66 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Documentos</h1>
+    @if (session.canOperateOrganization()) {
+      <button mat-flat-button (click)="upload()">
+        <mat-icon>upload_file</mat-icon>
+        Subir documento
+      </button>
+    }
+  </header>
+
+  @if (documents.isLoading() && !documents.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando documentos" />
+  }
+
+  @if (documents.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar los documentos.</p>
+      <button mat-stroked-button (click)="documents.reload()">Reintentar</button>
+    </div>
+  } @else if (documents.hasValue()) {
+    <ul class="documents">
+      @for (document of documents.value(); track document.id) {
+        <li>
+          <mat-icon aria-hidden="true">
+            {{ document.contentType === 'application/pdf' ? 'picture_as_pdf' : 'image' }}
+          </mat-icon>
+          <div class="what">
+            <strong>{{ document.title }}</strong>
+            @if (document.description) {
+              <span>{{ document.description }}</span>
+            }
+            <span class="muted">
+              {{ document.fileName }} · {{ sizeOf(document) }} · subido el
+              {{ document.createdAt | date: 'longDate' }}
+            </span>
+          </div>
+          <div class="actions">
+            <button mat-button (click)="download(document)">
+              <mat-icon>download</mat-icon>
+              Descargar
+            </button>
+            @if (session.canOperateOrganization()) {
+              <button
+                mat-icon-button
+                (click)="remove(document)"
+                [attr.aria-label]="'Eliminar ' + document.title"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </div>
+        </li>
+      } @empty {
+        <li class="state">
+          <mat-icon aria-hidden="true">folder_open</mat-icon>
+          <p>Aún no hay documentos.</p>
+          <p class="muted">
+            Guarda aquí los estatutos, las actas, la concesión de aguas y los certificados del
+            prestador.
+          </p>
+        </li>
+      }
+    </ul>
+  }
+</section>

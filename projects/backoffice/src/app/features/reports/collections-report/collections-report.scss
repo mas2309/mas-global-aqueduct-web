@@ -114,3 +114,28 @@ table {
     margin: 0 8px;
   }
 }
+
+.ranges {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+
+  thead th {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+  }
+
+  tbody th {
+    font-weight: 500;
+  }
+
+  .amount {
+    text-align: right;
+  }
+}

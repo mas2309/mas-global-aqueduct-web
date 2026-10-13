@@ -69,6 +69,13 @@ export class InvoicesApi {
     return this.http.post<GlobalCharge>(GLOBAL_CHARGES_URL, request);
   }
 
+  /** Aplica el cobro a un suscriptor que no lo tiene, por ejemplo uno registrado después. */
+  addChargeSubscriber(chargeId: string, subscriberId: string): Observable<InstallmentPlan> {
+    return this.http.post<InstallmentPlan>(`${GLOBAL_CHARGES_URL}/${chargeId}/subscribers`, {
+      subscriberId,
+    });
+  }
+
   cancelGlobalCharge(chargeId: string): Observable<GlobalCharge> {
     return this.http.post<GlobalCharge>(`${GLOBAL_CHARGES_URL}/${chargeId}/cancel`, null);
   }

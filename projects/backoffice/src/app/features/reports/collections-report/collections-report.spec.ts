@@ -36,6 +36,8 @@ function report(payments: CollectionEntry[]): Collections {
 interface Actions {
   from: WritableSignal<string>;
   to: WritableSignal<string>;
+  rangesMonth: WritableSignal<string>;
+  rangesService: WritableSignal<string>;
 }
 
 describe('CollectionsReport', () => {
@@ -136,6 +138,88 @@ describe('CollectionsReport', () => {
     context.http.expectNone(COLLECTIONS_URL);
     expect(textOf(element)).toContain('«Desde» no puede ser posterior a «Hasta»');
     expect(button('Recaudo para Excel')?.disabled).toBe(true);
+  });
+
+  it('muestra el consumo por rango de tarifa del mes y el servicio elegidos', async () => {
+    await open();
+    expectCollections(TODAY, TODAY).flush(report([]));
+    await settle();
+    const rangesUrl = `${REPORTS_URL}/consumption-ranges`;
+    const [year, month] = TODAY.split('-').map(Number);
+
+    button('Ver consumo por rango')?.click();
+    await settle();
+    const request = context.http.expectOne((candidate) => candidate.url === rangesUrl);
+    expect(request.request.params.get('year')).toBe(String(year));
+    expect(request.request.params.get('month')).toBe(String(month));
+    expect(request.request.params.get('serviceType')).toBe('WATER');
+    request.flush([
+      {
+        from: 0,
+        upTo: 0,
+        pricePerUnit: null,
+        subscribers: 2,
+        invoices: 2,
+        consumption: 0,
+        charge: 0,
+      },
+      {
+        from: 0,
+        upTo: 10,
+        pricePerUnit: 1000,
+        subscribers: 5,
+        invoices: 6,
+        consumption: 40,
+        charge: 40000,
+      },
+      {
+        from: 10,
+        upTo: null,
+        pricePerUnit: 1500,
+        subscribers: 2,
+        invoices: 2,
+        consumption: 50,
+        charge: 60000,
+      },
+    ]);
+    await settle();
+    const text = textOf(element);
+
+    expect(text).toContain('Sin consumo');
+    expect(text).toContain('Más de 0 y hasta 10 m³');
+    expect(text).toContain('Más de 10 m³');
+    expect(text).toContain('6 (60 %)');
+    expect(text).toContain('40 m³');
+    expect(text).toContain('$60,000 (60 %)');
+
+    // Sin facturas en el periodo lo dice; si falla deja reintentar
+    actions.rangesMonth.set('2026-01');
+    await settle();
+    context.http
+      .expectOne(
+        (candidate) => candidate.url === rangesUrl && candidate.params.get('month') === '1',
+      )
+      .flush([
+        {
+          from: 0,
+          upTo: 0,
+          pricePerUnit: null,
+          subscribers: 0,
+          invoices: 0,
+          consumption: 0,
+          charge: 0,
+        },
+      ]);
+    await settle();
+    expect(textOf(element)).toContain('No hay facturas de ese servicio en el periodo');
+
+    actions.rangesService.set('ELECTRICITY');
+    await settle();
+    context.http
+      .expectOne((candidate) => candidate.params.get('serviceType') === 'ELECTRICITY')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    await settle();
+    expect(textOf(element)).toContain('No pudimos cargar el consumo por rango');
   });
 
   it('muestra los mayores deudores solo cuando se piden', async () => {

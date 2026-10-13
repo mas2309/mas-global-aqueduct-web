@@ -1,9 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { access, authResponse } from '../../../../testing/fixtures';
 import { click, PageTestContext, settle, setUpPage, textOf, type } from '../../../../testing/setup';
+import { subscriber, SUBSCRIBER_ID } from '../../../../testing/subscriber-fixtures';
 import { OrganizationRole } from '../../../core/auth/auth.models';
+import { Subscriber } from '../../subscribers/subscriber.models';
+import { SUBSCRIBERS_URL } from '../../subscribers/subscribers-api';
+import { ChargeSubscriberDialog } from '../charge-subscriber-dialog/charge-subscriber-dialog';
 import { GlobalChargeDialog } from '../global-charge-dialog/global-charge-dialog';
 import { GlobalCharge } from '../invoice.models';
 import { GLOBAL_CHARGES_URL } from '../invoices-api';
@@ -94,8 +98,8 @@ describe('GlobalCharges', () => {
     expect(element.querySelector('article mat-progress-bar')?.getAttribute('aria-valuenow')).toBe(
       '25',
     );
-    // El activo con cuotas facturadas solo se cancela; el cancelado sin facturar solo se elimina
-    expect(element.querySelectorAll('article')[0].querySelectorAll('button')).toHaveLength(1);
+    // El activo con cuotas facturadas recibe suscriptores o se cancela; el cancelado sin facturar solo se elimina
+    expect(element.querySelectorAll('article')[0].querySelectorAll('button')).toHaveLength(2);
     expect(element.querySelectorAll('article')[1].querySelectorAll('button')).toHaveLength(1);
   });
 
@@ -112,6 +116,21 @@ describe('GlobalCharges', () => {
     await settle();
     await load([charge()]);
     expect(document.body.textContent).toContain('Cobro creado para 120 suscriptores');
+  });
+
+  it('agrega un suscriptor al cobro desde el diálogo', async () => {
+    await open([charge()]);
+
+    dialogResult = undefined;
+    button('Agregar suscriptor')?.click();
+    context.http.expectNone(GLOBAL_CHARGES_URL);
+
+    dialogResult = true;
+    button('Agregar suscriptor')?.click();
+    await settle();
+    await load([charge({ subscribers: 121 })]);
+    expect(document.body.textContent).toContain('Suscriptor agregado al cobro');
+    expect(textOf(element)).toContain('121 suscriptores');
   });
 
   it('cancela y elimina solo si se confirma', async () => {
@@ -211,5 +230,75 @@ describe('GlobalChargeDialog', () => {
 
     expect(textOf(element)).toContain('No hay suscriptores activos a quién cobrarle');
     expect(dialogRef.close).not.toHaveBeenCalled();
+  });
+});
+
+describe('ChargeSubscriberDialog', () => {
+  const dialogRef = { close: vi.fn() };
+  const addUrl = `${GLOBAL_CHARGES_URL}/${CHARGE_ID}/subscribers`;
+  let context: PageTestContext;
+  let element: HTMLElement;
+
+  afterEach(() => context.http.verify());
+
+  beforeEach(async () => {
+    dialogRef.close.mockReset();
+    context = setUpPage({
+      providers: [
+        { provide: MatDialogRef, useValue: dialogRef },
+        { provide: MAT_DIALOG_DATA, useValue: charge() },
+      ],
+    });
+    element = TestBed.createComponent(ChargeSubscriberDialog).nativeElement;
+    await settle();
+  });
+
+  async function search(text: string, found: Subscriber[]): Promise<void> {
+    type(element, 'input[type=search]', text);
+    click(element, 'form.search button[type=submit]');
+    await settle();
+    context.http
+      .expectOne((request) => request.url === SUBSCRIBERS_URL && request.params.get('q') === text)
+      .flush({ items: found, page: 0, size: 5, totalItems: found.length, totalPages: 1 });
+    await settle();
+  }
+
+  it('busca al suscriptor y le aplica el cobro', async () => {
+    expect(textOf(element)).toContain('Agregar suscriptor a «Aporte tanque»');
+    context.http.expectNone(SUBSCRIBERS_URL);
+
+    await search('nadie', []);
+    expect(textOf(element)).toContain('Ningún suscriptor coincide');
+
+    await search('luz', [subscriber(), subscriber({ id: 'inactive', status: 'INACTIVE' })]);
+    const buttons = [...element.querySelectorAll<HTMLButtonElement>('.results button')];
+    expect(buttons[1].disabled).toBe(true);
+    expect(textOf(buttons[1])).toBe('Inactivo');
+
+    buttons[0].click();
+    const request = context.http.expectOne(addUrl);
+    expect(request.request.body).toEqual({ subscriberId: SUBSCRIBER_ID });
+    request.flush({});
+
+    expect(dialogRef.close).toHaveBeenCalledWith(true);
+  });
+
+  it('explica cuando el suscriptor ya tiene el cobro o la búsqueda falla', async () => {
+    await search('maría', [subscriber()]);
+
+    click(element, '.results button');
+    context.http.expectOne(addUrl).flush({ status: 409 }, { status: 409, statusText: 'Conflict' });
+    await settle();
+    expect(textOf(element)).toContain('ya tiene este cobro');
+    expect(dialogRef.close).not.toHaveBeenCalled();
+
+    type(element, 'input[type=search]', 'otro');
+    click(element, 'form.search button[type=submit]');
+    await settle();
+    context.http
+      .expectOne((request) => request.url === SUBSCRIBERS_URL)
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    await settle();
+    expect(textOf(element)).toContain('No pudimos buscar los suscriptores');
   });
 });

@@ -148,6 +148,15 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'documentos',
+            title: 'Documentos · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/documents/document-list/document-list').then(
+                (m) => m.DocumentList,
+              ),
+          },
+          {
             path: 'tarifas',
             title: 'Tarifas · MAS Acueductos',
             canActivate: [organizationGuard],

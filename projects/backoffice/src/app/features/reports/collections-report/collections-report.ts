@@ -7,15 +7,21 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { SessionStore } from '../../../core/auth/session-store';
+import { SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { saveFile } from '../../../shared/ui/save-file';
 import { PAYMENT_METHOD_LABELS } from '../../invoices/invoice.models';
+import { SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
 import { periodLabel } from '../../readings/reading.models';
+import { METERED_SERVICES } from '../../subscribers/subscriber.models';
+import { unitOf } from '../../tariffs/tariff.models';
 import {
   CollectionEntry,
+  ConsumptionRange,
   Debtor,
   Collections,
   isoDate,
@@ -40,6 +46,7 @@ import {
     MatFormFieldModule,
     MatInputModule,
     MatProgressBarModule,
+    MatSelectModule,
   ],
   templateUrl: './collections-report.html',
   styleUrl: './collections-report.scss',
@@ -89,6 +96,49 @@ export class CollectionsReport {
       ? `${REPORTS_URL}/top-debtors`
       : undefined,
   );
+
+  /** Consumo por rango de tarifa: se consulta cuando se pide, para el mes y el servicio elegidos. */
+  protected readonly meteredServices = SERVICE_TYPES.filter((service) =>
+    METERED_SERVICES.has(service),
+  );
+  protected readonly serviceLabels = SERVICE_LABELS;
+  protected readonly rangesMonth = signal(isoDate(new Date()).slice(0, 7));
+  protected readonly rangesService = signal<ServiceType>('WATER');
+  protected readonly showRanges = signal(false);
+  protected readonly ranges = httpResource<ConsumptionRange[]>(() => {
+    const [year, month] = this.rangesMonth().split('-').map(Number);
+    if (!this.showRanges() || !this.session.organization()?.organizationId || !year || !month) {
+      return undefined;
+    }
+    return {
+      url: `${REPORTS_URL}/consumption-ranges`,
+      params: { year, month, serviceType: this.rangesService() },
+    };
+  });
+  protected readonly rangesUnit = computed(() => unitOf(this.rangesService()));
+  protected readonly rangeTotals = computed(() => {
+    const ranges = this.ranges.hasValue() ? this.ranges.value() : [];
+    return {
+      invoices: ranges.reduce((sum, range) => sum + range.invoices, 0),
+      charge: ranges.reduce((sum, range) => sum + range.charge, 0),
+    };
+  });
+
+  /** «Sin consumo», «1 a 10 m³», «Más de 20 m³». */
+  protected rangeLabel(range: ConsumptionRange): string {
+    const unit = this.rangesUnit();
+    if (range.pricePerUnit === null) {
+      return 'Sin consumo';
+    }
+    return range.upTo === null
+      ? `Más de ${range.from} ${unit}`
+      : `Más de ${range.from} y hasta ${range.upTo} ${unit}`;
+  }
+
+  /** Porcentaje entero de una parte sobre el total. */
+  protected share(part: number, total: number): number {
+    return total === 0 ? 0 : Math.round((part / total) * 100);
+  }
 
   protected readonly columns = ['paidAt', 'invoice', 'subscriber', 'period', 'method', 'amount'];
 

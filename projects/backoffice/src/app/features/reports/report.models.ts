@@ -74,3 +74,17 @@ export interface Debtor {
   /** La parte de `amount` ya vencida. */
   overdueAmount: number;
 }
+
+/** Facturas de un periodo cuyo consumo cae en un rango de la tarifa. */
+export interface ConsumptionRange {
+  from: number;
+  /** `null` en el último rango, que no tiene límite. */
+  upTo: number | null;
+  /** `null` en la fila de facturas sin consumo. */
+  pricePerUnit: number | null;
+  subscribers: number;
+  invoices: number;
+  consumption: number;
+  /** Valor del consumo facturado a quienes cayeron en el rango. */
+  charge: number;
+}
