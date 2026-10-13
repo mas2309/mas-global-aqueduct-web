@@ -1,9 +1,12 @@
 import { CurrencyPipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
@@ -35,6 +38,9 @@ type StatusFilter = PlanStatus | 'ALL';
     MatButtonToggleModule,
     MatIconModule,
     MatProgressBarModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
   ],
   templateUrl: './plan-overview.html',
   styleUrl: './plan-overview.scss',
@@ -44,6 +50,9 @@ export class PlanOverview {
   private readonly session = inject(SessionStore);
 
   protected readonly status = signal<StatusFilter>('ACTIVE');
+  /** Texto en el cuadro de búsqueda; se aplica al enviar, no en cada tecla. */
+  protected readonly searchText = signal('');
+  protected readonly query = signal('');
   protected readonly pageIndex = signal(0);
   protected readonly pageSize = signal(20);
 
@@ -60,6 +69,9 @@ export class PlanOverview {
     const status = this.status();
     if (status !== 'ALL') {
       params['status'] = status;
+    }
+    if (this.query()) {
+      params['q'] = this.query();
     }
     return { url: `${PLANS_URL}/overview`, params };
   });
@@ -89,6 +101,16 @@ export class PlanOverview {
   protected filterBy(status: StatusFilter): void {
     this.pageIndex.set(0);
     this.status.set(status);
+  }
+
+  protected search(): void {
+    this.pageIndex.set(0);
+    this.query.set(this.searchText().trim());
+  }
+
+  protected clear(): void {
+    this.searchText.set('');
+    this.search();
   }
 
   protected changePage(event: PageEvent): void {

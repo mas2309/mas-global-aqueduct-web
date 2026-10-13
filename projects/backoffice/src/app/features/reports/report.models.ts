@@ -43,3 +43,14 @@ export function isoDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
 }
+
+/** Un pago que se deshizo, con el motivo que dio quien lo reversó. */
+export interface PaymentReversal {
+  invoiceId: string;
+  number: number;
+  method: PaymentMethod;
+  /** Cuándo se había registrado el pago. */
+  paidAt: string;
+  reason: string;
+  reversedAt: string;
+}

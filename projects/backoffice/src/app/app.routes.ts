@@ -59,6 +59,14 @@ export const routes: Routes = [
                   ),
               },
               {
+                path: 'importar',
+                title: 'Importar suscriptores · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/subscribers/subscriber-import/subscriber-import').then(
+                    (m) => m.SubscriberImport,
+                  ),
+              },
+              {
                 path: 'nuevo',
                 title: 'Nuevo suscriptor · MAS Acueductos',
                 loadComponent: () =>

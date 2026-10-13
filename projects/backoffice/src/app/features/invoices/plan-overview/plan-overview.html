@@ -27,6 +27,35 @@
       <mat-button-toggle value="CANCELLED">Canceladas</mat-button-toggle>
       <mat-button-toggle value="ALL">Todas</mat-button-toggle>
     </mat-button-toggle-group>
+
+    <form class="search" role="search" (ngSubmit)="search()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Buscar por suscriptor, documento o código</mat-label>
+        <input
+          matInput
+          name="q"
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          maxlength="100"
+        />
+        @if (searchText()) {
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="clear()"
+            aria-label="Limpiar búsqueda"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <button mat-stroked-button type="submit">
+        <mat-icon>search</mat-icon>
+        Buscar
+      </button>
+    </form>
   </div>
 
   @if (overview.isLoading()) {

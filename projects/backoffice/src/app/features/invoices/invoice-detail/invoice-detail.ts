@@ -6,10 +6,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { filter, switchMap } from 'rxjs';
 import { SessionStore } from '../../../core/auth/session-store';
 import { SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
+import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { saveFile } from '../../../shared/ui/save-file';
 import { periodLabel } from '../../readings/reading.models';
 import { formatCode, METERED_SERVICES } from '../../subscribers/subscriber.models';
@@ -47,6 +49,7 @@ export class InvoiceDetail {
   private readonly dialog = inject(MatDialog);
   private readonly payments = inject(InvoicePayments);
   private readonly notifier = inject(Notifier);
+  private readonly router = inject(Router);
   protected readonly session = inject(SessionStore);
 
   /** Parámetro de ruta `:id`. */
@@ -89,6 +92,36 @@ export class InvoiceDetail {
           this.invoice.set(reopened);
           this.notifier.success(`Pago de la factura n.º ${invoice.number} reversado`);
         }
+      });
+  }
+
+  /** Solo para facturas de servicios sin medidor: las demás se retiran eliminando su lectura. */
+  protected voidInvoice(invoice: Invoice): void {
+    const data: ConfirmDialogData = {
+      title: `Anular la factura n.º ${invoice.number}`,
+      message:
+        `Se elimina la factura de ${invoice.subscriberName}. Si incluía deuda de una factura anterior, ` +
+        'esa vuelve a quedar pendiente. No se puede deshacer.',
+      confirmLabel: 'Anular factura',
+      danger: true,
+    };
+    this.dialog
+      .open(ConfirmDialog, { data, width: '440px' })
+      .afterClosed()
+      .pipe(
+        filter((confirmed) => confirmed === true),
+        switchMap(() => this.api.voidInvoice(invoice.id)),
+      )
+      .subscribe({
+        next: () => {
+          this.notifier.success(`Factura n.º ${invoice.number} anulada`);
+          void this.router.navigateByUrl('/facturas');
+        },
+        error: (error: unknown) =>
+          this.notifier.apiError(error, {
+            403: 'Solo el administrador del prestador anula facturas.',
+            422: 'Esta factura ya está pagada o incluida en una posterior: no se puede anular.',
+          }),
       });
   }
 

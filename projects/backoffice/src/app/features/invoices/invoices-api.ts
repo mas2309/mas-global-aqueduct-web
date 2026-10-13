@@ -27,6 +27,11 @@ export class InvoicesApi {
     return this.http.post<Invoice>(`${INVOICES_URL}/${invoiceId}/reverse-payment`, { reason });
   }
 
+  /** Anula una factura de un servicio sin medidor emitida por error. Solo el administrador. */
+  voidInvoice(invoiceId: string): Observable<void> {
+    return this.http.delete<void>(`${INVOICES_URL}/${invoiceId}`);
+  }
+
   /** Con valor cero se quitan los otros cobros. */
   changeOtherCharges(
     invoiceId: string,

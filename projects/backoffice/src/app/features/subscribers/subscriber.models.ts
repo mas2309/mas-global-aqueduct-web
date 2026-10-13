@@ -104,3 +104,12 @@ export function formatCode(code: number): string {
 export interface PortalLink {
   url: string | null;
 }
+
+/** Resultado de la carga inicial: con un solo error no se importa ninguna fila. */
+export interface ImportResult {
+  /** Filas con datos en el archivo. */
+  rows: number;
+  imported: number;
+  /** `line` es la línea del archivo; la 1 es el encabezado. */
+  errors: { line: number; message: string }[];
+}

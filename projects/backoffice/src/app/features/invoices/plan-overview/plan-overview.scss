@@ -25,7 +25,27 @@
 }
 
 .filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 16px;
+}
+
+.search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 280px;
+
+  mat-form-field {
+    flex: 1;
+  }
+
+  button[type='submit'] {
+    height: 56px;
+  }
 }
 
 .table-container {

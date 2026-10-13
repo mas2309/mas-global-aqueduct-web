@@ -120,4 +120,37 @@
       </div>
     }
   }
+
+  <h2 class="section-title reversals-title">Pagos reversados</h2>
+  @if (!showReversals()) {
+    <button mat-stroked-button [disabled]="!validRange()" (click)="showReversals.set(true)">
+      <mat-icon>undo</mat-icon>
+      Ver los de estas fechas
+    </button>
+  } @else if (reversals.error()) {
+    <p class="muted" role="alert">
+      No pudimos cargar los pagos reversados.
+      <button mat-button (click)="reversals.reload()">Reintentar</button>
+    </p>
+  } @else if (reversals.hasValue()) {
+    @if (reversals.value().length === 0) {
+      <p class="muted">No se reversó ningún pago en estas fechas.</p>
+    } @else {
+      <ul class="reversals">
+        @for (reversal of reversals.value(); track reversal.invoiceId + reversal.reversedAt) {
+          <li>
+            <strong>
+              Factura n.º {{ reversal.number }} ·
+              {{ reversal.reversedAt | date: 'd MMM y, h:mm a' }}
+            </strong>
+            <span>{{ reversal.reason }}</span>
+            <span class="muted">
+              Se deshizo un pago en {{ methodLabels[reversal.method].toLowerCase() }} del
+              {{ reversal.paidAt | date: 'd MMM y, h:mm a' }}
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  }
 </section>

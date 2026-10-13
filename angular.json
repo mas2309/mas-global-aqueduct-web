@@ -85,7 +85,8 @@
               "branches": 70,
               "functions": 80,
               "lines": 80
-            }
+            },
+            "setupFiles": ["projects/backoffice/src/testing/vitest-setup.ts"]
           }
         },
         "lint": {

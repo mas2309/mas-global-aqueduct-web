@@ -1,0 +1,100 @@
+<section class="page narrow">
+  <a mat-button routerLink="/suscriptores" class="back">
+    <mat-icon>arrow_back</mat-icon>
+    Suscriptores
+  </a>
+
+  <header class="page-header">
+    <h1>Importar suscriptores</h1>
+  </header>
+
+  <mat-card appearance="outlined">
+    <mat-card-content>
+      <p>
+        Carga de una vez los suscriptores desde un archivo CSV (se puede guardar desde Excel). Cada
+        fila crea el suscriptor con su predio y su servicio.
+      </p>
+      <ul class="notes">
+        <li>Solo <strong>nombre</strong> y <strong>direccion</strong> son obligatorias.</li>
+        <li>
+          <strong>lectura_inicial</strong> es la que trae hoy el medidor: de ahí parte la primera
+          lectura.
+        </li>
+        <li>
+          <strong>deuda_anterior</strong> se cobra completa en la primera factura;
+          <strong>financiacion_saldo</strong> se reparte en las cuotas indicadas.
+        </li>
+        <li>Si una fila tiene un error, no se importa ninguna: corrige el archivo y vuelve.</li>
+        <li>
+          Importar dos veces el mismo archivo duplica los suscriptores que no tengan documento.
+        </li>
+      </ul>
+      <div class="actions">
+        <button mat-button (click)="downloadTemplate()">
+          <mat-icon>download</mat-icon>
+          Descargar plantilla
+        </button>
+        <input
+          #picker
+          type="file"
+          accept=".csv,text/csv"
+          class="cdk-visually-hidden"
+          aria-label="Archivo CSV de suscriptores"
+          (change)="chooseFile($event)"
+        />
+        <button mat-stroked-button [disabled]="busy()" (click)="picker.click()">
+          <mat-icon>upload_file</mat-icon>
+          Elegir archivo
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  @if (busy()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Procesando archivo" />
+  }
+
+  @if (review(); as result) {
+    <div aria-live="polite">
+      @if (imported() !== null) {
+        <div class="state">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          <p>Se importaron {{ imported() }} suscriptores.</p>
+          <a mat-flat-button routerLink="/suscriptores">Ver suscriptores</a>
+        </div>
+      } @else if (result.errors.length === 0) {
+        <div class="state">
+          <p>
+            <strong>{{ file()?.name }}</strong> está bien: {{ result.rows }}
+            {{ result.rows === 1 ? 'suscriptor' : 'suscriptores' }} para importar.
+          </p>
+          <button mat-flat-button [disabled]="busy() || result.rows === 0" (click)="importFile()">
+            Importar
+          </button>
+        </div>
+      } @else {
+        <h2 class="section-title">{{ file()?.name }} tiene errores: no se importó nada</h2>
+        <table class="errors">
+          <caption class="cdk-visually-hidden">
+            Errores del archivo
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Línea</th>
+              <th scope="col">Problema</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (error of result.errors; track error.line) {
+              <tr>
+                <td>{{ error.line }}</td>
+                <td>{{ error.message }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <p class="muted">La línea 1 es el encabezado. Se muestran máximo 50 errores.</p>
+      }
+    </div>
+  }
+</section>

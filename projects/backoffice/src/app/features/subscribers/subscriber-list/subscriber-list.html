@@ -1,12 +1,20 @@
 <section class="page">
   <header class="page-header">
     <h1>Suscriptores</h1>
-    @if (session.canOperateOrganization()) {
-      <a mat-flat-button routerLink="/suscriptores/nuevo">
-        <mat-icon>person_add</mat-icon>
-        Nuevo suscriptor
-      </a>
-    }
+    <div class="actions">
+      @if (session.canAdministerOrganization()) {
+        <a mat-button routerLink="/suscriptores/importar">
+          <mat-icon>upload_file</mat-icon>
+          Importar
+        </a>
+      }
+      @if (session.canOperateOrganization()) {
+        <a mat-flat-button routerLink="/suscriptores/nuevo">
+          <mat-icon>person_add</mat-icon>
+          Nuevo suscriptor
+        </a>
+      }
+    </div>
   </header>
 
   <form class="search" role="search" (ngSubmit)="search()">

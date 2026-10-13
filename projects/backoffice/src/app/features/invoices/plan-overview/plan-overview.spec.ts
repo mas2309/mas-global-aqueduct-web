@@ -2,7 +2,7 @@ import { TestRequest } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PageEvent } from '@angular/material/paginator';
 import { plan } from '../../../../testing/billing-fixtures';
-import { PageTestContext, settle, setUpPage, textOf } from '../../../../testing/setup';
+import { click, PageTestContext, settle, setUpPage, textOf, type } from '../../../../testing/setup';
 import { SUBSCRIBER_ID } from '../../../../testing/subscriber-fixtures';
 import { PlanOverview as Overview, PlanStatus, PlanSummary } from '../invoice.models';
 import { PLANS_URL } from '../invoices-api';
@@ -95,6 +95,25 @@ describe('PlanOverview', () => {
     expectOverview({ status: null }).flush(overview([]));
     await settle();
     expect(textOf(element)).toContain('No hay financiaciones con este filtro');
+  });
+
+  it('busca por suscriptor y limpia la búsqueda', async () => {
+    await open();
+    expectOverview({ q: null }).flush(overview([summary()], 45));
+    await settle();
+    actions.changePage({ pageIndex: 1, pageSize: 20, length: 45 });
+    await settle();
+    expectOverview({ page: '1' }).flush(overview([summary()], 45));
+
+    type(element, 'input[type=search]', '  gómez ');
+    click(element, 'form.search button[type=submit]');
+    await settle();
+    expectOverview({ q: 'gómez', page: '0' }).flush(overview([summary()]));
+    await settle();
+
+    click(element, 'button[aria-label="Limpiar búsqueda"]');
+    await settle();
+    expectOverview({ q: null }).flush(overview([summary()]));
   });
 
   it('informa si las financiaciones no cargan', async () => {

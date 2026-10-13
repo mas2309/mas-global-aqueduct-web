@@ -149,6 +149,12 @@
           Reversar pago
         </button>
       }
+      @if (bill.readingId === null && isOpen(bill) && session.canAdministerOrganization()) {
+        <button mat-button (click)="voidInvoice(bill)">
+          <mat-icon>delete</mat-icon>
+          Anular factura
+        </button>
+      }
       @if (canCollect) {
         <button mat-button (click)="editOtherCharges(bill)">
           <mat-icon>add_card</mat-icon>

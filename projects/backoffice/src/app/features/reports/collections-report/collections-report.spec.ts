@@ -138,6 +138,60 @@ describe('CollectionsReport', () => {
     expect(button('Recaudo para Excel')?.disabled).toBe(true);
   });
 
+  it('muestra los pagos reversados solo cuando se piden', async () => {
+    await open();
+    expectCollections(TODAY, TODAY).flush(report([]));
+    await settle();
+    const reversalsUrl = `${REPORTS_URL}/payment-reversals`;
+    context.http.expectNone((request) => request.url === reversalsUrl);
+
+    button('Ver los de estas fechas')?.click();
+    await settle();
+    context.http
+      .expectOne((request) => request.url === reversalsUrl && request.params.get('from') === TODAY)
+      .flush([
+        {
+          invoiceId: INVOICE_ID,
+          number: 12,
+          method: 'CASH',
+          paidAt: '2026-10-12T15:00:00Z',
+          reason: 'Se cobró al predio equivocado',
+          reversedAt: '2026-10-12T16:00:00Z',
+        },
+      ]);
+    await settle();
+    expect(textOf(element)).toContain('Factura n.º 12');
+    expect(textOf(element)).toContain('Se cobró al predio equivocado');
+    expect(textOf(element)).toContain('Se deshizo un pago en efectivo');
+
+    // Al cambiar las fechas se vuelven a consultar; sin reversos lo dice, y si falla deja reintentar
+    button('Este mes')?.click();
+    await settle();
+    context.http
+      .match((request) => request.url === COLLECTIONS_URL)
+      .forEach((request) => request.flush(report([])));
+    context.http
+      .match((request) => request.url === reversalsUrl)
+      .forEach((request) => request.flush([]));
+    await settle();
+    actions.from.set('2026-01-01');
+    actions.to.set('2026-01-31');
+    await settle();
+    expectCollections('2026-01-01', '2026-01-31').flush(report([]));
+    context.http.expectOne((request) => request.url === reversalsUrl).flush([]);
+    await settle();
+    expect(textOf(element)).toContain('No se reversó ningún pago en estas fechas');
+
+    actions.to.set('2026-02-15');
+    await settle();
+    expectCollections('2026-01-01', '2026-02-15').flush(report([]));
+    context.http
+      .expectOne((request) => request.url === reversalsUrl)
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    await settle();
+    expect(textOf(element)).toContain('No pudimos cargar los pagos reversados');
+  });
+
   it('descarga el recaudo y la cartera para Excel', async () => {
     await open();
     expectCollections(TODAY, TODAY).flush(report([payment()]));

@@ -14,7 +14,13 @@ import { Notifier } from '../../../core/ui/notifier';
 import { saveFile } from '../../../shared/ui/save-file';
 import { PAYMENT_METHOD_LABELS } from '../../invoices/invoice.models';
 import { periodLabel } from '../../readings/reading.models';
-import { CollectionEntry, Collections, isoDate, REPORTS_URL } from '../report.models';
+import {
+  CollectionEntry,
+  Collections,
+  isoDate,
+  PaymentReversal,
+  REPORTS_URL,
+} from '../report.models';
 
 /**
  * Informe de recaudo: los pagos recibidos entre dos fechas con el total por medio de pago (sirve como cierre de
@@ -57,6 +63,23 @@ export class CollectionsReport {
     }
     return { url: `${REPORTS_URL}/collections`, params: { from: this.from(), to: this.to() } };
   });
+
+  /** Los pagos reversados del rango se consultan solo cuando se piden. */
+  protected readonly showReversals = signal(false);
+  protected readonly reversals = httpResource<PaymentReversal[]>(() => {
+    if (
+      !this.showReversals() ||
+      !this.session.organization()?.organizationId ||
+      !this.validRange()
+    ) {
+      return undefined;
+    }
+    return {
+      url: `${REPORTS_URL}/payment-reversals`,
+      params: { from: this.from(), to: this.to() },
+    };
+  });
+  protected readonly methodLabels = PAYMENT_METHOD_LABELS;
 
   protected readonly columns = ['paidAt', 'invoice', 'subscriber', 'period', 'method', 'amount'];
 

@@ -178,6 +178,45 @@ describe('InvoiceDetail', () => {
     expect(button('Pago en efectivo')).toBeDefined();
   });
 
+  it('el administrador anula una factura sin lectura y vuelve al listado', async () => {
+    const unmetered = invoice({ serviceType: 'SANITATION', readingId: null, consumption: 0 });
+    await open(unmetered, 'ORG_ADMIN');
+
+    dialogResult = false;
+    button('Anular factura')?.click();
+    context.http.expectNone(INVOICE_URL);
+
+    dialogResult = true;
+    button('Anular factura')?.click();
+    context.http
+      .expectOne(INVOICE_URL)
+      .flush({ status: 422 }, { status: 422, statusText: 'Unprocessable' });
+    await settle();
+    expect(document.body.textContent).toContain('no se puede anular');
+
+    button('Anular factura')?.click();
+    const request = context.http.expectOne(INVOICE_URL);
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+    await settle();
+
+    expect(document.body.textContent).toContain('Factura n.º 12 anulada');
+    expect(context.router.navigateByUrl).toHaveBeenCalledWith('/facturas');
+  });
+
+  it('no se anulan las facturas con lectura, las pagadas, ni por quien no administra', async () => {
+    await open(invoice(), 'ORG_ADMIN');
+    expect(button('Anular factura')).toBeUndefined();
+    TestBed.resetTestingModule();
+
+    await open(invoice({ readingId: null, state: 'PAID', paymentMethod: 'CASH' }), 'ORG_ADMIN');
+    expect(button('Anular factura')).toBeUndefined();
+    TestBed.resetTestingModule();
+
+    await open(invoice({ readingId: null }), 'OPERATOR');
+    expect(button('Anular factura')).toBeUndefined();
+  });
+
   it('solo el administrador ve la opción de reversar, y solo en facturas pagadas', async () => {
     await open(invoice({ state: 'PAID', paymentMethod: 'CASH' }), 'OPERATOR');
     expect(button('Reversar pago')).toBeUndefined();
