@@ -124,6 +124,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'finanzas',
+            title: 'Ingresos y gastos · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/finance/movement-list/movement-list').then((m) => m.MovementList),
+          },
+          {
             path: 'tarifas',
             title: 'Tarifas · MAS Acueductos',
             canActivate: [organizationGuard],

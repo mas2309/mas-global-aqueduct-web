@@ -1,0 +1,89 @@
+<h2 mat-dialog-title>{{ movement ? 'Corregir movimiento' : 'Registrar ingreso o gasto' }}</h2>
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    <mat-button-toggle-group formControlName="type" aria-label="Tipo de movimiento" class="type">
+      <mat-button-toggle value="EXPENSE">Gasto</mat-button-toggle>
+      <mat-button-toggle value="INCOME">Ingreso</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha</mat-label>
+        <input matInput type="date" formControlName="date" />
+        @if (form.controls.date.invalid) {
+          <mat-error>Indica la fecha</mat-error>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Valor</mat-label>
+        <span matTextPrefix>$&nbsp;</span>
+        <input matInput type="number" min="1" formControlName="amount" inputmode="numeric" />
+        @if (form.controls.amount.invalid) {
+          <mat-error>Debe ser mayor que cero</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Categoría</mat-label>
+      <input
+        matInput
+        formControlName="category"
+        maxlength="60"
+        [matAutocomplete]="suggestions"
+        autocomplete="off"
+      />
+      <mat-autocomplete #suggestions="matAutocomplete">
+        @for (category of categories(); track category) {
+          <mat-option [value]="category">{{ category }}</mat-option>
+        }
+      </mat-autocomplete>
+      <mat-hint>Elige una o escribe la tuya</mat-hint>
+      @if (form.controls.category.invalid) {
+        <mat-error>Indica la categoría</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descripción</mat-label>
+      <input matInput formControlName="description" maxlength="200" autocomplete="off" />
+      @if (form.controls.description.invalid) {
+        <mat-error>Describe el ingreso o el gasto</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="attachment">
+      <input
+        #picker
+        type="file"
+        accept="application/pdf,image/jpeg,image/png"
+        class="cdk-visually-hidden"
+        aria-label="Archivo de soporte"
+        (change)="chooseFile($event)"
+      />
+      <button mat-stroked-button type="button" (click)="picker.click()">
+        <mat-icon>attach_file</mat-icon>
+        {{ movement?.attachment ? 'Cambiar soporte' : 'Adjuntar soporte' }}
+      </button>
+      <span class="muted">
+        @if (file(); as chosen) {
+          {{ chosen.name }}
+        } @else if (movement?.attachment; as current) {
+          Actual: {{ current.fileName }}
+        } @else {
+          PDF, JPG o PNG de hasta 5 MB (opcional)
+        }
+      </span>
+    </div>
+
+    <div aria-live="assertive">
+      @if (error(); as message) {
+        <p class="error">{{ message }}</p>
+      }
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="saving()">Guardar</button>
+  </mat-dialog-actions>
+</form>

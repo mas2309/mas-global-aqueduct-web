@@ -36,6 +36,7 @@ describe('Shell', () => {
     expect(text).toContain('Facturas');
     expect(text).toContain('Financiaciones');
     expect(text).toContain('Informes');
+    expect(text).toContain('Ingresos y gastos');
     expect(text).toContain('Tarifas');
     expect(text).not.toContain('Prestadores');
     expect(text).not.toContain('Usuarios');

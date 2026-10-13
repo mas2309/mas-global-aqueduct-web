@@ -1,0 +1,25 @@
+.type {
+  margin: 4px 0 16px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+mat-form-field {
+  margin-bottom: 4px;
+}
+
+.attachment {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 12px;
+
+  span {
+    overflow-wrap: anywhere;
+  }
+}

@@ -1,0 +1,186 @@
+<section class="page">
+  <header class="page-header">
+    <h1>Ingresos y gastos</h1>
+    <div class="actions">
+      <button mat-stroked-button [disabled]="!validRange()" (click)="export()">
+        <mat-icon>download</mat-icon>
+        Para Excel
+      </button>
+      @if (session.canOperateOrganization()) {
+        <button mat-flat-button (click)="edit(null)">
+          <mat-icon>add</mat-icon>
+          Registrar
+        </button>
+      }
+    </div>
+  </header>
+
+  <div class="filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Desde</mat-label>
+      <input
+        matInput
+        type="date"
+        name="from"
+        [ngModel]="from()"
+        (ngModelChange)="changeRange($event, to())"
+      />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>Hasta</mat-label>
+      <input
+        matInput
+        type="date"
+        name="to"
+        [ngModel]="to()"
+        (ngModelChange)="changeRange(from(), $event)"
+      />
+    </mat-form-field>
+    <mat-button-toggle-group
+      [value]="type()"
+      (change)="filterBy($event.value)"
+      aria-label="Tipo de movimiento"
+    >
+      <mat-button-toggle value="ALL">Todos</mat-button-toggle>
+      <mat-button-toggle value="INCOME">Ingresos</mat-button-toggle>
+      <mat-button-toggle value="EXPENSE">Gastos</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  @if (!validRange()) {
+    <p class="error" role="alert">
+      Elige las dos fechas; «Desde» no puede ser posterior a «Hasta».
+    </p>
+  }
+
+  @if (validRange() && balance.hasValue()) {
+    @let totals = balance.value();
+    <dl class="summary">
+      <div class="tile">
+        <dt>Recaudo de facturas</dt>
+        <dd>{{ totals.invoiceCollections | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+      </div>
+      <div class="tile">
+        <dt>Otros ingresos</dt>
+        <dd>{{ totals.otherIncome | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+      </div>
+      <div class="tile">
+        <dt>Gastos</dt>
+        <dd>{{ totals.expenses | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+      </div>
+      <div class="tile">
+        <dt>Saldo del periodo</dt>
+        <dd>{{ totals.balance | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+        <span class="muted">
+          {{ totals.balance < 0 ? 'Se gastó más de lo que entró' : 'Ingresos menos gastos' }}
+        </span>
+      </div>
+    </dl>
+  }
+
+  @if (movements.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando movimientos" />
+  }
+
+  @if (movements.error() || balance.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar los ingresos y gastos.</p>
+      <p class="muted">El rango no puede pasar de un año.</p>
+      <button mat-stroked-button (click)="movements.reload(); balance.reload()">Reintentar</button>
+    </div>
+  } @else if (validRange() && movements.hasValue()) {
+    @if (movements.value().totalItems === 0) {
+      <div class="state">
+        <mat-icon aria-hidden="true">account_balance_wallet</mat-icon>
+        <p>No hay movimientos en estas fechas.</p>
+        <p class="muted">
+          Registra aquí los gastos y los ingresos distintos de las facturas. El recaudo de facturas
+          se suma solo.
+        </p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table mat-table [dataSource]="movements.value().items" aria-label="Ingresos y gastos">
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let movement" class="nowrap">
+              {{ movement.date | date: 'd MMM y' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let movement">
+              <span class="chip" [attr.data-state]="movement.type">{{ typeOf(movement) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef>Categoría</th>
+            <td mat-cell *matCellDef="let movement">{{ movement.category }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Descripción</th>
+            <td mat-cell *matCellDef="let movement">{{ movement.description }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef class="amount">Valor</th>
+            <td mat-cell *matCellDef="let movement" class="amount">
+              {{ movement.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>
+              <span class="cdk-visually-hidden">Acciones</span>
+            </th>
+            <td mat-cell *matCellDef="let movement" class="actions-cell">
+              @if (movement.attachment) {
+                <button
+                  mat-icon-button
+                  (click)="downloadAttachment(movement)"
+                  matTooltip="Descargar soporte"
+                  [attr.aria-label]="'Descargar soporte de ' + movement.description"
+                >
+                  <mat-icon>attach_file</mat-icon>
+                </button>
+              }
+              @if (session.canOperateOrganization()) {
+                <button
+                  mat-icon-button
+                  (click)="edit(movement)"
+                  matTooltip="Corregir"
+                  [attr.aria-label]="'Corregir ' + movement.description"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  (click)="remove(movement)"
+                  matTooltip="Eliminar"
+                  [attr.aria-label]="'Eliminar ' + movement.description"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="movements.value().totalItems"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="changePage($event)"
+        aria-label="Páginas de movimientos"
+      />
+    }
+  }
+</section>
