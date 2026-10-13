@@ -4,14 +4,16 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve backoffice",
-    "build": "ng build backoffice",
+    "build": "ng build backoffice && ng build portal",
     "watch": "ng build backoffice --watch --configuration development",
     "test": "ng test backoffice",
-    "test:ci": "ng test backoffice --watch=false --coverage",
-    "lint": "ng lint backoffice",
+    "test:ci": "ng test backoffice --watch=false --coverage && ng test portal --watch=false --coverage",
+    "lint": "ng lint backoffice && ng lint portal",
     "format": "prettier --write \"projects/**/*.{ts,html,scss,json}\"",
     "format:check": "prettier --check \"projects/**/*.{ts,html,scss,json}\"",
-    "verify": "npm run format:check && npm run lint && npm run test:ci && npm run build"
+    "verify": "npm run format:check && npm run lint && npm run test:ci && npm run build",
+    "start:portal": "ng serve portal",
+    "test:portal": "ng test portal"
   },
   "private": true,
   "packageManager": "npm@11.20.0",

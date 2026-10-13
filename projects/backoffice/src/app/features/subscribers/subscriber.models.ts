@@ -99,3 +99,8 @@ export const METERED_SERVICES: ReadonlySet<ServiceType> = new Set<ServiceType>([
 export function formatCode(code: number): string {
   return String(code).padStart(6, '0');
 }
+
+/** Enlace del portal público del suscriptor; `null` si el portal no está configurado en el ambiente. */
+export interface PortalLink {
+  url: string | null;
+}

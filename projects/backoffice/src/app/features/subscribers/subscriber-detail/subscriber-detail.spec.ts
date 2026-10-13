@@ -70,6 +70,9 @@ describe('SubscriberDetail', () => {
     await settle();
     // La ficha incluye las financiaciones del suscriptor
     context.http.expectOne(`${PLANS_URL}?subscriberId=${SUBSCRIBER_ID}`).flush([]);
+    context.http
+      .expectOne(`${SUBSCRIBER_URL}/portal-link`)
+      .flush({ url: 'https://portal.test/p/token' });
     await settle();
   }
 

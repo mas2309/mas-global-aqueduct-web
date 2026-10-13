@@ -2,7 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ServiceType } from '../organizations/organization.models';
-import { Property, PropertyRequest, Subscriber, SubscriberRequest } from './subscriber.models';
+import {
+  PortalLink,
+  Property,
+  PropertyRequest,
+  Subscriber,
+  SubscriberRequest,
+} from './subscriber.models';
 
 export const SUBSCRIBERS_URL = '/api/v1/subscribers';
 export const PROPERTIES_URL = '/api/v1/properties';
@@ -28,6 +34,11 @@ export class SubscribersApi {
 
   activate(id: string): Observable<Subscriber> {
     return this.http.post<Subscriber>(`${SUBSCRIBERS_URL}/${id}/activate`, null);
+  }
+
+  /** El enlace anterior y el QR de las facturas ya impresas dejan de funcionar. */
+  rotatePortalLink(id: string): Observable<PortalLink> {
+    return this.http.post<PortalLink>(`${SUBSCRIBERS_URL}/${id}/portal-link/rotate`, null);
   }
 
   addProperty(subscriberId: string, request: PropertyRequest): Observable<Property> {

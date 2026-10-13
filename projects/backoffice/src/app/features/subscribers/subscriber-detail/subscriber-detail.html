@@ -191,5 +191,7 @@
       [subscriberId]="person.id"
       [editable]="canOperate && person.status === 'ACTIVE'"
     />
+
+    <aq-portal-link [subscriberId]="person.id" [editable]="canOperate" />
   }
 </section>

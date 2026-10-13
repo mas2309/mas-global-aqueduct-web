@@ -15,6 +15,7 @@ import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dia
 import { InstallmentPlans } from '../../invoices/installment-plans/installment-plans';
 import { Organization, SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
 import { MeterDialog, MeterDialogData } from '../meter-dialog/meter-dialog';
+import { PortalLink } from '../portal-link/portal-link';
 import { PropertyDialog, PropertyDialogData } from '../property-dialog/property-dialog';
 import {
   DOCUMENT_TYPE_LABELS,
@@ -39,6 +40,7 @@ interface ServiceRow {
   imports: [
     RouterLink,
     InstallmentPlans,
+    PortalLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,

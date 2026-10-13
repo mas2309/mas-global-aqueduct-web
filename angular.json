@@ -3,9 +3,7 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "schematicCollections": [
-      "angular-eslint"
-    ],
+    "schematicCollections": ["angular-eslint"],
     "analytics": "70272e25-da23-4afb-9b64-c9dda4d956ca"
   },
   "newProjectRoot": "projects",
@@ -94,6 +92,94 @@
           "builder": "@angular-eslint/builder:lint",
           "options": {
             "lintFilePatterns": ["projects/backoffice/**/*.ts", "projects/backoffice/**/*.html"]
+          }
+        }
+      }
+    },
+    "portal": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss",
+          "changeDetection": "OnPush"
+        }
+      },
+      "root": "projects/portal",
+      "sourceRoot": "projects/portal/src",
+      "prefix": "aq",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/portal/src/main.ts",
+            "tsConfig": "projects/portal/tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/portal/public"
+              }
+            ],
+            "styles": ["projects/portal/src/styles.scss"]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "300kB",
+                  "maximumError": "400kB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4300,
+            "proxyConfig": "projects/portal/proxy.conf.json"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "portal:build:production"
+            },
+            "development": {
+              "buildTarget": "portal:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "coverageInclude": ["projects/portal/src/app/**/*.ts"],
+            "coverageExclude": ["**/*.spec.ts", "**/*.routes.ts", "**/app.config.ts"],
+            "coverageReporters": ["text-summary", "html", "lcov"],
+            "coverageThresholds": {
+              "statements": 80,
+              "branches": 70,
+              "functions": 80,
+              "lines": 80
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["projects/portal/**/*.ts", "projects/portal/**/*.html"]
           }
         }
       }

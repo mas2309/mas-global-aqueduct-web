@@ -1,0 +1,65 @@
+// Portal del suscriptor: sin librería de componentes ni fuentes externas, para que abra rápido con mala señal.
+// Los colores se adaptan al modo claro/oscuro del sistema.
+:root {
+  color-scheme: light dark;
+  --surface: light-dark(#ffffff, #1b1f24);
+  --background: light-dark(#f4f6f8, #111417);
+  --text: light-dark(#1a1c1e, #e3e5e8);
+  --muted: light-dark(#5a6068, #a5abb3);
+  --outline: light-dark(#d5d9de, #3a4048);
+  --accent: light-dark(#005cbb, #a8c7fa);
+  --ok-surface: light-dark(#dcf3e3, #1e3a29);
+  --warning-surface: light-dark(#fdebc8, #4a3a12);
+  --danger-surface: light-dark(#fbdcd9, #55211d);
+  --neutral-surface: light-dark(#e6e9ed, #2c3138);
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  line-height: 1.4;
+  background: var(--background);
+  color: var(--text);
+}
+
+.page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.notice {
+  padding: 24px 16px;
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: center;
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0 0 12px;
+  }
+
+  button {
+    padding: 10px 20px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+}

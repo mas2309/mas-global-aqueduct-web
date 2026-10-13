@@ -1,0 +1,100 @@
+<main class="page">
+  @if (statement.isLoading() && !statement.hasValue()) {
+    <p class="notice" aria-live="polite">Cargando tus facturas…</p>
+  }
+
+  @switch (failure()) {
+    @case ('INVALID_LINK') {
+      <div class="notice" role="alert">
+        <h1>Este enlace ya no es válido</h1>
+        <p>
+          Puede que tu prestador lo haya cambiado. Escanea el código QR de tu factura más reciente o
+          pídele el enlace nuevo.
+        </p>
+      </div>
+    }
+    @case ('TOO_MANY_REQUESTS') {
+      <div class="notice" role="alert">
+        <h1>Demasiadas consultas</h1>
+        <p>Espera un minuto y vuelve a intentarlo.</p>
+        <button type="button" (click)="statement.reload()">Reintentar</button>
+      </div>
+    }
+    @case ('UNAVAILABLE') {
+      <div class="notice" role="alert">
+        <h1>No pudimos cargar tus facturas</h1>
+        <p>Revisa tu conexión a internet y vuelve a intentarlo.</p>
+        <button type="button" (click)="statement.reload()">Reintentar</button>
+      </div>
+    }
+  }
+
+  @if (!failure() && statement.hasValue()) {
+    @let account = statement.value();
+
+    <header class="account">
+      <p class="organization">{{ account.organizationName }}</p>
+      <h1>{{ account.subscriberName }}</h1>
+      <p class="muted">Código de suscriptor {{ account.subscriberCode }}</p>
+    </header>
+
+    <section class="summary" [class.clear]="payable().length === 0" aria-live="polite">
+      @if (payable().length === 0) {
+        <p class="amount">Estás al día</p>
+        <p>No tienes facturas por pagar.</p>
+      } @else {
+        <p>
+          {{
+            payable().length === 1
+              ? 'Tienes 1 factura por pagar'
+              : 'Tienes ' + payable().length + ' facturas por pagar'
+          }}
+        </p>
+        <p class="amount">{{ debt() | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</p>
+      }
+    </section>
+
+    <h2>Tus facturas</h2>
+    <ul class="invoices">
+      @for (invoice of account.invoices; track invoice.id) {
+        <li class="invoice">
+          <div class="what">
+            <strong>{{ periodLabel(invoice) }}</strong>
+            <span class="muted">
+              {{ serviceLabels[invoice.serviceType] }} · Factura n.º {{ invoice.number }}
+            </span>
+            @if (unitOf(invoice.serviceType); as unit) {
+              <span class="muted">Consumo: {{ invoice.consumption }} {{ unit }}</span>
+            }
+          </div>
+          <div class="value">
+            <span class="total">
+              {{ invoice.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+            </span>
+            <span class="chip" [attr.data-state]="invoice.state">
+              {{ stateLabels[invoice.state] }}
+            </span>
+          </div>
+          <div class="foot">
+            <span class="muted">
+              @switch (invoice.state) {
+                @case ('PAID') {
+                  Pagada el {{ invoice.paidAt | date: 'longDate' }}
+                }
+                @case ('CARRIED') {
+                  Su valor está incluido en la factura siguiente
+                }
+                @default {
+                  Paga hasta el {{ invoice.dueDate | date: 'longDate' }}
+                }
+              }
+            </span>
+            <a [href]="pdfUrl(invoice)" target="_blank" rel="noopener">Ver factura (PDF)</a>
+          </div>
+        </li>
+      } @empty {
+        <li class="notice">Todavía no tienes facturas.</li>
+      }
+    </ul>
+  }
+</main>
