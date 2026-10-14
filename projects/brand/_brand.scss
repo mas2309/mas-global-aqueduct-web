@@ -1,0 +1,38 @@
+// Marca MAS Solutions, compartida por el backoffice y el portal. Sigue la web corporativa (massolution.org):
+// verde profundo, dorado de acento, tipografía del sistema y solo modo claro.
+
+$green: #1a5632; // principal: botones, enlaces, encabezados
+$green-light: #217a45; // hover
+$green-dark: #0d2e1a; // fin del degradado
+$green-tint: #e8f5ee; // fondos suaves: ítem activo, estados
+$gold: #b8960c; // acento decorativo; como texto sobre blanco no llega a 4.5:1
+$gold-text: #7a6308; // dorado legible sobre blanco
+$gold-tint: #f7f0d4;
+$ink: #212529;
+$muted: #5c6670;
+$line: #dee2e6;
+$surface: #f8f9fa;
+$danger: #c0392b;
+
+$gradient: linear-gradient(135deg, $green 0%, $green-dark 100%);
+
+$font:
+  'Segoe UI',
+  system-ui,
+  -apple-system,
+  Roboto,
+  'Helvetica Neue',
+  Arial,
+  sans-serif;
+
+// Esquinas sobrias, como los botones de la web corporativa
+$radius: 6px;
+$radius-lg: 12px;
+
+// Icono de la marca, como fondo de un elemento decorativo
+@mixin mark($size) {
+  flex: none;
+  width: $size;
+  height: $size;
+  background: url('./logo/mas-icono.svg') center / contain no-repeat;
+}

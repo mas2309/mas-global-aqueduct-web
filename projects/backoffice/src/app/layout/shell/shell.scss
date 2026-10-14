@@ -1,25 +1,54 @@
+@use '@angular/material' as mat;
+@use 'brand/brand';
+
 :host {
   display: flex;
   flex-direction: column;
   height: 100vh;
 }
 
+// Encabezado de la marca: el degradado verde de la web corporativa, texto e íconos en blanco
 .toolbar {
   position: sticky;
   top: 0;
   z-index: 2;
   gap: 8px;
-  background: var(--mat-sys-surface-container);
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  background: brand.$gradient;
+  @include mat.toolbar-overrides(
+    (
+      container-background-color: transparent,
+      container-text-color: #fff,
+    )
+  );
+  @include mat.icon-button-overrides(
+    (
+      icon-color: #fff,
+    )
+  );
+  @include mat.button-overrides(
+    (
+      outlined-label-text-color: #fff,
+      outlined-outline-color: rgb(255 255 255 / 60%),
+    )
+  );
+
+  // El contorno verde del foco no se ve sobre el degradado
+  :focus-visible {
+    outline-color: #fff;
+  }
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--mat-sys-primary);
+  gap: 10px;
+  color: #fff;
   text-decoration: none;
-  font: var(--mat-sys-title-medium);
+  font: 600 1.25rem / 1 brand.$font;
+}
+
+.mark {
+  @include brand.mark(32px);
 }
 
 .spacer {

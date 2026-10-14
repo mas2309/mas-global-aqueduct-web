@@ -1,16 +1,42 @@
 @use '@angular/material' as mat;
+@use 'brand/brand';
+@use 'theme-colors';
 
-// Tema Material 3: azul agua. Se adapta al modo claro/oscuro del sistema.
+// Tema Material 3 con los colores de la web corporativa: verde profundo y dorado de acento (tertiary). Las
+// paletas salen de `ng generate @angular/material:theme-color` (_theme-colors.scss). Solo modo claro, como la web.
 html {
-  color-scheme: light dark;
+  color-scheme: light;
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$cyan-palette,
+        theme-type: light,
+        primary: theme-colors.$primary-palette,
+        tertiary: theme-colors.$tertiary-palette,
       ),
-      typography: Roboto,
+      typography: brand.$font,
       density: 0,
+    )
+  );
+  // Los contenedores tonales de Material salen en tonos pastel; se cambian por el verde exacto de la marca y
+  // tintes suaves, para un aspecto más sobrio
+  @include mat.theme-overrides(
+    (
+      primary: brand.$green,
+      primary-container: brand.$green-tint,
+      on-primary-container: brand.$green,
+      secondary-container: brand.$green-tint,
+      on-secondary-container: brand.$green-dark,
+      tertiary-container: brand.$gold-tint,
+      on-tertiary-container: brand.$gold-text,
+    )
+  );
+  @include mat.button-overrides(
+    (
+      filled-container-shape: brand.$radius,
+      outlined-container-shape: brand.$radius,
+      protected-container-shape: brand.$radius,
+      text-container-shape: brand.$radius,
+      tonal-container-shape: brand.$radius,
     )
   );
 }
@@ -22,8 +48,8 @@ body {
 
 body {
   margin: 0;
-  font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background: var(--mat-sys-surface-container-lowest);
+  font-family: brand.$font;
+  background: brand.$surface;
   color: var(--mat-sys-on-surface);
 }
 
@@ -54,6 +80,7 @@ body {
   h1 {
     margin: 0;
     font: var(--mat-sys-headline-small);
+    color: brand.$green;
   }
 }
 
