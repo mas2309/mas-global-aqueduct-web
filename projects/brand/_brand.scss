@@ -1,5 +1,5 @@
 // Marca MAS Solutions, compartida por el backoffice y el portal. Sigue la web corporativa (massolution.org):
-// verde profundo, dorado de acento, tipografía del sistema y solo modo claro.
+// verde profundo, dorado de acento y tipografía del sistema. Modo claro y oscuro según el sistema.
 
 $green: #1a5632; // principal: botones, enlaces, encabezados
 $green-light: #217a45; // hover
@@ -13,6 +13,18 @@ $muted: #5c6670;
 $line: #dee2e6;
 $surface: #f8f9fa;
 $danger: #c0392b;
+
+// Modo oscuro: fondos grises neutros y un verde medio legible (5.9:1 sobre el fondo), sin tonos pastel
+$dark-green: #4caf7a;
+$dark-green-tint: #1f3a2b;
+$dark-green-tint-text: #c8e6d3;
+$dark-gold-tint: #3b3218;
+$dark-gold-tint-text: #f0d98a;
+$dark-surface: #1e2124;
+$dark-background: #16181a;
+$dark-ink: #e9ecef;
+$dark-muted: #adb5bd;
+$dark-line: #3a3f44;
 
 $gradient: linear-gradient(135deg, $green 0%, $green-dark 100%);
 

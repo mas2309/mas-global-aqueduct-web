@@ -3,13 +3,14 @@
 @use 'theme-colors';
 
 // Tema Material 3 con los colores de la web corporativa: verde profundo y dorado de acento (tertiary). Las
-// paletas salen de `ng generate @angular/material:theme-color` (_theme-colors.scss). Solo modo claro, como la web.
+// paletas salen de `ng generate @angular/material:theme-color` (_theme-colors.scss), con neutros grises para
+// que el modo oscuro sea un gris normal. Sigue el modo claro/oscuro del sistema; al declararlo, Chrome tampoco
+// oscurece la página por su cuenta.
 html {
-  color-scheme: light;
+  color-scheme: light dark;
   @include mat.theme(
     (
       color: (
-        theme-type: light,
         primary: theme-colors.$primary-palette,
         tertiary: theme-colors.$tertiary-palette,
       ),
@@ -17,21 +18,24 @@ html {
       density: 0,
     )
   );
-  // Los contenedores tonales de Material salen en tonos pastel; se cambian por el verde exacto de la marca y
-  // tintes suaves, para un aspecto más sobrio
+  // Los contenedores tonales de Material salen en tonos pastel; se cambian por el verde de la marca y tintes
+  // sobrios. En oscuro, un verde medio que conserva el contraste (no el menta de Material)
   @include mat.theme-overrides(
     (
-      primary: brand.$green,
-      primary-container: brand.$green-tint,
-      on-primary-container: brand.$green,
-      secondary-container: brand.$green-tint,
-      on-secondary-container: brand.$green-dark,
-      tertiary-container: brand.$gold-tint,
-      on-tertiary-container: brand.$gold-text,
+      primary: light-dark(brand.$green, brand.$dark-green),
+      primary-container: light-dark(brand.$green-tint, brand.$dark-green-tint),
+      on-primary-container: light-dark(brand.$green, brand.$dark-green-tint-text),
+      secondary-container: light-dark(brand.$green-tint, brand.$dark-green-tint),
+      on-secondary-container: light-dark(brand.$green-dark, brand.$dark-green-tint-text),
+      tertiary-container: light-dark(brand.$gold-tint, brand.$dark-gold-tint),
+      on-tertiary-container: light-dark(brand.$gold-text, brand.$dark-gold-tint-text),
     )
   );
+  // Botones con esquinas sobrias, como la web; el botón principal siempre verde con texto blanco
   @include mat.button-overrides(
     (
+      filled-container-color: light-dark(brand.$green, brand.$green-light),
+      filled-label-text-color: #fff,
       filled-container-shape: brand.$radius,
       outlined-container-shape: brand.$radius,
       protected-container-shape: brand.$radius,
@@ -49,7 +53,7 @@ body {
 body {
   margin: 0;
   font-family: brand.$font;
-  background: brand.$surface;
+  background: light-dark(brand.$surface, var(--mat-sys-surface));
   color: var(--mat-sys-on-surface);
 }
 
@@ -80,7 +84,7 @@ body {
   h1 {
     margin: 0;
     font: var(--mat-sys-headline-small);
-    color: brand.$green;
+    color: var(--mat-sys-primary);
   }
 }
 

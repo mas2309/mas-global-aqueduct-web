@@ -1,19 +1,19 @@
 @use 'brand/brand';
 
 // Portal del suscriptor: sin librería de componentes ni fuentes externas, para que abra rápido con mala señal.
-// Colores de la web corporativa de MAS y solo modo claro, como la web.
+// Colores de la web corporativa de MAS; se adaptan al modo claro/oscuro del sistema.
 :root {
-  color-scheme: light;
-  --surface: #ffffff;
-  --background: #{brand.$surface};
-  --text: #{brand.$ink};
-  --muted: #{brand.$muted};
-  --outline: #{brand.$line};
-  --accent: #{brand.$green};
-  --ok-surface: #{brand.$green-tint};
-  --warning-surface: #{brand.$gold-tint};
-  --danger-surface: #fbdcd9;
-  --neutral-surface: #eef0f2;
+  color-scheme: light dark;
+  --surface: light-dark(#ffffff, #{brand.$dark-surface});
+  --background: light-dark(#{brand.$surface}, #{brand.$dark-background});
+  --text: light-dark(#{brand.$ink}, #{brand.$dark-ink});
+  --muted: light-dark(#{brand.$muted}, #{brand.$dark-muted});
+  --outline: light-dark(#{brand.$line}, #{brand.$dark-line});
+  --accent: light-dark(#{brand.$green}, #{brand.$dark-green});
+  --ok-surface: light-dark(#{brand.$green-tint}, #{brand.$dark-green-tint});
+  --warning-surface: light-dark(#{brand.$gold-tint}, #{brand.$dark-gold-tint});
+  --danger-surface: light-dark(#fbdcd9, #4a1f1b);
+  --neutral-surface: light-dark(#eef0f2, #2b2f33);
 }
 
 body {

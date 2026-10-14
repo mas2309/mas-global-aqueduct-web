@@ -16,7 +16,7 @@
   padding: 8px;
   border: 0;
   border-radius: brand.$radius-lg;
-  background: #fff;
+  background: var(--mat-sys-surface-container-lowest);
   box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
 }
 
@@ -27,7 +27,7 @@
 
 .brand {
   font: 700 1.375rem / 1.3 brand.$font;
-  color: brand.$green;
+  color: var(--mat-sys-primary);
 }
 
 form {
