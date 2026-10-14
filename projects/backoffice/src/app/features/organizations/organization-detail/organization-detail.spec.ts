@@ -1,15 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
-import {
-  access,
-  AQUEDUCT_ID,
-  authResponse,
-  organization,
-  UTILITY_ID,
-} from '../../../../testing/fixtures';
+import { AQUEDUCT_ID, organization, UTILITY_ID } from '../../../../testing/fixtures';
 import { PageTestContext, settle, setUpPage, textOf } from '../../../../testing/setup';
-import { AUTH_URL } from '../../../core/auth/auth-api';
 import { Member } from '../../members/member.models';
 import { membersUrl } from '../../members/members-api';
 import { Affiliation, Organization, Page } from '../organization.models';
@@ -74,7 +67,7 @@ describe('OrganizationDetail', () => {
 
     expect(textOf(element)).toContain('Agrega su administrador');
     [...element.querySelectorAll<HTMLButtonElement>('button')]
-      .find((button) => textOf(button).includes('Agregar usuario'))!
+      .find((button) => textOf(button).includes('Agregar administrador'))!
       .click();
 
     expect(openDialog).toHaveBeenCalledWith(expect.anything(), {
@@ -221,19 +214,10 @@ describe('OrganizationDetail', () => {
     expect(document.body.textContent).toContain('ya está vinculado a otra empresa');
   });
 
-  it('permite al administrador operar como el prestador', async () => {
+  it('no ofrece operar como el prestador: el administrador global solo lo configura', async () => {
     await open(organization());
 
-    [...element.querySelectorAll<HTMLButtonElement>('button')]
-      .find((button) => textOf(button).includes('Operar como este prestador'))!
-      .click();
-    context.http
-      .expectOne(`${AUTH_URL}/refresh`)
-      .flush(authResponse({ organization: access({ role: 'ORG_ADMIN' }) }));
-    await settle();
-
-    expect(context.router.navigateByUrl).toHaveBeenCalledWith('/inicio');
-    expect(context.store.organization()?.organizationId).toBe(AQUEDUCT_ID);
+    expect(textOf(element)).not.toContain('Operar como');
   });
 
   it('informa si el prestador no existe', async () => {

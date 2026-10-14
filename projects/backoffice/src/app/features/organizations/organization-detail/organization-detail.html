@@ -31,10 +31,6 @@
         <button mat-stroked-button (click)="changeStatus(org)" [disabled]="busy()">
           {{ org.status === 'ACTIVE' ? 'Suspender' : 'Reactivar' }}
         </button>
-        <button mat-flat-button (click)="operateAs(org)" [disabled]="busy()">
-          <mat-icon>login</mat-icon>
-          Operar como este prestador
-        </button>
       </div>
     </header>
 
@@ -81,6 +77,11 @@
         </mat-card-content>
       </mat-card>
     </div>
+
+    <!-- Primero sus usuarios: el administrador de plataforma crea aquí al administrador del prestador -->
+    @if (memberTarget(); as target) {
+      <aq-member-list [organization]="target" />
+    }
 
     @if (canAffiliate()) {
       <mat-card appearance="outlined" class="affiliations">
@@ -136,10 +137,6 @@
           </div>
         </mat-card-content>
       </mat-card>
-    }
-
-    @if (memberTarget(); as target) {
-      <aq-member-list [organization]="target" />
     }
   }
 </section>

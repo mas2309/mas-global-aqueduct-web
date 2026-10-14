@@ -10,9 +10,8 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { filter, Observable, switchMap } from 'rxjs';
-import { AuthService } from '../../../core/auth/auth.service';
 import {
   ORGANIZATION_STATUS_LABELS,
   ORGANIZATION_TYPE_LABELS,
@@ -58,10 +57,8 @@ const CATALOG_SIZE = 100;
 })
 export class OrganizationDetail {
   private readonly api = inject(OrganizationsApi);
-  private readonly auth = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly notifier = inject(Notifier);
-  private readonly router = inject(Router);
 
   /** Parámetro de ruta `:id`. */
   readonly id = input.required<string>();
@@ -198,14 +195,6 @@ export class OrganizationDetail {
         this.notifier.success(`Se terminó la vinculación con ${name}`);
       },
       error: (error: unknown) => this.notifier.apiError(error),
-    });
-  }
-
-  /** El administrador de plataforma entra a operar como este prestador. */
-  protected operateAs(organization: Organization): void {
-    this.run(this.auth.selectOrganization(organization.id), () => {
-      this.notifier.success(`Ahora trabajas en ${displayName(organization)}`);
-      void this.router.navigateByUrl('/inicio');
     });
   }
 

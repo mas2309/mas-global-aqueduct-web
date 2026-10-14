@@ -66,6 +66,10 @@ export class MemberList {
     return organizationId ? membersUrl(organizationId) : undefined;
   });
   protected readonly busy = signal(false);
+  /** Prestador sin usuarios (recién creado): el primero que se agrega es su administrador. */
+  protected readonly needsAdministrator = computed(
+    () => this.members.hasValue() && this.members.value().length === 0,
+  );
 
   protected readonly columns = ['name', 'role', 'since', 'actions'];
   protected readonly roles = ORGANIZATION_ROLES;
@@ -88,7 +92,7 @@ export class MemberList {
       organizationId: organization.organizationId,
       organizationName: organization.name,
       // El primer usuario de un prestador nuevo es su administrador
-      role: this.members.hasValue() && this.members.value().length === 0 ? 'ORG_ADMIN' : 'OPERATOR',
+      role: this.needsAdministrator() ? 'ORG_ADMIN' : 'OPERATOR',
     };
     this.dialog
       .open<AddMemberDialog, AddMemberDialogData, Member>(AddMemberDialog, { data })

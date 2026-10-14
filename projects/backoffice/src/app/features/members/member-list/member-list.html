@@ -10,7 +10,7 @@
     </div>
     <button mat-flat-button (click)="add()">
       <mat-icon>person_add</mat-icon>
-      Agregar usuario
+      {{ needsAdministrator() ? 'Agregar administrador' : 'Agregar usuario' }}
     </button>
   </header>
 
