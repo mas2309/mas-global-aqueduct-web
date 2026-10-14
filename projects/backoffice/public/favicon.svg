@@ -1,13 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="MAS Solutions">
-<defs>
-  <linearGradient id="masGreen" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#268C65"/>
-    <stop offset="1" stop-color="#0E4630"/>
-  </linearGradient>
-</defs>
-
-<rect x="52" y="64" width="408" height="408" rx="72" fill="url(#masGreen)"/>
-<rect x="52" y="50" width="408" height="14" rx="7" fill="#E4AF2B"/>
-<path d="M40 733V770H343L551 254H557L774 770H1031V733L947 713V58L1031 37V0H690V37L775 58V594H771L520 -10H472L201 621H197V56L285 37V0H39V37L128 56V714Z" transform="translate(114.70 372.36) scale(0.26411 -0.26411)" fill="#FFFFFF"/>
-<circle cx="406" cy="406" r="21" fill="#E4AF2B"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="MAS Acueductos"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#268C65"/><stop offset="1" stop-color="#0E4630"/></linearGradient></defs><rect width="1024" height="1024" rx="224" fill="#EEF4F0"/><g transform="translate(100.56 79.67) scale(1.60717)">
+<rect x="116" y="46" width="280" height="16" rx="8" fill="#E4AF2B"/>
+<path d="M256.0 65.0 C281.2 142.0 396.0 247.0 396.0 352.0 A140.0 140.0 0 0 1 116.0 352.0 C116.0 247.0 230.8 142.0 256.0 65.0 Z" fill="url(#g)" />
+<path d="M40 733V770H343L551 254H557L774 770H1031V733L947 713V58L1031 37V0H690V37L775 58V594H771L520 -10H472L201 621H197V56L285 37V0H39V37L128 56V714Z" transform="translate(158.32 433.12) scale(0.17137 -0.17137)" fill="#FFFFFF"/>
+<circle cx="350" cy="414" r="14" fill="#E4AF2B"/>
+</g></svg>
