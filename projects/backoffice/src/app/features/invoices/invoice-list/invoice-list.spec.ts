@@ -275,6 +275,37 @@ describe('BillingSettingsDialog', () => {
     expect(dialogRef.close).toHaveBeenCalledWith({ paymentDueDay: 15, lateFee: 3000 });
   });
 
+  it('el recargo es opcional: apagado se guarda en cero', async () => {
+    await render();
+    const toggle = element.querySelector<HTMLButtonElement>('button[role=switch]')!;
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+
+    toggle.click();
+    await settle();
+    expect(element.querySelector('input[formcontrolname=lateFee]')).toBeNull();
+    expect(textOf(element)).toContain('Sin recargo');
+    click(element, 'button[type=submit]');
+    const request = context.http.expectOne(BILLING_SETTINGS_URL);
+    expect(request.request.body).toEqual({
+      paymentDueDay: 15,
+      lateFee: 0,
+      invoiceNote: null,
+      invoiceHeader: null,
+    });
+    request.flush({ paymentDueDay: 15, lateFee: 0 });
+  });
+
+  it('encendido exige un recargo mayor que cero', async () => {
+    await render();
+
+    type(element, 'input[formcontrolname=lateFee]', '0');
+    click(element, 'button[type=submit]');
+    await settle();
+
+    expect(textOf(element)).toContain('Indica un valor mayor que cero');
+    context.http.expectNone(BILLING_SETTINGS_URL);
+  });
+
   it('valida el día y muestra el rechazo del servidor', async () => {
     await render();
 

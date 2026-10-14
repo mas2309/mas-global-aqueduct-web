@@ -36,6 +36,8 @@ import {
 import { CURRENT_ORGANIZATION_URL } from '../../subscribers/subscribers-api';
 import { blockLabel, Tariff, TariffAdjustment, TariffCharge, unitOf } from '../tariff.models';
 import { TARIFFS_URL, TariffsApi } from '../tariffs-api';
+import { BillingSettingsDialog } from '../../invoices/billing-settings-dialog/billing-settings-dialog';
+import { BillingSettings } from '../../invoices/invoice.models';
 
 /** Tarifas del prestador: la vigente de cada servicio, sus versiones y un simulador de factura. */
 @Component({
@@ -180,6 +182,18 @@ export class TariffList {
           this.notifier.apiError(error, {
             422: 'La tarifa ya está vigente: no se puede eliminar.',
           }),
+      });
+  }
+
+  /** Plazo de pago y recargo opcional por no pago: se configuran junto a lo que se cobra. */
+  protected openBillingRules(): void {
+    this.dialog
+      .open<BillingSettingsDialog, void, BillingSettings>(BillingSettingsDialog, { width: '480px' })
+      .afterClosed()
+      .subscribe((saved) => {
+        if (saved) {
+          this.notifier.success('Configuración guardada: aplica a las próximas facturas');
+        }
       });
   }
 

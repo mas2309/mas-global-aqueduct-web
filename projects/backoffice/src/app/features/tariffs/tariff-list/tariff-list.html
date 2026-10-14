@@ -1,11 +1,19 @@
 <section class="page">
   <header class="page-header">
     <h1>Tarifas</h1>
-    @if (session.canAdministerOrganization() && selected(); as service) {
-      <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="{ servicio: service }">
-        <mat-icon>add</mat-icon>
-        Nueva tarifa
-      </a>
+    @if (session.canAdministerOrganization()) {
+      <div class="actions">
+        <button mat-stroked-button (click)="openBillingRules()">
+          <mat-icon>settings</mat-icon>
+          Plazo y recargo
+        </button>
+        @if (selected(); as service) {
+          <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="{ servicio: service }">
+            <mat-icon>add</mat-icon>
+            Nueva tarifa
+          </a>
+        }
+      </div>
     }
   </header>
 

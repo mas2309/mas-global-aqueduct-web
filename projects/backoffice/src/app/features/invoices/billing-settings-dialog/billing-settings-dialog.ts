@@ -5,6 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { problemMessage, toProblem } from '../../../core/api/problem';
 import { Observable } from 'rxjs';
 import { MAX_ATTACHMENT_BYTES } from '../../finance/finance.models';
@@ -23,6 +25,7 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
+    MatSlideToggleModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -40,15 +43,24 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
             <mat-error>Debe ser un día entre 1 y 31</mat-error>
           }
         </mat-form-field>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Recargo por no pago</mat-label>
-          <span matTextPrefix>$&nbsp;</span>
-          <input matInput type="number" min="0" formControlName="lateFee" inputmode="numeric" />
-          <mat-hint>Se cobra cuando la factura anterior no se pagó. Cero para no cobrarlo</mat-hint>
-          @if (form.controls.lateFee.invalid) {
-            <mat-error>Debe ser cero o más</mat-error>
-          }
-        </mat-form-field>
+        <mat-slide-toggle formControlName="chargeLateFee" class="late-fee-toggle">
+          Cobrar recargo por no pago oportuno
+        </mat-slide-toggle>
+        @if (form.controls.chargeLateFee.value) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Valor del recargo</mat-label>
+            <span matTextPrefix>$&nbsp;</span>
+            <input matInput type="number" min="1" formControlName="lateFee" inputmode="numeric" />
+            <mat-hint>Se suma a la factura cuando la anterior no se pagó</mat-hint>
+            @if (form.controls.lateFee.invalid) {
+              <mat-error>Indica un valor mayor que cero</mat-error>
+            }
+          </mat-form-field>
+        } @else {
+          <p class="muted late-fee-off">
+            Sin recargo: la deuda anterior pasa a la factura siguiente sin cobro adicional.
+          </p>
+        }
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Línea de cabecera</mat-label>
           <input matInput formControlName="invoiceHeader" maxlength="200" autocomplete="off" />
@@ -106,6 +118,15 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
       margin-top: 12px;
     }
 
+    .late-fee-toggle {
+      display: block;
+      margin-top: 16px;
+    }
+
+    .late-fee-off {
+      margin: 8px 0 0;
+    }
+
     .logo {
       display: flex;
       flex-wrap: wrap;
@@ -128,7 +149,9 @@ export class BillingSettingsDialog {
   protected readonly current = httpResource<BillingSettings>(() => BILLING_SETTINGS_URL);
   protected readonly form = inject(NonNullableFormBuilder).group({
     paymentDueDay: [20, [Validators.required, Validators.min(1), Validators.max(31)]],
-    lateFee: [0, [Validators.required, Validators.min(0)]],
+    /** El recargo es opcional: apagado se guarda en cero y no se cobra. */
+    chargeLateFee: [false],
+    lateFee: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
     invoiceHeader: ['', Validators.maxLength(200)],
     invoiceNote: ['', Validators.maxLength(300)],
   });
@@ -144,11 +167,21 @@ export class BillingSettingsDialog {
           this.current.value();
         this.form.setValue({
           paymentDueDay,
+          chargeLateFee: lateFee > 0,
           lateFee,
           invoiceHeader: invoiceHeader ?? '',
           invoiceNote: invoiceNote ?? '',
         });
         this.hasLogo.set(hasLogo ?? false);
+      }
+    });
+    // Apagado, el valor no se valida ni se envía
+    this.form.controls.chargeLateFee.valueChanges.pipe(takeUntilDestroyed()).subscribe((charge) => {
+      const lateFee = this.form.controls.lateFee;
+      if (charge) {
+        lateFee.enable({ emitEvent: false });
+      } else {
+        lateFee.disable({ emitEvent: false });
       }
     });
   }
@@ -176,10 +209,12 @@ export class BillingSettingsDialog {
     }
     this.saving.set(true);
     this.error.set(null);
-    const { invoiceNote, invoiceHeader, ...rules } = this.form.getRawValue();
+    const { paymentDueDay, chargeLateFee, lateFee, invoiceNote, invoiceHeader } =
+      this.form.getRawValue();
     this.api
       .updateSettings({
-        ...rules,
+        paymentDueDay,
+        lateFee: chargeLateFee ? lateFee : 0,
         invoiceNote: invoiceNote.trim() || null,
         invoiceHeader: invoiceHeader.trim() || null,
       })
