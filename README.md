@@ -57,3 +57,29 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Despliegue en stage
+
+Un tag `vX.Y.Z-rcN` dispara [deploy-stage.yml](.github/workflows/deploy-stage.yml): corre `npm run verify`,
+construye una imagen por aplicación (`mas-global-aqueduct-backoffice` y `mas-global-aqueduct-portal`) y levanta
+los dos contenedores en la VPS, en la red `mas-network`, sin puerto publicado.
+
+```bash
+git tag v0.1.0-rc1 && git push origin v0.1.0-rc1
+```
+
+Cada contenedor sirve su aplicación y reenvía `/api` al backend (`mas-global-aqueduct-service:8090`) por la red
+interna, así que el backend debe estar desplegado. No hay configuración por entorno en el código: la API
+siempre es `/api` del mismo dominio.
+
+Preparación, una sola vez:
+
+1. Environment `stage` en GitHub con los secretos `VPS_HOST`, `VPS_USER`, `VPS_PASSWORD` y `GHCR_TOKEN` (y,
+   si se quieren notificaciones, las variables `SLACK_WEBHOOK_URL` o `TEAMS_WEBHOOK_URL`).
+2. Dominios en Cloudflare y bloques del Nginx central de la VPS:
+   [infra/nginx/sandbox-massolutions.conf](infra/nginx/sandbox-massolutions.conf).
+
+| Aplicación | Dominio de stage |
+|------------|------------------|
+| Backoffice | `https://acueductos.sandbox-massolutions.uk` |
+| Portal del suscriptor | `https://acueductos-portal.sandbox-massolutions.uk/p/<token>` |

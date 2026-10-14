@@ -1,4 +1,4 @@
-# Sirve el backoffice y publica la API del backend en el mismo dominio.
+# Sirve la aplicación (backoffice o portal) y publica la API del backend en el mismo dominio.
 # ${API_UPSTREAM} se reemplaza al arrancar el contenedor (envsubst de la imagen oficial de nginx).
 server {
     listen 8080;
@@ -16,11 +16,20 @@ server {
     gzip on;
     gzip_types text/css application/javascript application/json image/svg+xml;
 
-    location /api/ {
-        proxy_pass ${API_UPSTREAM};
+    # Soportes, documentos, logos y archivos de carga inicial: hasta 5 MB
+    client_max_body_size 6m;
+
+    # DNS interno de Docker: el nombre del backend se resuelve en cada petición, así el contenedor arranca aunque
+    # el backend aún no exista y no queda apuntando a una IP vieja cuando el backend se vuelve a desplegar
+    resolver 127.0.0.11 valid=10s;
+
+    location ^~ /api/ {
+        set $api_upstream ${API_UPSTREAM};
+        proxy_pass $api_upstream;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        # El esquema original (https) lo informa el Nginx central
+        proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
     }
 
     # Archivos con hash en el nombre: caché larga

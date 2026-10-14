@@ -1,0 +1,145 @@
+name: Deploy to Stage
+
+# Mismo flujo que los demás proyectos de la VPS: un tag vX.Y.Z-rcN publica las imágenes y las despliega en stage.
+# El repositorio produce dos aplicaciones, cada una con su imagen y su contenedor: backoffice y portal.
+on:
+  push:
+    tags:
+      - 'v*-rc*'
+
+env:
+  SERVICE_NAME: mas-global-aqueduct-web
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/mas-global-aqueduct
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # npm 10 falla al resolver este árbol de dependencias (bug "edgesOut"); se fija la versión del proyecto
+      - run: npm install -g npm@11.20.0
+
+      - run: npm ci --no-fund --no-audit
+
+      # Formato, ESLint (incluye accesibilidad), tests con cobertura >= 80 % y build de producción
+      - run: npm run verify
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: verify
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        app: [backoffice, portal]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          IMAGE="${{ env.IMAGE_PREFIX }}-${{ matrix.app }}"
+          docker build \
+            --build-arg APP=${{ matrix.app }} \
+            -t $IMAGE:$TAG \
+            -t $IMAGE:stage \
+            .
+          docker push $IMAGE:$TAG
+          docker push $IMAGE:stage
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: stage
+    steps:
+      - name: Deploy to VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+            NETWORK="mas-network"
+
+            docker network create $NETWORK 2>/dev/null || true
+
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+            for APP in backoffice portal; do
+              CONTAINER="mas-global-aqueduct-$APP"
+              IMAGE="ghcr.io/${{ github.repository_owner }}/mas-global-aqueduct-$APP:${{ github.ref_name }}"
+
+              docker stop $CONTAINER 2>/dev/null || true
+              docker rm $CONTAINER 2>/dev/null || true
+              docker rmi $(docker images --filter=reference="ghcr.io/*/mas-global-aqueduct-$APP*" -q) 2>/dev/null || true
+
+              docker pull $IMAGE || exit 1
+
+              # Sin -p: el Nginx central de la VPS llega al contenedor por la red interna (puerto 8080)
+              docker run -d \
+                --name $CONTAINER \
+                --restart unless-stopped \
+                --network $NETWORK \
+                -e TZ=America/Bogota \
+                -e API_UPSTREAM=http://mas-global-aqueduct-service:8090 \
+                $IMAGE || exit 1
+            done
+
+            sleep 5
+            for APP in backoffice portal; do
+              STATUS=$(docker inspect -f '{{.State.Status}}' mas-global-aqueduct-$APP 2>/dev/null || echo missing)
+              if [ "$STATUS" != "running" ]; then
+                echo "mas-global-aqueduct-$APP no arrancó: $STATUS"
+                docker logs --tail 40 mas-global-aqueduct-$APP
+                exit 1
+              fi
+            done
+          ENDSSH
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+    steps:
+      - name: Set status message
+        id: status
+        run: |
+          if [[ "${{ needs.deploy.result }}" == "success" ]]; then
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+            echo "text=Deploy exitoso" >> $GITHUB_OUTPUT
+          else
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+            echo "text=Deploy fallido" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify Slack
+        if: vars.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook: ${{ vars.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "${{ steps.status.outputs.emoji }} *${{ env.SERVICE_NAME }}* | `${{ github.ref_name }}` → *stage*\n${{ steps.status.outputs.text }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Ver pipeline>"
+            }
+
+      - name: Notify Microsoft Teams
+        if: vars.TEAMS_WEBHOOK_URL != ''
+        run: |
+          curl -H "Content-Type: application/json" -d '{
+            "text": "${{ steps.status.outputs.emoji }} **${{ env.SERVICE_NAME }}** | `${{ github.ref_name }}` → **stage** — ${{ steps.status.outputs.text }} — [Ver pipeline](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          }' ${{ vars.TEAMS_WEBHOOK_URL }}
