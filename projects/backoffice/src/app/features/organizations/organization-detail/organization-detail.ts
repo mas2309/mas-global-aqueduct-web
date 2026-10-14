@@ -31,6 +31,8 @@ import {
   ServiceType,
 } from '../organization.models';
 import { AFFILIATIONS_URL, ORGANIZATIONS_URL, OrganizationsApi } from '../organizations-api';
+import { MemberTarget } from '../../members/member.models';
+import { MemberList } from '../../members/member-list/member-list';
 
 /** Prestadores que se cargan para elegir a quién vincular (y mostrar nombres de los vinculados). */
 const CATALOG_SIZE = 100;
@@ -48,6 +50,7 @@ const CATALOG_SIZE = 100;
     MatSelectModule,
     MatFormFieldModule,
     MatProgressBarModule,
+    MemberList,
   ],
   templateUrl: './organization-detail.html',
   styleUrl: './organization-detail.scss',
@@ -66,6 +69,13 @@ export class OrganizationDetail {
   protected readonly organization = httpResource<Organization>(
     () => `${ORGANIZATIONS_URL}/${this.id()}`,
   );
+  /** Sus usuarios se administran aquí mismo, sin operar como el prestador. */
+  protected readonly memberTarget = computed<MemberTarget | undefined>(() => {
+    const organization = this.organization.hasValue() ? this.organization.value() : undefined;
+    return organization
+      ? { organizationId: organization.id, name: displayName(organization) }
+      : undefined;
+  });
   protected readonly canAffiliate = computed(() => {
     const organization = this.organization.hasValue() ? this.organization.value() : undefined;
     return organization ? canAffiliateOthers(organization.type) : false;

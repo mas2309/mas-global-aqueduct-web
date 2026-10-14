@@ -113,6 +113,24 @@ describe('AuthService', () => {
     expect(store.mustChangePassword()).toBe(false);
   });
 
+  it('si la contraseña cambió pero el nuevo ingreso falla, pide ingresar con la nueva', async () => {
+    store.start(authResponse({ user: user({ mustChangePassword: true }) }));
+
+    const result = firstValueFrom(service.changePassword('temporal-123', 'nueva-clave-segura'), {
+      defaultValue: undefined,
+    });
+    http.expectOne(`${AUTH_URL}/password`).flush(null);
+    http
+      .expectOne(`${AUTH_URL}/login`)
+      .flush({ status: 429 }, { status: 429, statusText: 'Too Many Requests' });
+
+    expect(await result).toBeUndefined();
+    expect(store.isAuthenticated()).toBe(false);
+    expect(router.navigate).toHaveBeenCalledWith(['/ingresar'], {
+      queryParams: { sesion: 'clave-actualizada' },
+    });
+  });
+
   it('cierra sesión en el servidor y localmente, aunque el servidor falle', async () => {
     store.start(authResponse());
     const done = firstValueFrom(service.logout(), { defaultValue: undefined });

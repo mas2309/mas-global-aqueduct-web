@@ -9,6 +9,10 @@
     <mat-card-content>
       @if (sesion() === 'expirada') {
         <p class="notice" role="status">Tu sesión expiró. Ingresa de nuevo.</p>
+      } @else if (sesion() === 'clave-actualizada') {
+        <p class="notice" role="status">
+          Tu contraseña se actualizó. Ingresa con la contraseña nueva.
+        </p>
       }
 
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>

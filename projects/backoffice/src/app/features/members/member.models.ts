@@ -21,6 +21,12 @@ export interface AddMemberRequest {
   password?: string;
 }
 
+/** Prestador cuyos usuarios se administran. */
+export interface MemberTarget {
+  organizationId: string;
+  name: string;
+}
+
 export const ORGANIZATION_ROLES: readonly OrganizationRole[] = ['ORG_ADMIN', 'OPERATOR', 'VIEWER'];
 
 /** Qué puede hacer cada rol, para que quien asigna el acceso elija con criterio. */

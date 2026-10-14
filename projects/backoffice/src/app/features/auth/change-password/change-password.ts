@@ -11,7 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
-import { problemMessage, toProblem } from '../../../core/api/problem';
+import { Problem, problemMessage, toProblem } from '../../../core/api/problem';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session-store';
 import { Notifier } from '../../../core/ui/notifier';
@@ -29,6 +29,31 @@ function passwordsDiffer(group: AbstractControl): ValidationErrors | null {
     errors['mismatch'] = true;
   }
   return Object.keys(errors).length ? errors : null;
+}
+
+/** Motivos de rechazo del backend (detalle del 400), en español. */
+const POLICY_MESSAGES: readonly [string, string][] = [
+  ['different from the current', 'La nueva contraseña debe ser distinta de la actual.'],
+  ['must not be the email', 'La contraseña no puede ser tu correo.'],
+  ['too weak', 'La contraseña es demasiado débil: no uses un solo carácter repetido.'],
+  ['at least', `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`],
+  ['at most', 'La contraseña debe tener máximo 128 caracteres.'],
+];
+
+export function changePasswordError(problem: Problem): string {
+  if (problem.status === 400) {
+    const detail = problem.detail ?? '';
+    const known = POLICY_MESSAGES.find(([fragment]) => detail.includes(fragment));
+    return known ? known[1] : 'La nueva contraseña no cumple la política de seguridad.';
+  }
+  if (problem.status === 422) {
+    return 'La contraseña actual es incorrecta.';
+  }
+  const message = problemMessage(problem);
+  // El código ayuda a soporte a encontrar la causa en los registros del servidor
+  return problem.status > 0 && ![401, 429].includes(problem.status)
+    ? `${message} (código ${problem.status})`
+    : message;
 }
 
 @Component({
@@ -83,12 +108,7 @@ export class ChangePassword {
       },
       error: (error: unknown) => {
         this.saving.set(false);
-        this.error.set(
-          problemMessage(toProblem(error), {
-            400: 'La nueva contraseña no cumple la política de seguridad.',
-            422: 'La contraseña actual es incorrecta.',
-          }),
-        );
+        this.error.set(changePasswordError(toProblem(error)));
       },
     });
   }

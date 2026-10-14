@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { authResponse, user } from '../../../../testing/fixtures';
 import { click, PageTestContext, setUpPage, textOf, type } from '../../../../testing/setup';
 import { AUTH_URL } from '../../../core/auth/auth-api';
-import { ChangePassword } from './change-password';
+import { ChangePassword, changePasswordError } from './change-password';
 
 describe('ChangePassword', () => {
   let context: PageTestContext;
@@ -65,5 +65,31 @@ describe('ChangePassword', () => {
     await fixture.whenStable();
 
     expect(textOf(element)).toContain('La contraseña actual es incorrecta');
+  });
+});
+
+describe('changePasswordError', () => {
+  it('traduce el motivo exacto del rechazo de la política', () => {
+    expect(
+      changePasswordError({
+        status: 400,
+        detail: 'The new password must be different from the current one',
+      }),
+    ).toBe('La nueva contraseña debe ser distinta de la actual.');
+    expect(changePasswordError({ status: 400, detail: 'password must not be the email' })).toBe(
+      'La contraseña no puede ser tu correo.',
+    );
+    expect(changePasswordError({ status: 400 })).toBe(
+      'La nueva contraseña no cumple la política de seguridad.',
+    );
+  });
+
+  it('muestra el código en errores inesperados para buscarlos en el servidor', () => {
+    expect(changePasswordError({ status: 502 })).toBe(
+      'Ocurrió un error inesperado. Inténtalo de nuevo. (código 502)',
+    );
+    expect(changePasswordError({ status: 429 })).toBe(
+      'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
+    );
   });
 });

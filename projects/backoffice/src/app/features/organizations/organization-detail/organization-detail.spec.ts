@@ -10,6 +10,8 @@ import {
 } from '../../../../testing/fixtures';
 import { PageTestContext, settle, setUpPage, textOf } from '../../../../testing/setup';
 import { AUTH_URL } from '../../../core/auth/auth-api';
+import { Member } from '../../members/member.models';
+import { membersUrl } from '../../members/members-api';
 import { Affiliation, Organization, Page } from '../organization.models';
 import { AFFILIATIONS_URL, ORGANIZATIONS_URL } from '../organizations-api';
 import { OrganizationDetail } from './organization-detail';
@@ -52,14 +54,37 @@ describe('OrganizationDetail', () => {
 
   afterEach(() => context.http.verify());
 
-  async function open(org: Organization): Promise<void> {
+  async function open(org: Organization, members: Member[] = []): Promise<void> {
     fixture = TestBed.createComponent(OrganizationDetail);
     fixture.componentRef.setInput('id', org.id);
     element = fixture.nativeElement;
     await settle();
     context.http.expectOne(`${ORGANIZATIONS_URL}/${org.id}`).flush(org);
     await settle();
+    context.http.expectOne(membersUrl(org.id)).flush(members);
+    await settle();
   }
+
+  it('crea el administrador de un prestador nuevo sin operar como él', async () => {
+    const dialog = TestBed.inject(MatDialog);
+    const openDialog = vi
+      .spyOn(dialog, 'open')
+      .mockReturnValue({ afterClosed: () => of(undefined) } as never);
+    await open(organization());
+
+    expect(textOf(element)).toContain('Agrega su administrador');
+    [...element.querySelectorAll<HTMLButtonElement>('button')]
+      .find((button) => textOf(button).includes('Agregar usuario'))!
+      .click();
+
+    expect(openDialog).toHaveBeenCalledWith(expect.anything(), {
+      data: {
+        organizationId: AQUEDUCT_ID,
+        organizationName: 'Acueducto El Hato',
+        role: 'ORG_ADMIN',
+      },
+    });
+  });
 
   async function loadAffiliationData(
     affiliations: Affiliation[],

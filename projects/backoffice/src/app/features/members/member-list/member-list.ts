@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -15,12 +15,12 @@ import { ROLE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { AddMemberDialog, AddMemberDialogData } from '../add-member-dialog/add-member-dialog';
-import { Member, ORGANIZATION_ROLES } from '../member.models';
+import { Member, MemberTarget, ORGANIZATION_ROLES } from '../member.models';
 import { MembersApi, membersUrl } from '../members-api';
 
 const LAST_ADMIN = 'El prestador debe conservar al menos un administrador.';
 
-/** Usuarios del prestador seleccionado: quién entra y con qué rol. */
+/** Usuarios de un prestador: quién entra y con qué rol. */
 @Component({
   selector: 'aq-member-list',
   imports: [
@@ -42,8 +42,24 @@ export class MemberList {
   private readonly notifier = inject(Notifier);
   protected readonly session = inject(SessionStore);
 
-  /** Cambia sola si el usuario cambia de prestador desde la barra superior. */
-  private readonly organizationId = computed(() => this.session.organization()?.organizationId);
+  /**
+   * Prestador cuyos usuarios se administran. Sin valor, el de la sesión (pantalla Usuarios), que cambia solo si
+   * el usuario cambia de prestador desde la barra superior. El detalle de un prestador lo indica, para que el
+   * administrador de plataforma cree su administrador sin tener que operar como él.
+   */
+  readonly organization = input<MemberTarget>();
+
+  private readonly target = computed<MemberTarget | undefined>(() => {
+    const session = this.session.organization();
+    return (
+      this.organization() ??
+      (session ? { organizationId: session.organizationId, name: session.name } : undefined)
+    );
+  });
+  private readonly organizationId = computed(() => this.target()?.organizationId);
+  protected readonly organizationName = computed(() => this.target()?.name);
+  /** Dentro del detalle de un prestador: título de sección, no de página. */
+  protected readonly embedded = computed(() => this.organization() !== undefined);
 
   protected readonly members = httpResource<Member[]>(() => {
     const organizationId = this.organizationId();
@@ -64,13 +80,15 @@ export class MemberList {
   }
 
   protected add(): void {
-    const organization = this.session.organization();
+    const organization = this.target();
     if (!organization) {
       return;
     }
     const data: AddMemberDialogData = {
       organizationId: organization.organizationId,
       organizationName: organization.name,
+      // El primer usuario de un prestador nuevo es su administrador
+      role: this.members.hasValue() && this.members.value().length === 0 ? 'ORG_ADMIN' : 'OPERATOR',
     };
     this.dialog
       .open<AddMemberDialog, AddMemberDialogData, Member>(AddMemberDialog, { data })
@@ -110,7 +128,7 @@ export class MemberList {
     }
     const data: ConfirmDialogData = {
       title: 'Quitar acceso',
-      message: `${member.fullName} ya no podrá entrar a ${this.session.organization()?.name}. Su cuenta no se elimina.`,
+      message: `${member.fullName} ya no podrá entrar a ${this.organizationName()}. Su cuenta no se elimina.`,
       confirmLabel: 'Quitar acceso',
       danger: true,
     };

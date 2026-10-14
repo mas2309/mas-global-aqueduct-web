@@ -1,10 +1,12 @@
-<section class="page">
+<section [class.page]="!embedded()" [class.embedded]="embedded()">
   <header class="page-header">
     <div>
-      <h1>Usuarios</h1>
-      <span class="muted"
-        >Quién puede entrar a {{ session.organization()?.name }} y con qué rol</span
-      >
+      @if (embedded()) {
+        <h2>Usuarios</h2>
+      } @else {
+        <h1>Usuarios</h1>
+      }
+      <span class="muted">Quién puede entrar a {{ organizationName() }} y con qué rol</span>
     </div>
     <button mat-flat-button (click)="add()">
       <mat-icon>person_add</mat-icon>
@@ -26,7 +28,11 @@
       <div class="state">
         <mat-icon aria-hidden="true">group</mat-icon>
         <p>Este prestador aún no tiene usuarios propios.</p>
-        <p class="muted">Agrega a quienes registran lecturas, facturan o administran.</p>
+        @if (embedded()) {
+          <p class="muted">Agrega su administrador: él podrá crear al resto de usuarios.</p>
+        } @else {
+          <p class="muted">Agrega a quienes registran lecturas, facturan o administran.</p>
+        }
       </div>
     } @else {
       <div class="table-container">

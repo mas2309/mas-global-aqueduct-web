@@ -79,13 +79,26 @@ export class AuthService {
   /**
    * El backend cierra todas las sesiones al cambiar la contraseña; se inicia una nueva con la contraseña nueva
    * y el mismo prestador para no obligar al usuario a ingresar otra vez.
+   *
+   * Si ese nuevo ingreso falla, la contraseña ya cambió: no se reporta como error (el usuario creería que no
+   * cambió y volvería a intentarlo con la anterior), sino que se le pide ingresar con la nueva.
    */
   changePassword(currentPassword: string, newPassword: string): Observable<AuthResponse> {
     const email = this.store.user()?.email ?? '';
     const organizationId = this.store.organization()?.organizationId;
-    return this.api
-      .changePassword(currentPassword, newPassword)
-      .pipe(switchMap(() => this.login(email, newPassword, organizationId)));
+    return this.api.changePassword(currentPassword, newPassword).pipe(
+      switchMap(() =>
+        this.login(email, newPassword, organizationId).pipe(
+          catchError(() => {
+            this.store.clear();
+            void this.router.navigate([LOGIN_ROUTE], {
+              queryParams: { sesion: 'clave-actualizada' },
+            });
+            return EMPTY;
+          }),
+        ),
+      ),
+    );
   }
 
   /** Cierra la sesión en el servidor (si falla, igual se cierra localmente). */

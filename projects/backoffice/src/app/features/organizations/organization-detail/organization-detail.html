@@ -137,5 +137,9 @@
         </mat-card-content>
       </mat-card>
     }
+
+    @if (memberTarget(); as target) {
+      <aq-member-list [organization]="target" />
+    }
   }
 </section>

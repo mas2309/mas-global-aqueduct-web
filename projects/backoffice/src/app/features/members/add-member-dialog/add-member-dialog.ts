@@ -17,6 +17,8 @@ import { generateTemporaryPassword } from '../temporary-password';
 export interface AddMemberDialogData {
   organizationId: string;
   organizationName: string;
+  /** Rol propuesto; por defecto operador. */
+  role?: OrganizationRole;
 }
 
 /** Misma política que el backend. */
@@ -53,7 +55,7 @@ export class AddMemberDialog {
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
-    role: ['OPERATOR' as OrganizationRole, Validators.required],
+    role: [this.data.role ?? ('OPERATOR' as OrganizationRole), Validators.required],
     fullName: ['', [Validators.minLength(2), Validators.maxLength(150)]],
     password: ['', [Validators.minLength(MIN_PASSWORD_LENGTH), Validators.maxLength(128)]],
   });
