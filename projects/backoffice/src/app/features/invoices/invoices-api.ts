@@ -26,6 +26,19 @@ export class InvoicesApi {
     return this.http.get<Invoice[]>(`${INVOICES_URL}/${invoiceId}/document`);
   }
 
+  /** Registra la entrega. Si fue tarde y el perfil exige días mínimos, el servidor corre el vencimiento. */
+  deliver(invoiceId: string, deliveredOn: string): Observable<Invoice[]> {
+    return this.http.post<Invoice[]>(`${INVOICES_URL}/${invoiceId}/deliver`, { deliveredOn });
+  }
+
+  /** Registra la entrega de las facturas del periodo que aún no la tienen. */
+  deliverPeriod(periodId: string, deliveredOn: string): Observable<{ delivered: number }> {
+    return this.http.post<{ delivered: number }>(
+      `/api/v1/billing-periods/${periodId}/invoices/deliver`,
+      { deliveredOn },
+    );
+  }
+
   /** Paga el documento completo: también los demás servicios pendientes. */
   pay(invoiceId: string, method: PaymentMethod): Observable<Invoice> {
     return this.http.post<Invoice>(`${INVOICES_URL}/${invoiceId}/pay`, { method });

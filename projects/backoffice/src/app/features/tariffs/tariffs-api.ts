@@ -26,10 +26,14 @@ export class TariffsApi {
     consumption: number,
     usage: PropertyUsage,
     stratum: number | null,
+    serviceAreaId?: string | null,
   ): Observable<TariffCharge> {
     const params: Record<string, string | number> = { serviceType, consumption, usage };
     if (stratum !== null) {
       params['stratum'] = stratum;
+    }
+    if (serviceAreaId) {
+      params['serviceAreaId'] = serviceAreaId;
     }
     return this.http.get<TariffCharge>(`${TARIFFS_URL}/estimate`, { params });
   }

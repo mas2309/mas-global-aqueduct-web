@@ -34,6 +34,8 @@ interface Actions {
   usage: { set: (usage: PropertyUsage) => void };
 }
 
+const SERVICE_AREAS_URL = '/api/v1/service-areas';
+
 describe('TariffList', () => {
   let context: PageTestContext;
   let fixture: ComponentFixture<TariffList>;
@@ -61,6 +63,7 @@ describe('TariffList', () => {
     element = fixture.nativeElement;
     actions = fixture.componentInstance as unknown as Actions;
     await settle();
+    context.http.expectOne(SERVICE_AREAS_URL).flush([]);
     context.http
       .expectOne(CURRENT_ORGANIZATION_URL)
       .flush(organization({ services: ['WATER', 'SANITATION'] }));

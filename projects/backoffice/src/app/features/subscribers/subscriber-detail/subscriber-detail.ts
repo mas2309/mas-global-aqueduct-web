@@ -12,6 +12,16 @@ import { SessionStore } from '../../../core/auth/session-store';
 import { SERVICE_ICONS, SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
+import {
+  ServiceActionData,
+  ServiceActionDialog,
+} from '../../disconnections/service-action-dialog/service-action-dialog';
+import {
+  ServiceEventsData,
+  ServiceEventsDialog,
+} from '../../disconnections/service-events-dialog/service-events-dialog';
+import { RequestedAction, ServiceEvent } from '../../disconnections/disconnection.models';
+import { ConnectionFees } from '../../invoices/connection-fees/connection-fees';
 import { InstallmentPlans } from '../../invoices/installment-plans/installment-plans';
 import { Organization, SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
 import { MeterDialog, MeterDialogData } from '../meter-dialog/meter-dialog';
@@ -39,6 +49,7 @@ interface ServiceRow {
   selector: 'aq-subscriber-detail',
   imports: [
     RouterLink,
+    ConnectionFees,
     InstallmentPlans,
     PortalLink,
     MatCardModule,
@@ -163,33 +174,35 @@ export class SubscriberDetail {
       );
   }
 
-  /** Corte del servicio (p. ej. por falta de pago). */
-  protected suspend(property: Property, service: ServiceType): void {
-    this.confirm(
-      {
-        title: `Suspender ${SERVICE_LABELS[service].toLowerCase()}`,
-        message: `Se registra el corte del servicio en ${property.address}. Puedes reconectarlo cuando corresponda.`,
-        confirmLabel: 'Suspender',
-        danger: true,
-      },
-      () => this.api.suspendService(property.id, service),
-    ).subscribe({
-      next: () => this.refresh('Servicio suspendido'),
-      error: (error: unknown) => this.notifier.apiError(error),
-    });
+  /** Registra una suspensión, un corte o un restablecimiento, con su causal y su rastro. */
+  protected act(
+    property: Property,
+    service: ServiceType,
+    action: RequestedAction,
+    title: string,
+  ): void {
+    const data: ServiceActionData = {
+      propertyId: property.id,
+      address: property.address,
+      serviceType: service,
+      action,
+      title,
+    };
+    this.dialog
+      .open<ServiceActionDialog, ServiceActionData, ServiceEvent>(ServiceActionDialog, {
+        data,
+        width: '480px',
+      })
+      .afterClosed()
+      .pipe(filter(Boolean))
+      .subscribe(() =>
+        this.refresh(`Registrado: ${title.toLowerCase()} ${SERVICE_LABELS[service].toLowerCase()}`),
+      );
   }
 
-  protected reconnect(property: Property, service: ServiceType): void {
-    this.run(this.api.reconnectService(property.id, service), () =>
-      this.refresh('Servicio reconectado'),
-    );
-  }
-
-  /** Reinstala un servicio cortado. El servidor cobra su valor si las reglas del prestador lo fijan. */
-  protected restore(property: Property, service: ServiceType): void {
-    this.run(this.api.restoreService(property.id, service), () =>
-      this.refresh('Servicio reinstalado'),
-    );
+  protected showEvents(property: Property): void {
+    const data: ServiceEventsData = { propertyId: property.id, address: property.address };
+    this.dialog.open(ServiceEventsDialog, { data, width: '520px' });
   }
 
   protected disconnect(property: Property, service: ServiceType): void {

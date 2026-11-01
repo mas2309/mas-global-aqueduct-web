@@ -24,6 +24,7 @@ import { SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { saveFile } from '../../../shared/ui/save-file';
+import { DeliveryDialog, DeliveryDialogData } from '../../invoices/delivery-dialog/delivery-dialog';
 import { Invoice } from '../../invoices/invoice.models';
 import { InvoicesApi } from '../../invoices/invoices-api';
 import { Organization, SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
@@ -260,6 +261,32 @@ export class Readings {
       error: (error: unknown) =>
         this.notifier.apiError(error, { 422: 'Este periodo aún no tiene facturas.' }),
     });
+  }
+
+  /** Reparto masivo: registra la entrega de las facturas del periodo que aún no la tienen. */
+  protected deliverInvoices(period: BillingPeriod): void {
+    const data: DeliveryDialogData = {
+      title: `Registrar la entrega de ${periodLabel(period)}`,
+      message: 'Aplica a las facturas del periodo que aún no tienen entrega registrada.',
+    };
+    this.dialog
+      .open<DeliveryDialog, DeliveryDialogData, string>(DeliveryDialog, { data, width: '440px' })
+      .afterClosed()
+      .pipe(
+        filter((deliveredOn) => deliveredOn !== undefined),
+        switchMap((deliveredOn) => this.invoicesApi.deliverPeriod(period.id, deliveredOn)),
+      )
+      .subscribe({
+        next: ({ delivered }) => {
+          this.invoices.reload();
+          this.notifier.success(`${delivered} facturas con entrega registrada`);
+        },
+        error: (error: unknown) =>
+          this.notifier.apiError(error, {
+            400: 'La fecha de entrega no puede ser anterior a la emisión de la factura.',
+            403: 'Tu rol solo permite consultar.',
+          }),
+      });
   }
 
   protected invoiceOf(entry: RouteEntry): Invoice | null {

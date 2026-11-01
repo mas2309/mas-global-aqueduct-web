@@ -51,6 +51,10 @@
           }
           <dt>Pagar hasta</dt>
           <dd>{{ bill.dueDate | date: 'longDate' }}</dd>
+          @if (bill.deliveredOn) {
+            <dt>Entregada</dt>
+            <dd>{{ bill.deliveredOn | date: 'longDate' }}</dd>
+          }
           @if (bill.paymentMethod) {
             <dt>Pago</dt>
             <dd>{{ methodLabels[bill.paymentMethod] }} · {{ bill.paidAt | date: 'longDate' }}</dd>
@@ -186,6 +190,16 @@
         <mat-icon>picture_as_pdf</mat-icon>
         Descargar PDF
       </button>
+      <button mat-button (click)="showHistory(bill)">
+        <mat-icon>history</mat-icon>
+        Historial
+      </button>
+      @if (!bill.deliveredOn && isOpen(bill) && session.canOperateOrganization()) {
+        <button mat-button (click)="deliver(bill)">
+          <mat-icon>local_shipping</mat-icon>
+          Registrar entrega
+        </button>
+      }
       @if (bill.state === 'PAID' && session.canAdministerOrganization()) {
         <button mat-button (click)="reversePayment(bill)">
           <mat-icon>undo</mat-icon>

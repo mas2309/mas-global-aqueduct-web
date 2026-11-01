@@ -1,3 +1,4 @@
+import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { problemMessage, toProblem } from '../../../core/api/problem';
 import { applyServerErrors } from '../../../shared/forms/server-errors';
+import { SERVICE_AREAS_URL, ServiceArea } from '../../service-areas/service-area.models';
 import {
   Property,
   PROPERTY_USAGE_LABELS,
@@ -44,6 +46,8 @@ export class PropertyDialog {
   protected readonly usages = PROPERTY_USAGES;
   protected readonly usageLabels = PROPERTY_USAGE_LABELS;
   protected readonly strata = STRATA;
+  /** Las áreas son opcionales: sin ninguna registrada no se pregunta. */
+  protected readonly areas = httpResource<ServiceArea[]>(() => SERVICE_AREAS_URL);
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     address: [
@@ -53,6 +57,11 @@ export class PropertyDialog {
     sector: [this.data.property?.sector ?? '', Validators.maxLength(100)],
     usage: [this.data.property?.usage ?? ('RESIDENTIAL' as PropertyUsage), Validators.required],
     stratum: [this.data.property?.stratum ?? (null as number | null)],
+    cadastralNumber: [this.data.property?.cadastralNumber ?? '', Validators.pattern(/^\d{30}$/)],
+    cadastralAddress: [this.data.property?.cadastralAddress ?? '', Validators.maxLength(60)],
+    municipalityCode: [this.data.property?.municipalityCode ?? '', Validators.pattern(/^\d{5}$/)],
+    settlementCode: [this.data.property?.settlementCode ?? '', Validators.pattern(/^\d{3}$/)],
+    serviceAreaId: [this.data.property?.serviceAreaId ?? ''],
   });
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -63,7 +72,8 @@ export class PropertyDialog {
   }
 
   protected submit(): void {
-    const { address, sector, usage, stratum } = this.form.getRawValue();
+    const value = this.form.getRawValue();
+    const { address, sector, usage, stratum } = value;
     const residential = usage === 'RESIDENTIAL';
     if (this.form.invalid || (residential && stratum === null)) {
       this.form.markAllAsTouched();
@@ -75,6 +85,11 @@ export class PropertyDialog {
       sector: sector.trim() || null,
       usage,
       stratum: residential ? stratum : null,
+      cadastralNumber: value.cadastralNumber.trim() || undefined,
+      cadastralAddress: value.cadastralAddress.trim() || undefined,
+      municipalityCode: value.municipalityCode.trim() || undefined,
+      settlementCode: value.settlementCode.trim() || undefined,
+      serviceAreaId: value.serviceAreaId || undefined,
     };
     this.saving.set(true);
     this.error.set(null);

@@ -84,6 +84,10 @@
               @if (property.stratum) {
                 · Estrato {{ property.stratum }}
               }
+              · NUIU {{ property.code }}
+              @if (property.municipalityCode) {
+                · Municipio {{ property.municipalityCode }}
+              }
             </mat-card-subtitle>
             @if (canOperate) {
               <button
@@ -148,21 +152,45 @@
                           </button>
                         }
                         @if (connection.status === 'ACTIVE') {
-                          <button mat-menu-item (click)="suspend(property, row.serviceType)">
+                          <button
+                            mat-menu-item
+                            (click)="act(property, row.serviceType, 'SUSPEND', 'Suspender')"
+                          >
                             <mat-icon>block</mat-icon>
-                            <span>Suspender (corte)</span>
+                            <span>Suspender</span>
                           </button>
-                        } @else if (connection.status === 'CUT') {
-                          <button mat-menu-item (click)="restore(property, row.serviceType)">
-                            <mat-icon>check_circle</mat-icon>
-                            <span>Reinstalar</span>
+                        }
+                        @if (connection.status !== 'CUT') {
+                          <button
+                            mat-menu-item
+                            (click)="act(property, row.serviceType, 'CUT', 'Cortar')"
+                          >
+                            <mat-icon>content_cut</mat-icon>
+                            <span>Cortar</span>
                           </button>
-                        } @else {
-                          <button mat-menu-item (click)="reconnect(property, row.serviceType)">
+                        }
+                        @if (connection.status === 'SUSPENDED') {
+                          <button
+                            mat-menu-item
+                            (click)="act(property, row.serviceType, 'RESTORE', 'Reconectar')"
+                          >
                             <mat-icon>check_circle</mat-icon>
                             <span>Reconectar</span>
                           </button>
                         }
+                        @if (connection.status === 'CUT') {
+                          <button
+                            mat-menu-item
+                            (click)="act(property, row.serviceType, 'RESTORE', 'Reinstalar')"
+                          >
+                            <mat-icon>check_circle</mat-icon>
+                            <span>Reinstalar</span>
+                          </button>
+                        }
+                        <button mat-menu-item (click)="showEvents(property)">
+                          <mat-icon>history</mat-icon>
+                          <span>Historial de cortes</span>
+                        </button>
                         <button mat-menu-item (click)="disconnect(property, row.serviceType)">
                           <mat-icon>link_off</mat-icon>
                           <span>Retirar del predio</span>
@@ -197,6 +225,12 @@
     <aq-installment-plans
       [subscriberId]="person.id"
       [editable]="canOperate && person.status === 'ACTIVE'"
+    />
+
+    <aq-connection-fees
+      [subscriber]="person"
+      [editable]="canOperate && person.status === 'ACTIVE'"
+      (changed)="subscriber.value.set($event)"
     />
 
     <aq-portal-link [subscriberId]="person.id" [editable]="canOperate" />

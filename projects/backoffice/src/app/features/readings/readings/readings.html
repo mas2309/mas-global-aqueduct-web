@@ -7,6 +7,12 @@
           <mat-icon>picture_as_pdf</mat-icon>
           Imprimir facturas
         </button>
+        @if (session.canOperateOrganization()) {
+          <button mat-button (click)="deliverInvoices(printable)">
+            <mat-icon>local_shipping</mat-icon>
+            Registrar entrega
+          </button>
+        }
       }
       @if (session.canAdministerOrganization() && periods.hasValue()) {
         @if (latest(); as last) {

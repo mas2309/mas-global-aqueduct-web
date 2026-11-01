@@ -126,6 +126,22 @@ describe('InvoiceDetail', () => {
     expect(text).toContain('35,500');
   });
 
+  it('registra la entrega y deja de ofrecerla', async () => {
+    await open(invoice());
+
+    dialogResult = '2026-10-20';
+    button('Registrar entrega')?.click();
+    const request = context.http.expectOne(`${INVOICE_URL}/deliver`);
+    expect(request.request.body).toEqual({ deliveredOn: '2026-10-20' });
+    request.flush([invoice({ deliveredOn: '2026-10-20' })]);
+    await settle();
+    context.http.expectOne(DOCUMENT_URL).flush([invoice({ deliveredOn: '2026-10-20' })]);
+    await settle();
+
+    expect(textOf(element)).toContain('Entregada');
+    expect(button('Registrar entrega')).toBeUndefined();
+  });
+
   it('muestra el valor en reclamo y si el consumo es estimado', async () => {
     await open(invoice({ disputedAmount: 5000, total: 20500, estimated: true }));
 

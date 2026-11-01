@@ -16,6 +16,8 @@ export interface Subscriber {
   email: string | null;
   phone: string | null;
   status: SubscriberStatus;
+  /** Asociado del gestor comunitario: solo a ellos se cobra el reconocimiento de inversiones. */
+  associate: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,21 +46,37 @@ export interface PropertyService {
 export interface Property {
   id: string;
   subscriberId: string;
+  /** Su NUIU: el código único del predio. */
+  code: number;
   address: string;
   sector: string | null;
   usage: PropertyUsage;
   /** Estrato 1 a 6; solo en predios residenciales. */
   stratum: number | null;
+  /** Número predial nacional de 30 dígitos. */
+  cadastralNumber: string | null;
+  cadastralAddress: string | null;
+  /** Código DANE del municipio, de 5 dígitos. */
+  municipalityCode: string | null;
+  /** Centro poblado, de 3 dígitos. */
+  settlementCode: string | null;
+  serviceAreaId: string | null;
   services: PropertyService[];
   createdAt: string;
   updatedAt: string;
 }
 
+/** Sin datos catastrales ni área, el servidor conserva los que el predio ya tenga. */
 export interface PropertyRequest {
   address: string;
   sector: string | null;
   usage: PropertyUsage;
   stratum: number | null;
+  cadastralNumber?: string;
+  cadastralAddress?: string;
+  municipalityCode?: string;
+  settlementCode?: string;
+  serviceAreaId?: string;
 }
 
 export const DOCUMENT_TYPES: readonly DocumentType[] = ['CC', 'CE', 'NIT', 'TI', 'PASSPORT'];

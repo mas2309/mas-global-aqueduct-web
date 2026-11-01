@@ -65,6 +65,10 @@ export class Shell {
       items.push({ path: '/facturas', label: 'Facturas', icon: 'receipt_long' });
       items.push({ path: '/financiaciones', label: 'Financiaciones', icon: 'event_repeat' });
       items.push({ path: '/tarifas', label: 'Tarifas', icon: 'payments' });
+      items.push({ path: '/pqr', label: 'PQR', icon: 'forum' });
+      items.push({ path: '/cortes', label: 'Suspensión y corte', icon: 'content_cut' });
+      items.push({ path: '/sui', label: 'Archivos SUI', icon: 'upload_file' });
+      items.push({ path: '/areas', label: 'Áreas de prestación', icon: 'map' });
       items.push({ path: '/perfil-regulatorio', label: 'Perfil regulatorio', icon: 'gavel' });
       items.push({ path: '/finanzas', label: 'Ingresos y gastos', icon: 'account_balance_wallet' });
       items.push({ path: '/informes', label: 'Informes', icon: 'bar_chart' });
@@ -75,6 +79,7 @@ export class Shell {
     }
     if (this.session.isPlatformAdmin()) {
       items.push({ path: '/prestadores', label: 'Prestadores', icon: 'apartment' });
+      items.push({ path: '/liquidaciones', label: 'Liquidación de MAS', icon: 'request_quote' });
     }
     return items;
   });

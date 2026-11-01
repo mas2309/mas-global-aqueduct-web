@@ -33,6 +33,18 @@
     </mat-button-toggle-group>
   }
 
+  @if (areas.hasValue() && areas.value().length > 0) {
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="area-filter">
+      <mat-label>Área de prestación</mat-label>
+      <mat-select [ngModel]="area()" (ngModelChange)="selectArea($event)">
+        <mat-option [value]="null">Tarifa general</mat-option>
+        @for (option of areas.value(); track option.id) {
+          <mat-option [value]="option.id">{{ option.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+
   @if (tariffs.isLoading()) {
     <mat-progress-bar mode="indeterminate" aria-label="Cargando tarifas" />
   }

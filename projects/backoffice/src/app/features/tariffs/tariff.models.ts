@@ -20,6 +20,8 @@ export interface TariffAdjustment {
 export interface Tariff {
   id: string;
   serviceType: ServiceType;
+  /** Área de prestación a la que aplica; sin ella es la tarifa general. */
+  serviceAreaId?: string | null;
   /** Fecha ISO `yyyy-MM-dd`. */
   validFrom: string;
   /** Es la versión que se usa hoy para liquidar. */

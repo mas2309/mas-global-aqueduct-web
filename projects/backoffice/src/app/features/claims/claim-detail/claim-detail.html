@@ -1,0 +1,145 @@
+<section class="page">
+  @if (claim.isLoading() && !claim.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando PQR" />
+  }
+  @if (claim.error()) {
+    <div class="state" role="alert">
+      <p>No pudimos cargar la PQR.</p>
+      <a mat-stroked-button routerLink="/pqr">Volver a PQR</a>
+    </div>
+  } @else if (claim.hasValue()) {
+    @let item = claim.value();
+    @let canOperate = session.canOperateOrganization();
+
+    <header class="page-header">
+      <div>
+        <h1>{{ typeLabels[item.type] }} n.º {{ item.number }}</h1>
+        <span class="muted">Radicada el {{ item.filedOn | date: 'longDate' }}</span>
+      </div>
+      <span class="chip">{{ stateLabels[item.state] }}</span>
+    </header>
+
+    @if (item.state === 'POSITIVE_SILENCE') {
+      <p class="error" role="status">
+        Sin respuesta a tiempo: se entiende resuelta a favor del suscriptor y no se puede cobrar nada
+        de lo reclamado.
+      </p>
+    }
+
+    <mat-card appearance="outlined">
+      <mat-card-content>
+        <dl class="data">
+          <dt>Suscriptor</dt>
+          <dd>
+            <a [routerLink]="['/suscriptores', item.subscriberId]">
+              {{ formatCode(item.subscriberCode) }} · {{ item.subscriberName }}
+            </a>
+          </dd>
+          <dt>Canal</dt>
+          <dd>{{ channelLabels[item.channel] }}</dd>
+          <dt>Causal</dt>
+          <dd>
+            {{ item.cause }}
+            @if (item.causeCode) {
+              ({{ item.causeCode }})
+            }
+          </dd>
+          <dt>Descripción</dt>
+          <dd>{{ item.description }}</dd>
+          @if (item.invoiceId) {
+            <dt>Factura</dt>
+            <dd><a [routerLink]="['/facturas', item.invoiceId]">Ver factura</a></dd>
+          }
+          @if (item.disputedAmount > 0) {
+            <dt>Valor congelado</dt>
+            <dd>{{ item.disputedAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+          }
+          <dt>Responder hasta</dt>
+          <dd>
+            {{ item.dueDate | date: 'longDate' }}
+            @if (isPending(item)) {
+              <span [class.late]="item.businessDaysLeft <= 3">· {{ deadlineLabel(item) }}</span>
+            }
+          </dd>
+        </dl>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Respuesta</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (item.answer) {
+          <dl class="data">
+            @if (item.decision; as decision) {
+              <dt>Decisión</dt>
+              <dd>{{ decisionLabels[decision] }}</dd>
+            }
+            <dt>Respondida</dt>
+            <dd>{{ item.answeredOn | date: 'longDate' }}</dd>
+            <dt>Texto</dt>
+            <dd>{{ item.answer }}</dd>
+            @if (item.owedAmount) {
+              <dt>Debe de lo congelado</dt>
+              <dd>{{ item.owedAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+            }
+            <dt>Notificación</dt>
+            <dd>
+              @if (item.notifiedOn && item.notificationChannel) {
+                {{ channelLabels[item.notificationChannel] }} · {{ item.notifiedOn | date: 'longDate' }}
+              } @else {
+                Sin notificar
+              }
+            </dd>
+          </dl>
+        } @else {
+          <p class="muted">Aún sin responder.</p>
+        }
+        @if (canOperate) {
+          <div class="actions">
+            @if (!item.answer) {
+              <button mat-flat-button (click)="answer(item)">Responder</button>
+            } @else if (!item.notifiedOn) {
+              <button mat-flat-button (click)="notify(item)">Registrar notificación</button>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Soportes</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <ul class="attachments">
+          @for (attachment of item.attachments; track attachment.id) {
+            <li>
+              <button mat-button (click)="download(item, attachment)">
+                <mat-icon>download</mat-icon>
+                {{ attachment.fileName }}
+              </button>
+            </li>
+          } @empty {
+            <li class="muted">Sin soportes.</li>
+          }
+        </ul>
+        @if (canOperate) {
+          <input
+            #file
+            hidden
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg"
+            aria-label="Adjuntar soporte"
+            (change)="attach(item, $event)"
+          />
+          <button mat-stroked-button [disabled]="uploading()" (click)="file.click()">
+            <mat-icon>attach_file</mat-icon>
+            Adjuntar soporte
+          </button>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</section>

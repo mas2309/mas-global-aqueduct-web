@@ -60,28 +60,6 @@ export class SubscribersApi {
     });
   }
 
-  suspendService(propertyId: string, service: ServiceType): Observable<Property> {
-    return this.http.post<Property>(
-      `${PROPERTIES_URL}/${propertyId}/services/${service}/suspend`,
-      null,
-    );
-  }
-
-  /** Restablece un servicio cortado, con su rastro y el cobro que fijen las reglas del prestador. */
-  restoreService(propertyId: string, service: ServiceType): Observable<unknown> {
-    return this.http.post(
-      `/api/v1/disconnections/properties/${propertyId}/services/${service}/restore`,
-      {},
-    );
-  }
-
-  reconnectService(propertyId: string, service: ServiceType): Observable<Property> {
-    return this.http.post<Property>(
-      `${PROPERTIES_URL}/${propertyId}/services/${service}/reconnect`,
-      null,
-    );
-  }
-
   disconnectService(propertyId: string, service: ServiceType): Observable<Property> {
     return this.http.delete<Property>(`${PROPERTIES_URL}/${propertyId}/services/${service}`);
   }

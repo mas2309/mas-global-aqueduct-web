@@ -16,6 +16,8 @@ import { saveFile } from '../../../shared/ui/save-file';
 import { periodLabel } from '../../readings/reading.models';
 import { formatCode, METERED_SERVICES } from '../../subscribers/subscriber.models';
 import { unitOf } from '../../tariffs/tariff.models';
+import { DeliveryDialog, DeliveryDialogData } from '../delivery-dialog/delivery-dialog';
+import { InvoiceHistoryDialog } from '../invoice-history-dialog/invoice-history-dialog';
 import { InvoicePayments } from '../invoice-payments';
 import {
   Invoice,
@@ -95,6 +97,39 @@ export class InvoiceDetail {
       },
       error: () => undefined,
     });
+  }
+
+  protected deliver(invoice: Invoice): void {
+    const data: DeliveryDialogData = {
+      title: `Registrar la entrega de la factura n.º ${invoice.number}`,
+      message: 'Si se entregó tarde y el perfil regulatorio exige días mínimos, se corre su vencimiento.',
+    };
+    this.dialog
+      .open<DeliveryDialog, DeliveryDialogData, string>(DeliveryDialog, { data, width: '440px' })
+      .afterClosed()
+      .pipe(
+        filter((deliveredOn) => deliveredOn !== undefined),
+        switchMap((deliveredOn) => this.api.deliver(invoice.id, deliveredOn)),
+      )
+      .subscribe({
+        next: (document) => {
+          const delivered = document.find((item) => item.id === invoice.id);
+          if (delivered) {
+            this.invoice.set(delivered);
+          }
+          this.document.reload();
+          this.notifier.success('Entrega registrada');
+        },
+        error: (error: unknown) =>
+          this.notifier.apiError(error, {
+            400: 'La fecha de entrega no puede ser anterior a la emisión de la factura.',
+            403: 'Tu rol solo permite consultar.',
+          }),
+      });
+  }
+
+  protected showHistory(invoice: Invoice): void {
+    this.dialog.open(InvoiceHistoryDialog, { data: invoice, width: '520px' });
   }
 
   protected reversePayment(invoice: Invoice): void {

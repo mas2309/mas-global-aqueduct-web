@@ -1,0 +1,120 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Suspensión y corte</h1>
+      <span class="muted">
+        El sistema solo sugiere: la acción se ejecuta en el predio y luego se registra aquí.
+      </span>
+    </div>
+  </header>
+
+  @if (candidates.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando acometidas" />
+  }
+
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Sugeridas</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (candidates.error()) {
+        <p class="error" role="alert">No pudimos cargar las acometidas sugeridas.</p>
+      } @else if (candidates.hasValue()) {
+        @if (candidates.value().length === 0) {
+          <p class="muted">
+            @if (suggests()) {
+              Ninguna acometida alcanza la mora de las reglas.
+            } @else {
+              Aún no hay sugerencias: indica abajo después de cuántos periodos sin pagar se sugiere
+              suspender o cortar.
+            }
+          </p>
+        } @else {
+          <table class="candidates" aria-label="Acometidas sugeridas">
+            <thead>
+              <tr>
+                <th scope="col">Suscriptor</th>
+                <th scope="col">Predio</th>
+                <th scope="col">Servicio</th>
+                <th scope="col">Periodos sin pagar</th>
+                <th scope="col">Saldo</th>
+                <th scope="col">Sugerencia</th>
+                <th scope="col"><span class="cdk-visually-hidden">Acción</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (candidate of candidates.value(); track candidate.propertyId + candidate.serviceType) {
+                <tr>
+                  <td>
+                    <a [routerLink]="['/suscriptores', candidate.subscriberId]">
+                      {{ formatCode(candidate.subscriberCode) }} · {{ candidate.subscriberName }}
+                    </a>
+                  </td>
+                  <td>{{ candidate.address }}</td>
+                  <td>{{ serviceLabels[candidate.serviceType] }}</td>
+                  <td>{{ candidate.unpaidPeriods }}</td>
+                  <td>{{ candidate.owed | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+                  <td>{{ actionLabels[candidate.action] }}</td>
+                  <td>
+                    @if (session.canOperateOrganization()) {
+                      <button mat-stroked-button (click)="register(candidate)">Registrar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>Reglas</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="muted">
+        Según el contrato de condiciones uniformes del prestador. El sistema no impone el tope legal
+        de mora: quien configura las reglas responde por respetarlo.
+      </p>
+      <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Sugerir suspender después de (periodos)</mat-label>
+            <input matInput type="number" min="1" max="120" formControlName="suspendAfterUnpaidPeriods" />
+            <mat-hint>Vacío: no se sugiere</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Sugerir cortar después de (periodos)</mat-label>
+            <input matInput type="number" min="1" max="120" formControlName="cutAfterUnpaidPeriods" />
+            <mat-hint>Vacío: no se sugiere</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Valor de la reconexión</mat-label>
+            <input matInput type="number" min="0" formControlName="reconnectionFee" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Valor de la reinstalación</mat-label>
+            <input matInput type="number" min="0" formControlName="reinstatementFee" />
+          </mat-form-field>
+        </div>
+        <mat-checkbox formControlName="paymentRequiredToRestore">
+          Para restablecer el servicio hay que estar al día
+        </mat-checkbox>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Causales (una por línea)</mat-label>
+          <textarea matInput rows="6" formControlName="causes"></textarea>
+          @if (form.controls.causes.invalid) {
+            <mat-error>Indica al menos una causal</mat-error>
+          }
+        </mat-form-field>
+        @if (session.canAdministerOrganization()) {
+          <div class="actions">
+            <button mat-flat-button type="submit" [disabled]="saving()">Guardar reglas</button>
+          </div>
+        }
+      </form>
+    </mat-card-content>
+  </mat-card>
+</section>

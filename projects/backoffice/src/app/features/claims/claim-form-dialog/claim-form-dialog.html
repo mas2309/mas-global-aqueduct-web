@@ -1,0 +1,133 @@
+<h2 mat-dialog-title>Radicar PQR</h2>
+@if (subscriber(); as person) {
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <mat-dialog-content>
+      <p>
+        <strong>{{ formatCode(person.code) }} · {{ person.fullName }}</strong>
+        <button mat-button type="button" (click)="subscriber.set(null)">Cambiar</button>
+      </p>
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="type">
+            @for (type of types; track type) {
+              <mat-option [value]="type">{{ typeLabels[type] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Canal</mat-label>
+          <mat-select formControlName="channel">
+            @for (channel of channels; track channel) {
+              <mat-option [value]="channel">{{ channelLabels[channel] }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Causal</mat-label>
+          <input matInput formControlName="cause" maxlength="150" />
+          @if (form.controls.cause.invalid) {
+            <mat-error>Indica la causal</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Código de causal del SUI (opcional)</mat-label>
+          <input matInput formControlName="causeCode" maxlength="20" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Predio (opcional)</mat-label>
+          <mat-select formControlName="propertyId">
+            <mat-option [value]="null">Sin predio</mat-option>
+            @if (properties.hasValue()) {
+              @for (property of properties.value(); track property.id) {
+                <mat-option [value]="property.id">{{ property.address }}</mat-option>
+              }
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de radicación</mat-label>
+          <input matInput type="date" formControlName="filedOn" />
+          <mat-hint>Vacía: hoy</mat-hint>
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Descripción</mat-label>
+        <textarea matInput rows="4" formControlName="description" maxlength="2000"></textarea>
+        @if (form.controls.description.invalid) {
+          <mat-error>Describe la PQR</mat-error>
+        }
+      </mat-form-field>
+      @if (form.controls.type.value === 'CLAIM') {
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Factura reclamada (opcional)</mat-label>
+            <mat-select formControlName="invoiceId">
+              <mat-option [value]="null">Sin factura</mat-option>
+              @if (invoices.hasValue()) {
+                @for (invoice of invoices.value().items; track invoice.id) {
+                  <mat-option [value]="invoice.id">
+                    N.º {{ invoice.number }} · {{ periodLabel(invoice) }}
+                  </mat-option>
+                }
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (form.controls.invoiceId.value) {
+            <mat-form-field appearance="outline">
+              <mat-label>Valor reclamado a congelar</mat-label>
+              <input matInput type="number" min="0" formControlName="disputedAmount" />
+              <mat-hint>Deja de cobrarse mientras se resuelve</mat-hint>
+            </mat-form-field>
+          }
+        </div>
+      }
+      <div aria-live="assertive">
+        @if (error(); as message) {
+          <p class="error">{{ message }}</p>
+        }
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button type="button" mat-dialog-close>Cancelar</button>
+      <button mat-flat-button type="submit" [disabled]="saving()">Radicar</button>
+    </mat-dialog-actions>
+  </form>
+} @else {
+  <mat-dialog-content>
+    <form class="search" role="search" (ngSubmit)="search()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Buscar suscriptor por nombre, documento o código</mat-label>
+        <input
+          matInput
+          name="q"
+          type="search"
+          [ngModel]="searchText()"
+          (ngModelChange)="searchText.set($event)"
+          maxlength="100"
+        />
+      </mat-form-field>
+      <button mat-stroked-button type="submit">
+        <mat-icon>search</mat-icon>
+        Buscar
+      </button>
+    </form>
+    @if (results.error()) {
+      <p class="error" role="alert">No pudimos buscar los suscriptores.</p>
+    } @else if (results.hasValue()) {
+      <ul class="results">
+        @for (found of results.value().items; track found.id) {
+          <li>
+            <span>{{ formatCode(found.code) }} · {{ found.fullName }}</span>
+            <button mat-button (click)="subscriber.set(found)">Elegir</button>
+          </li>
+        } @empty {
+          <li class="muted">Ningún suscriptor coincide.</li>
+        }
+      </ul>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancelar</button>
+  </mat-dialog-actions>
+}

@@ -1,0 +1,259 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Archivos SUI</h1>
+      <span class="muted">
+        CSV para pasar por el SUI-Validador y cargar con el usuario del prestador. No incluyen nombres
+        ni documentos.
+      </span>
+    </div>
+  </header>
+
+  <mat-button-toggle-group
+    [value]="format()"
+    (change)="format.set($event.value)"
+    aria-label="Archivo"
+  >
+    @for (option of formats; track option) {
+      <mat-button-toggle [value]="option">{{ formatLabels[option] }}</mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+
+  <mat-card appearance="outlined">
+    <mat-card-content>
+      <p class="notice" role="note">
+        @if (format() === 'USER_CATALOG') {
+          <strong>Borrador sin validar:</strong> las columnas y los códigos de este archivo aún no se
+          han confirmado con el SUI-Validador. Ajústalos abajo si el validador pide otra cosa.
+        } @else {
+          Los valores siguen el instructivo de la SSPD (versión 3 de 2023), pero los encabezados y los
+          códigos de los usos especial y oficial son supuestos: confírmalos antes de entregarlo.
+        }
+      </p>
+
+      @if (session.canOperateOrganization()) {
+        @if (review.isLoading()) {
+          <mat-progress-bar mode="indeterminate" aria-label="Revisando el archivo" />
+        }
+        @if (review.error()) {
+          <p class="error" role="alert">No pudimos revisar el archivo.</p>
+        } @else if (review.hasValue()) {
+          @let result = review.value();
+          <p>
+            {{ result.rows }} {{ result.rows === 1 ? 'fila' : 'filas' }} ·
+            {{ result.issues.length }} por corregir
+          </p>
+          @if (result.issues.length > 0) {
+            <table class="issues" aria-label="Datos por corregir">
+              <thead>
+                <tr>
+                  <th scope="col">NUIU</th>
+                  <th scope="col">Columna</th>
+                  <th scope="col">Qué falta</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (issue of result.issues; track $index) {
+                  <tr>
+                    <td>{{ issue.propertyCode }}</td>
+                    <td>{{ issue.column }}</td>
+                    <td>{{ issue.message }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          <div class="actions">
+            <button mat-flat-button [disabled]="!canExport()" (click)="export()">
+              <mat-icon>download</mat-icon>
+              Exportar CSV
+            </button>
+          </div>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+
+  @if (template.hasValue()) {
+    @let editable = session.canAdministerOrganization();
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Plantilla</mat-card-title>
+        <mat-card-subtitle>
+          {{
+            template.value().version === 0
+              ? 'La que trae la plataforma'
+              : 'Versión ' + template.value().version + ' de este prestador'
+          }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <h3>Columnas, en el orden del archivo</h3>
+        <table class="rows" aria-label="Columnas de la plantilla">
+          <thead>
+            <tr>
+              <th scope="col">Encabezado</th>
+              <th scope="col">Dato</th>
+              <th scope="col">Servicio</th>
+              @if (editable) {
+                <th scope="col"><span class="cdk-visually-hidden">Acciones</span></th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (column of columns(); track $index) {
+              <tr>
+                @if (editable) {
+                  <td>
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <input
+                        matInput
+                        maxlength="60"
+                        [attr.aria-label]="'Encabezado de la columna ' + ($index + 1)"
+                        [ngModel]="column.header"
+                        (ngModelChange)="updateColumn($index, { header: $event })"
+                      />
+                    </mat-form-field>
+                  </td>
+                  <td>
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <mat-select
+                        [attr.aria-label]="'Dato de la columna ' + ($index + 1)"
+                        [ngModel]="column.field"
+                        (ngModelChange)="setField($index, $event)"
+                      >
+                        @for (field of fields; track field) {
+                          <mat-option [value]="field">{{ fieldLabels[field] }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </td>
+                  <td>
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <mat-select
+                        [attr.aria-label]="'Servicio de la columna ' + ($index + 1)"
+                        [ngModel]="column.service"
+                        (ngModelChange)="setService($index, $event)"
+                      >
+                        <mat-option [value]="null">Del predio</mat-option>
+                        @for (service of services; track service) {
+                          <mat-option [value]="service">{{ serviceLabels[service] }}</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                  </td>
+                  <td>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      [attr.aria-label]="'Subir la columna ' + ($index + 1)"
+                      [disabled]="$index === 0"
+                      (click)="moveUp($index)"
+                    >
+                      <mat-icon>arrow_upward</mat-icon>
+                    </button>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      [attr.aria-label]="'Quitar la columna ' + ($index + 1)"
+                      (click)="removeColumn($index)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                } @else {
+                  <td>{{ column.header }}</td>
+                  <td>{{ fieldLabels[column.field] }}</td>
+                  <td>{{ column.service ? serviceLabels[column.service] : 'Del predio' }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (editable) {
+          <button mat-button type="button" (click)="addColumn()">
+            <mat-icon>add</mat-icon>
+            Agregar columna
+          </button>
+        }
+
+        <h3>Códigos</h3>
+        <p class="muted">
+          Clave y valor que toma cada dato codificado, p. ej. usage.RESIDENTIAL = 1. Un código que falte
+          aparece como dato por corregir.
+        </p>
+        <table class="rows" aria-label="Códigos de la plantilla">
+          <thead>
+            <tr>
+              <th scope="col">Clave</th>
+              <th scope="col">Valor</th>
+              @if (editable) {
+                <th scope="col"><span class="cdk-visually-hidden">Acciones</span></th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (code of codes(); track $index) {
+              <tr>
+                @if (editable) {
+                  <td>
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <input
+                        matInput
+                        maxlength="60"
+                        [attr.aria-label]="'Clave del código ' + ($index + 1)"
+                        [ngModel]="code.key"
+                        (ngModelChange)="updateCode($index, { key: $event })"
+                      />
+                    </mat-form-field>
+                  </td>
+                  <td>
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                      <input
+                        matInput
+                        maxlength="10"
+                        [attr.aria-label]="'Valor del código ' + ($index + 1)"
+                        [ngModel]="code.value"
+                        (ngModelChange)="updateCode($index, { value: $event })"
+                      />
+                    </mat-form-field>
+                  </td>
+                  <td>
+                    <button
+                      mat-icon-button
+                      type="button"
+                      [attr.aria-label]="'Quitar el código ' + ($index + 1)"
+                      (click)="removeCode($index)"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </td>
+                } @else {
+                  <td>{{ code.key }}</td>
+                  <td>{{ code.value }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+        @if (editable) {
+          <button mat-button type="button" (click)="addCode()">
+            <mat-icon>add</mat-icon>
+            Agregar código
+          </button>
+          @if (!valid()) {
+            <p class="error" role="alert">
+              Revisa la plantilla: los encabezados solo admiten letras, números, espacios y guion bajo,
+              y no se repiten; los valores de los códigos, solo letras y números.
+            </p>
+          }
+          <div class="actions">
+            <button mat-flat-button [disabled]="!valid() || saving()" (click)="save()">
+              Guardar como nueva versión
+            </button>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</section>
