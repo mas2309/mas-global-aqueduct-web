@@ -54,9 +54,7 @@ import { SERVICE_AREAS_URL, ServiceArea } from '../service-area.models';
                   }}
                   ·
                   {{
-                    area.altitudeBand
-                      ? altitudeLabels[area.altitudeBand]
-                      : 'Altitud del perfil regulatorio'
+                    area.altitudeBand ? altitudeLabels[area.altitudeBand] : 'Altitud del prestador'
                   }}
                 </div>
               </div>

@@ -43,7 +43,7 @@ import { SERVICE_AREAS_URL, ServiceArea, ServiceAreaRequest } from '../service-a
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Altitud</mat-label>
           <mat-select formControlName="altitudeBand">
-            <mat-option [value]="null">La del perfil regulatorio</mat-option>
+            <mat-option [value]="null">La del prestador</mat-option>
             @for (altitude of altitudes; track altitude) {
               <mat-option [value]="altitude">{{ altitudeLabels[altitude] }}</mat-option>
             }

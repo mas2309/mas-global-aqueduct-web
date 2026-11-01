@@ -204,15 +204,6 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'perfil-regulatorio',
-            title: 'Perfil regulatorio · MAS Acueductos',
-            canActivate: [organizationAdminGuard],
-            loadComponent: () =>
-              import('./features/regulatory/regulatory-profile/regulatory-profile').then(
-                (m) => m.RegulatoryProfilePage,
-              ),
-          },
-          {
             path: 'tarifas',
             title: 'Tarifas · MAS Acueductos',
             canActivate: [organizationGuard],
@@ -251,6 +242,14 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./features/organizations/organization-form/organization-form').then(
                     (m) => m.OrganizationForm,
+                  ),
+              },
+              {
+                path: ':id/perfil-regulatorio',
+                title: 'Perfil regulatorio · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/regulatory/regulatory-profile/regulatory-profile').then(
+                    (m) => m.RegulatoryProfilePage,
                   ),
               },
               {

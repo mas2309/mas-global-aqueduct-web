@@ -1,9 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { access, authResponse } from '../../../../testing/fixtures';
+import { authResponse, user } from '../../../../testing/fixtures';
 import { PageTestContext, settle, setUpPage, textOf } from '../../../../testing/setup';
+import { ORGANIZATIONS_URL } from '../../organizations/organizations-api';
 import { REGULATORY_PROFILE_URL, RegulatoryProfile, RegulatoryRules } from '../regulatory.models';
-import { RegulatoryStatus } from '../regulatory-status';
 import { RegulatoryProfilePage } from './regulatory-profile';
+
+const ID = 'org-1';
+const PROFILE_URL = `${ORGANIZATIONS_URL}/${ID}/regulatory-profile`;
 
 const FREE_RULES: RegulatoryRules = {
   basicConsumption: null,
@@ -38,26 +41,24 @@ describe('RegulatoryProfilePage', () => {
 
   afterEach(() => context.http.verify());
 
-  async function open(role: 'ORG_ADMIN' | 'VIEWER' = 'ORG_ADMIN'): Promise<RegulatoryProfilePage> {
-    context = setUpPage(
-      role === 'VIEWER'
-        ? {
-            session: authResponse({
-              organization: access({ role }),
-              organizations: [access({ role })],
-            }),
-          }
-        : {},
-    );
+  async function open(): Promise<RegulatoryProfilePage> {
+    context = setUpPage({
+      session: authResponse({
+        user: user({ platformAdmin: true }),
+        organization: null,
+        organizations: [],
+      }),
+    });
     const fixture = TestBed.createComponent(RegulatoryProfilePage);
+    fixture.componentRef.setInput('id', ID);
     element = fixture.nativeElement;
     await settle();
-    context.http.expectOne(REGULATORY_PROFILE_URL).flush(FREE_PROFILE);
+    context.http.expectOne(PROFILE_URL).flush(FREE_PROFILE);
     await settle();
     return fixture.componentInstance;
   }
 
-  it('el administrador guarda el perfil enviando todas las reglas', async () => {
+  it('la plataforma guarda el perfil del prestador enviando todas las reglas', async () => {
     const page = await open();
 
     expect(textOf(element)).toContain('Perfil regulatorio');
@@ -66,7 +67,7 @@ describe('RegulatoryProfilePage', () => {
     page['form'].controls.rules.controls.caps.controls.s1.setValue(70);
     page['submit']();
 
-    const request = context.http.expectOne(REGULATORY_PROFILE_URL);
+    const request = context.http.expectOne(PROFILE_URL);
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({
       framework: 'NONE',
@@ -86,8 +87,6 @@ describe('RegulatoryProfilePage', () => {
     });
     await settle();
     expect(document.body.textContent).toContain('Perfil regulatorio guardado');
-    // El menú comparte el perfil: se entera sin volver a consultarlo
-    expect(TestBed.inject(RegulatoryStatus).regulated()).toBe(true);
   });
 
   it('propone los valores por defecto del marco elegido', async () => {
@@ -115,12 +114,5 @@ describe('RegulatoryProfilePage', () => {
     expect(rules.basicConsumption).toBe(11);
     expect(rules.caps.s2).toBe(40);
     expect(rules.deviation.reviewRequired).toBe(true);
-  });
-
-  it('un rol de consulta ve el perfil pero no lo cambia', async () => {
-    const page = await open('VIEWER');
-
-    expect(page['form'].disabled).toBe(true);
-    expect(textOf(element)).not.toContain('Guardar');
   });
 });

@@ -1,10 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  input,
   signal,
   untracked,
 } from '@angular/core';
@@ -16,7 +17,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
-import { SessionStore } from '../../../core/auth/session-store';
+import { RouterLink } from '@angular/router';
+import { ORGANIZATIONS_URL } from '../../organizations/organizations-api';
 import { Notifier } from '../../../core/ui/notifier';
 import {
   ALTITUDE_BANDS,
@@ -34,17 +36,18 @@ import {
   STRATIFICATION_SOURCES,
   StratificationSource,
 } from '../regulatory.models';
-import { RegulatoryStatus } from '../regulatory-status';
 
 const STRATA = [1, 2, 3, 4, 5, 6] as const;
 
 /**
  * Marco regulatorio del prestador y reglas que se derivan de él. Al cambiar de marco o altitud se proponen los valores
- * por defecto de la norma; todos se pueden ajustar antes de guardar. Solo el administrador cambia algo.
+ * por defecto de la norma; todos se pueden ajustar antes de guardar. La gestiona el administrador de plataforma desde
+ * la ficha del prestador: a un acueducto pequeño estas reglas no le interesan.
  */
 @Component({
   selector: 'aq-regulatory-profile',
   imports: [
+    RouterLink,
     ReactiveFormsModule,
     MatButtonModule,
     MatCardModule,
@@ -86,11 +89,11 @@ export class RegulatoryProfilePage {
   private readonly http = inject(HttpClient);
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly notifier = inject(Notifier);
-  private readonly session = inject(SessionStore);
+  /** Parámetro de ruta `:id`: el prestador. */
+  readonly id = input.required<string>();
 
-  /** El mismo que usa el menú: al guardar, el menú se actualiza. */
-  protected readonly profile = inject(RegulatoryStatus).profile;
-  protected readonly canEdit = computed(() => this.session.canAdministerOrganization());
+  private readonly url = computed(() => `${ORGANIZATIONS_URL}/${this.id()}/regulatory-profile`);
+  protected readonly profile = httpResource<RegulatoryProfile>(() => this.url());
   protected readonly saving = signal(false);
 
   protected readonly frameworks = FRAMEWORKS;
@@ -147,13 +150,6 @@ export class RegulatoryProfilePage {
         untracked(() => this.fill(profile));
       }
     });
-    effect(() => {
-      if (this.canEdit()) {
-        this.form.enable();
-      } else {
-        this.form.disable();
-      }
-    });
   }
 
   protected get regulated(): boolean {
@@ -182,7 +178,7 @@ export class RegulatoryProfilePage {
       return;
     }
     this.saving.set(true);
-    this.http.put<RegulatoryProfile>(REGULATORY_PROFILE_URL, this.request()).subscribe({
+    this.http.put<RegulatoryProfile>(this.url(), this.request()).subscribe({
       next: (saved) => {
         this.saving.set(false);
         this.profile.set(saved);
@@ -191,10 +187,9 @@ export class RegulatoryProfilePage {
       error: (error: unknown) => {
         this.saving.set(false);
         this.notifier.apiError(error, {
-          403: 'Solo el administrador del prestador cambia el perfil regulatorio.',
-          422:
+          400:
             'No se pudo guardar: un marco regulado exige la altitud, el de pequeños prestadores exige sus ' +
-            'condiciones, y estas solo se fijan una vez.',
+            'condiciones, y estas deben corresponder al marco.',
         });
       },
     });

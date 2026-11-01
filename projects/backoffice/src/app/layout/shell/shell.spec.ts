@@ -66,37 +66,19 @@ describe('Shell', () => {
     expect(menu).toContain('PQR');
     expect(menu).toContain('Suspensión y corte');
 
-    // El administrador puede activar un marco desde su menú de usuario
-    fixture.nativeElement.querySelector('button[aria-label="Opciones de usuario"]').click();
-    await settle();
-    expect(menuItem('Perfil regulatorio').getAttribute('href')).toBe('/perfil-regulatorio');
-  });
-
-  it('un rol sin administración no ve el perfil en su menú de usuario', async () => {
-    context = setUpPage();
-    const fixture = await render();
-
+    // Tampoco en su menú de usuario: el perfil lo gestiona la plataforma
     fixture.nativeElement.querySelector('button[aria-label="Opciones de usuario"]').click();
     await settle();
     expect(() => menuItem('Perfil regulatorio')).toThrow();
   });
 
-  it('con marco regulado quien no administra no ve el perfil', async () => {
-    context = setUpPage();
-    const fixture = await render('SMALL_PROVIDERS', true);
-    const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
-
-    expect(menu).toContain('Archivos SUI');
-    expect(menu).not.toContain('Perfil regulatorio');
-  });
-
-  it('con marco regulado el administrador ve el perfil y los archivos SUI', async () => {
+  it('con marco regulado tampoco se ve el perfil, pero sí los archivos SUI', async () => {
     context = setUpPage({ session: authResponse({ organization: access({ role: 'ORG_ADMIN' }) }) });
     const fixture = await render('SMALL_PROVIDERS', true);
     const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
 
     expect(menu).toContain('Archivos SUI');
-    expect(menu).toContain('Perfil regulatorio');
+    expect(menu).not.toContain('Perfil regulatorio');
   });
 
   it('sin marco pero reportando al SUI muestra los archivos', async () => {
@@ -108,7 +90,7 @@ describe('Shell', () => {
     expect(menu).not.toContain('Perfil regulatorio');
   });
 
-  it('si el perfil no se puede leer muestra todo el menú', async () => {
+  it('si el perfil no se puede leer muestra los archivos SUI', async () => {
     context = setUpPage({ session: authResponse({ organization: access({ role: 'ORG_ADMIN' }) }) });
     const fixture = TestBed.createComponent(Shell);
     await settle();
@@ -119,7 +101,6 @@ describe('Shell', () => {
     const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
 
     expect(menu).toContain('Archivos SUI');
-    expect(menu).toContain('Perfil regulatorio');
   });
 
   it('el administrador del prestador ve la gestión de usuarios', async () => {

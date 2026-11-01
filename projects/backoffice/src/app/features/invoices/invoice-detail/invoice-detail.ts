@@ -105,7 +105,7 @@ export class InvoiceDetail {
     const data: DeliveryDialogData = {
       title: `Registrar la entrega de la factura n.º ${invoice.number}`,
       message:
-        'Si se entregó tarde y el perfil regulatorio exige días mínimos, se corre su vencimiento.',
+        'Si se entregó tarde y el prestador debe respetar días mínimos, se corre su vencimiento.',
     };
     this.dialog
       .open<DeliveryDialog, DeliveryDialogData, string>(DeliveryDialog, { data, width: '440px' })

@@ -1,4 +1,5 @@
 <section class="page">
+  <a mat-button [routerLink]="['/prestadores', id()]">Volver al prestador</a>
   <header class="page-header">
     <div>
       <h1>Perfil regulatorio</h1>
@@ -171,12 +172,10 @@
         </mat-card-content>
       </mat-card>
 
-      @if (canEdit()) {
-        <div class="actions">
-          <button mat-button type="button" (click)="applyPreset()">Usar valores por defecto</button>
-          <button mat-flat-button type="submit" [disabled]="saving()">Guardar</button>
-        </div>
-      }
+      <div class="actions">
+        <button mat-button type="button" (click)="applyPreset()">Usar valores por defecto</button>
+        <button mat-flat-button type="submit" [disabled]="saving()">Guardar</button>
+      </div>
     </form>
 
     @if (regulated) {

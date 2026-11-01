@@ -32,7 +32,7 @@ import {
 import { AFFILIATIONS_URL, ORGANIZATIONS_URL, OrganizationsApi } from '../organizations-api';
 import { MemberTarget } from '../../members/member.models';
 import { MemberList } from '../../members/member-list/member-list';
-import { CensusCard } from '../census-card/census-card';
+import { RegulatorySummary } from '../regulatory-summary/regulatory-summary';
 import { statusChangeConfirmation } from '../organization-status';
 
 /** Prestadores que se cargan para elegir a quién vincular (y mostrar nombres de los vinculados). */
@@ -52,7 +52,7 @@ const CATALOG_SIZE = 100;
     MatFormFieldModule,
     MatProgressBarModule,
     MemberList,
-    CensusCard,
+    RegulatorySummary,
   ],
   templateUrl: './organization-detail.html',
   styleUrl: './organization-detail.scss',
