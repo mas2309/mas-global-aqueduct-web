@@ -71,7 +71,9 @@
           <tbody>
             @if (metered) {
               <tr>
-                <th scope="row">Consumo ({{ bill.consumption }} {{ unit }})</th>
+                <th scope="row">
+                  Consumo {{ bill.estimated ? 'estimado' : '' }} ({{ bill.consumption }} {{ unit }})
+                </th>
                 <td>{{ bill.consumptionCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
               </tr>
             }
@@ -122,6 +124,12 @@
                 <td>{{ bill.lateFee | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
               </tr>
             }
+            @if (bill.disputedAmount > 0) {
+              <tr>
+                <th scope="row">En reclamo (no se cobra mientras se resuelve)</th>
+                <td>{{ -bill.disputedAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+              </tr>
+            }
             <tr class="total">
               <th scope="row">Total</th>
               <td>{{ bill.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
@@ -130,6 +138,41 @@
         </table>
       </mat-card-content>
     </mat-card>
+
+    @if (siblings().length > 0) {
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Factura conjunta</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="muted">
+            El documento n.º {{ bill.number }} incluye otros servicios del predio y se paga completo.
+          </p>
+          <table class="breakdown">
+            <caption class="cdk-visually-hidden">
+              Otros servicios del documento
+            </caption>
+            <tbody>
+              @for (other of siblings(); track other.id) {
+                <tr>
+                  <th scope="row">
+                    <a [routerLink]="['/facturas', other.id]">{{
+                      serviceLabels[other.serviceType]
+                    }}</a>
+                    · {{ stateLabels[other.state] }}
+                  </th>
+                  <td>{{ other.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+                </tr>
+              }
+              <tr class="total">
+                <th scope="row">Por pagar del documento</th>
+                <td>{{ documentDue() | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </mat-card-content>
+      </mat-card>
+    }
 
     @if (bill.state === 'CARRIED') {
       <p class="muted note">

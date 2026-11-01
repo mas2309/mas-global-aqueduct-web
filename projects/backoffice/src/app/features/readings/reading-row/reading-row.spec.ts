@@ -125,6 +125,20 @@ describe('ReadingRow', () => {
     request.flush(reading({ previousReading: 0, currentReading: 5, meterReplaced: true }));
   });
 
+  it('avisa que una lectura en revisión aún no tiene factura y ofrece revisarla', async () => {
+    await render(routeEntry({ reading: reading({ unusual: true, reviewStatus: 'PENDING' }) }));
+
+    expect(textOf(element)).toContain('Por revisar: aún sin factura');
+    expect(button('Revisar')).toBeDefined();
+  });
+
+  it('no ofrece revisar una lectura ya resuelta', async () => {
+    await render(routeEntry({ reading: reading({ unusual: true, reviewStatus: 'RESOLVED' }) }));
+
+    expect(textOf(element)).not.toContain('Por revisar');
+    expect(() => button('Revisar')).toThrow();
+  });
+
   it('resalta el consumo inusual y permite eliminar la lectura', async () => {
     await render(
       routeEntry({ reading: reading({ consumption: 40, unusual: true, meterReplaced: true }) }),

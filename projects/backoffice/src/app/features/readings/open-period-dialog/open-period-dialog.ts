@@ -5,11 +5,13 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MONTH_OPTIONS } from '../reading.models';
+import { MONTH_OPTIONS, PERIODICITY_OPTIONS } from '../reading.models';
 
 export interface FirstPeriod {
   year: number;
   month: number;
+  /** Meses que cubre cada periodo; los siguientes la conservan. */
+  months: number;
 }
 
 /**
@@ -32,7 +34,7 @@ export interface FirstPeriod {
     <mat-dialog-content>
       <p class="muted">
         Elige el mes desde el que empiezas a registrar lecturas. Después los periodos siguen en
-        orden, uno por mes.
+        orden, con la periodicidad que elijas.
       </p>
       <div class="fields">
         <mat-form-field appearance="outline">
@@ -53,6 +55,14 @@ export interface FirstPeriod {
             [ngModel]="year()"
             (ngModelChange)="year.set(+$event)"
           />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Periodicidad</mat-label>
+          <mat-select [ngModel]="periodicity()" (ngModelChange)="periodicity.set($event)">
+            @for (option of periodicities; track option.value) {
+              <mat-option [value]="option.value">{{ option.name }}</mat-option>
+            }
+          </mat-select>
         </mat-form-field>
       </div>
     </mat-dialog-content>
@@ -76,10 +86,12 @@ export class OpenPeriodDialog {
   private readonly dialogRef = inject<MatDialogRef<OpenPeriodDialog, FirstPeriod>>(MatDialogRef);
 
   protected readonly months = MONTH_OPTIONS;
+  protected readonly periodicities = PERIODICITY_OPTIONS;
+  protected readonly periodicity = signal(1);
   protected readonly year = signal(new Date().getFullYear());
   protected readonly month = signal(new Date().getMonth() + 1);
 
   protected confirm(): void {
-    this.dialogRef.close({ year: this.year(), month: this.month() });
+    this.dialogRef.close({ year: this.year(), month: this.month(), months: this.periodicity() });
   }
 }

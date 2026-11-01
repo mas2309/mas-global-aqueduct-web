@@ -12,6 +12,7 @@ import { ReversePaymentDialog } from '../reverse-payment-dialog/reverse-payment-
 import { InvoiceDetail } from './invoice-detail';
 
 const INVOICE_URL = `${INVOICES_URL}/${INVOICE_ID}`;
+const DOCUMENT_URL = `${INVOICE_URL}/document`;
 
 interface Actions {
   editOtherCharges: (invoice: Invoice) => void;
@@ -25,7 +26,11 @@ describe('InvoiceDetail', () => {
 
   afterEach(() => context.http.verify());
 
-  async function open(bill: Invoice | null, role: OrganizationRole = 'OPERATOR'): Promise<void> {
+  async function open(
+    bill: Invoice | null,
+    role: OrganizationRole = 'OPERATOR',
+    siblings?: Invoice[],
+  ): Promise<void> {
     dialogResult = true;
     context = setUpPage({
       session: authResponse({ organization: access({ role }) }),
@@ -43,6 +48,7 @@ describe('InvoiceDetail', () => {
     } else {
       request.flush(null, { status: 404, statusText: 'Not Found' });
     }
+    context.http.expectOne(DOCUMENT_URL).flush(siblings ?? (bill ? [bill] : []));
     await settle();
   }
 
@@ -108,16 +114,40 @@ describe('InvoiceDetail', () => {
     expect(text).not.toContain('Consumo');
   });
 
+  it('muestra los demás servicios de la factura conjunta y lo que falta por pagar', async () => {
+    const water = invoice();
+    const sewerage = invoice({ id: 'otra', serviceType: 'SEWERAGE', total: 10000 });
+    await open(water, 'OPERATOR', [water, sewerage]);
+
+    const text = textOf(element);
+    expect(text).toContain('Factura conjunta');
+    expect(text).toContain('Alcantarillado');
+    expect(text).toContain('Por pagar del documento');
+    expect(text).toContain('35,500');
+  });
+
+  it('muestra el valor en reclamo y si el consumo es estimado', async () => {
+    await open(invoice({ disputedAmount: 5000, total: 20500, estimated: true }));
+
+    const text = textOf(element);
+    expect(text).toContain('En reclamo');
+    expect(text).toContain('Consumo estimado');
+    expect(text).not.toContain('Factura conjunta');
+  });
+
   it('registra el pago y deja la factura en solo consulta', async () => {
     await open(invoice({ adjustment: 3000, adjustmentPercent: 20 }));
 
     expect(textOf(element)).toContain('Contribución (20 %)');
     button('Pago por banco')?.click();
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     const request = context.http.expectOne(`${INVOICE_URL}/pay`);
     expect(request.request.body).toEqual({ method: 'BANK' });
     request.flush(
       invoice({ state: 'PAID', paymentMethod: 'BANK', paidAt: '2026-10-12T15:00:00Z' }),
     );
+    await settle();
+    context.http.expectOne(DOCUMENT_URL).flush([invoice({ state: 'PAID' })]);
     await settle();
 
     expect(textOf(element)).toContain('Pagada');
@@ -131,10 +161,12 @@ describe('InvoiceDetail', () => {
 
     dialogResult = false;
     button('Pago en efectivo')?.click();
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     context.http.expectNone(`${INVOICE_URL}/pay`);
 
     dialogResult = true;
     button('Pago en efectivo')?.click();
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     context.http
       .expectOne(`${INVOICE_URL}/pay`)
       .flush({ status: 409 }, { status: 409, statusText: 'Conflict' });
@@ -168,6 +200,8 @@ describe('InvoiceDetail', () => {
 
     dialogResult = invoice();
     button('Reversar pago')?.click();
+    await settle();
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     await settle();
 
     expect(document.body.textContent).toContain('Pago de la factura n.º 12 reversado');

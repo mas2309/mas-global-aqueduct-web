@@ -1,0 +1,189 @@
+<header class="page-header">
+  <div>
+    <h1>Perfil regulatorio</h1>
+    <span class="muted">
+      Sin régimen, el prestador define sus reglas. Con un marco regulado se parte de los valores de
+      la norma, y se pueden ajustar.
+    </span>
+  </div>
+</header>
+
+@if (profile.isLoading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+@if (profile.hasValue()) {
+  @let current = profile.value();
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <mat-card appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>Marco</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="fields">
+          <mat-form-field appearance="outline">
+            <mat-label>Marco regulatorio</mat-label>
+            <mat-select formControlName="framework" (selectionChange)="applyPreset()">
+              @for (framework of frameworks; track framework) {
+                <mat-option [value]="framework">{{ frameworkLabels[framework] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Altitud del municipio</mat-label>
+            <mat-select formControlName="altitudeBand" (selectionChange)="applyPreset()">
+              <mat-option [value]="null">Sin definir</mat-option>
+              @for (altitude of altitudes; track altitude) {
+                <mat-option [value]="altitude">{{ altitudeLabels[altitude] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Origen del estrato</mat-label>
+            <mat-select formControlName="stratificationSource">
+              <mat-option [value]="null">Sin definir</mat-option>
+              @for (source of sources; track source) {
+                <mat-option [value]="source">{{ sourceLabels[source] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        @if (current.methodology) {
+          <p class="muted">Metodología vigente: {{ current.methodology }}</p>
+        }
+        @if (current.classification; as classification) {
+          <p class="muted">
+            Clasificación CRA 1038: segmento {{ classification.segment }}, subsegmento
+            {{ classification.subsegment }}.
+          </p>
+        }
+      </mat-card-content>
+    </mat-card>
+
+    @if (needsCensus) {
+      <mat-card appearance="outlined" formGroupName="census">
+        <mat-card-header>
+          <mat-card-title>Condiciones al 31 de diciembre de 2024</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="muted">Se fijan una sola vez: después solo las corrige la plataforma.</p>
+          <div class="fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Suscriptores de acueducto</mat-label>
+              <input matInput type="number" min="0" formControlName="waterSubscribers" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Suscriptores de alcantarillado</mat-label>
+              <input matInput type="number" min="0" formControlName="sewerageSubscribers" />
+            </mat-form-field>
+          </div>
+          <div class="checks">
+            <mat-checkbox formControlName="ruralMajority">
+              La mitad o más de sus suscriptores son rurales
+            </mat-checkbox>
+            <mat-checkbox formControlName="onlyRural">Atiende solo zona rural</mat-checkbox>
+            <mat-checkbox formControlName="communityManager">
+              Es gestor comunitario del agua
+            </mat-checkbox>
+            <mat-checkbox formControlName="communityInFirstSegment">
+              El gestor comunitario eligió la metodología del primer segmento
+            </mat-checkbox>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <mat-card appearance="outlined" formGroupName="rules">
+      <mat-card-header>
+        <mat-card-title>Reglas de facturación</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @if (current.customizedRules.length > 0) {
+          <p class="muted">
+            Este prestador ajustó {{ current.customizedRules.length }} reglas respecto a los valores
+            por defecto.
+          </p>
+        }
+
+        <h3>Desviaciones de consumo</h3>
+        <div class="fields" formGroupName="deviation">
+          <mat-form-field appearance="outline">
+            <mat-label>Promedio que separa los dos topes (m³)</mat-label>
+            <input matInput type="number" min="0" formControlName="threshold" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Variación permitida si es igual o mayor (%)</mat-label>
+            <input matInput type="number" min="0" formControlName="percentAtOrAbove" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Variación permitida si es menor (%)</mat-label>
+            <input matInput type="number" min="0" formControlName="percentBelow" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Meses del promedio</mat-label>
+            <input matInput type="number" min="1" max="24" formControlName="historyMonths" />
+          </mat-form-field>
+          <mat-checkbox formControlName="reviewRequired">
+            No facturar hasta revisar la desviación (si no, solo se marca)
+          </mat-checkbox>
+        </div>
+
+        <h3>Subsidios</h3>
+        <div class="fields">
+          <mat-form-field appearance="outline">
+            <mat-label>Consumo básico (m³)</mat-label>
+            <input matInput type="number" min="0" formControlName="basicConsumption" />
+            <mat-hint>Vacío si no distingue rangos de consumo</mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="fields" formGroupName="caps">
+          @for (stratum of strata; track stratum) {
+            <mat-form-field appearance="outline">
+              <mat-label>Tope de subsidio estrato {{ stratum }} (%)</mat-label>
+              <input
+                matInput
+                type="number"
+                min="0"
+                max="100"
+                [formControlName]="'s' + stratum"
+              />
+              <mat-hint>Vacío: sin tope</mat-hint>
+            </mat-form-field>
+          }
+        </div>
+
+        <h3>Factura y reportes</h3>
+        <div class="fields">
+          <mat-form-field appearance="outline">
+            <mat-label>Días mínimos entre entrega y vencimiento</mat-label>
+            <input matInput type="number" min="1" max="60" formControlName="minDeliveryDaysBeforeDue" />
+            <mat-hint>Vacío si no se exige</mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="checks">
+          <mat-checkbox formControlName="legalInvoiceContent">
+            La factura lleva el contenido mínimo del art. 148 de la Ley 142
+          </mat-checkbox>
+          <mat-checkbox formControlName="reportsToSui">Reporta información al SUI</mat-checkbox>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    @if (canEdit()) {
+      <div class="actions">
+        <button mat-button type="button" (click)="applyPreset()">Usar valores por defecto</button>
+        <button mat-flat-button type="submit" [disabled]="saving()">Guardar</button>
+      </div>
+    }
+  </form>
+
+  @if (regulated) {
+    <p class="muted">
+      Con revisión obligatoria, una lectura con desviación no genera factura y el periodo no se
+      puede cerrar hasta resolverla en Lecturas.
+    </p>
+  }
+} @else if (profile.error()) {
+  <p class="error" role="alert">No se pudo cargar el perfil regulatorio.</p>
+}

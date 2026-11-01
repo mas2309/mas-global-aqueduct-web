@@ -185,6 +185,13 @@ export class SubscriberDetail {
     );
   }
 
+  /** Reinstala un servicio cortado. El servidor cobra su valor si las reglas del prestador lo fijan. */
+  protected restore(property: Property, service: ServiceType): void {
+    this.run(this.api.restoreService(property.id, service), () =>
+      this.refresh('Servicio reinstalado'),
+    );
+  }
+
   protected disconnect(property: Property, service: ServiceType): void {
     this.confirm(
       {

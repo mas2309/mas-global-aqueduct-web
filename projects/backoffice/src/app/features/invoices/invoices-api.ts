@@ -21,6 +21,12 @@ export class InvoicesApi {
   private readonly http = inject(HttpClient);
 
   /** Recaudo en la oficina. Pagar la factura más reciente salda también las anteriores incluidas en ella. */
+  /** Las facturas del documento: los servicios del predio en el periodo, que se cobran juntos. */
+  document(invoiceId: string): Observable<Invoice[]> {
+    return this.http.get<Invoice[]>(`${INVOICES_URL}/${invoiceId}/document`);
+  }
+
+  /** Paga el documento completo: también los demás servicios pendientes. */
   pay(invoiceId: string, method: PaymentMethod): Observable<Invoice> {
     return this.http.post<Invoice>(`${INVOICES_URL}/${invoiceId}/pay`, { method });
   }

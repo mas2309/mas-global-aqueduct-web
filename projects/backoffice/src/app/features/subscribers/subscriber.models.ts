@@ -30,7 +30,8 @@ export interface SubscriberRequest {
 
 export type PropertyUsage = 'RESIDENTIAL' | 'COMMERCIAL' | 'INDUSTRIAL' | 'OFFICIAL' | 'SPECIAL';
 
-export type ConnectionStatus = 'ACTIVE' | 'SUSPENDED';
+/** `CUT`: corte, más grave que la suspensión; se restablece reinstalando el servicio. */
+export type ConnectionStatus = 'ACTIVE' | 'SUSPENDED' | 'CUT';
 
 /** Acometida: un servicio conectado a un predio. */
 export interface PropertyService {

@@ -67,7 +67,7 @@
     @if (reading.unusual) {
       <mat-icon
         class="warning"
-        matTooltip="Consumo mayor al doble de su promedio: verifica la lectura o una posible fuga"
+        matTooltip="Consumo muy distinto a su promedio: verifica la lectura o una posible fuga"
         aria-label="Consumo inusual"
       >
         warning
@@ -77,6 +77,12 @@
     }
     @if (reading.meterReplaced) {
       <span class="muted tag">Medidor nuevo</span>
+    }
+    @if (reading.estimated) {
+      <span class="muted tag">Estimado</span>
+    }
+    @if (reading.reviewStatus === 'PENDING') {
+      <span class="muted tag">Por revisar: aún sin factura</span>
     }
     @if (invoice(); as bill) {
       <a
@@ -105,6 +111,11 @@
     >
       <mat-icon>published_with_changes</mat-icon>
     </button>
+    @if (reading?.reviewStatus === 'PENDING') {
+      <button mat-stroked-button type="button" (click)="review()" [disabled]="saving()">
+        Revisar
+      </button>
+    }
     @if (reading) {
       <button
         mat-icon-button

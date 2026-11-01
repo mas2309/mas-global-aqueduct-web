@@ -234,10 +234,10 @@ describe('Readings', () => {
     await open([]);
 
     expect(textOf(element)).toContain('Aún no hay periodos de facturación');
-    dialogResult = { year: 2026, month: 9 };
+    dialogResult = { year: 2026, month: 9, months: 2 };
     click(element, '.state button');
     const request = context.http.expectOne(PERIODS_URL);
-    expect(request.request.body).toEqual({ year: 2026, month: 9 });
+    expect(request.request.body).toEqual({ year: 2026, month: 9, months: 2 });
     request.flush({ status: 409 }, { status: 409, statusText: 'Conflict' });
     await settle();
 
@@ -347,7 +347,7 @@ describe('OpenPeriodDialog', () => {
     await settle();
     confirm.click();
 
-    expect(dialogRef.close).toHaveBeenCalledWith({ year: 2026, month: 9 });
+    expect(dialogRef.close).toHaveBeenCalledWith({ year: 2026, month: 9, months: 1 });
     context.http.verify();
   });
 });

@@ -126,6 +126,12 @@ export class Readings {
   protected readonly unusual = computed(() =>
     this.route.hasValue() ? this.route.value().filter((entry) => entry.reading?.unusual).length : 0,
   );
+  /** Solo si el perfil regulatorio exige revisar: estas lecturas no se facturan y frenan el cierre. */
+  protected readonly toReview = computed(() =>
+    this.route.hasValue()
+      ? this.route.value().filter((entry) => entry.reading?.reviewStatus === 'PENDING').length
+      : 0,
+  );
   /** Sin tarifa vigente no se puede facturar la lectura, así que el servidor tampoco la registra. */
   private readonly tariffs = httpResource<Tariff[]>(() => {
     const serviceType = this.service();
@@ -183,7 +189,7 @@ export class Readings {
     return periodLabel(nextPeriod(period));
   }
 
-  /** El primer periodo se elige; los demás son siempre el mes siguiente. */
+  /** El primer periodo se elige; los demás siguen al anterior y conservan su periodicidad. */
   protected openPeriod(): void {
     const latest = this.latest();
     const which: Observable<FirstPeriod> = latest
@@ -196,19 +202,25 @@ export class Readings {
           .open<OpenPeriodDialog, void, FirstPeriod>(OpenPeriodDialog, { width: '440px' })
           .afterClosed()
           .pipe(filter((period) => period !== undefined));
-    which.pipe(switchMap((period) => this.api.openPeriod(period.year, period.month))).subscribe({
-      next: (opened) => {
-        this.periodId.set(opened.id);
-        this.periods.reload();
-        this.notifier.success(`Periodo ${periodLabel(opened)} abierto`);
-      },
-      error: (error: unknown) =>
-        this.notifier.apiError(error, {
-          403: 'Solo el administrador del prestador abre y cierra periodos.',
-          409: 'Ese periodo ya existe.',
-          422: 'Cierra el periodo abierto antes de abrir el siguiente.',
-        }),
-    });
+    which
+      .pipe(
+        switchMap((period) =>
+          this.api.openPeriod(period.year, period.month, latest ? undefined : period.months),
+        ),
+      )
+      .subscribe({
+        next: (opened) => {
+          this.periodId.set(opened.id);
+          this.periods.reload();
+          this.notifier.success(`Periodo ${periodLabel(opened)} abierto`);
+        },
+        error: (error: unknown) =>
+          this.notifier.apiError(error, {
+            403: 'Solo el administrador del prestador abre y cierra periodos.',
+            409: 'Ese periodo ya existe.',
+            422: 'Cierra el periodo abierto antes de abrir el siguiente.',
+          }),
+      });
   }
 
   protected closePeriod(period: BillingPeriod): void {
@@ -233,7 +245,9 @@ export class Readings {
         error: (error: unknown) =>
           this.notifier.apiError(error, {
             403: 'Solo el administrador del prestador abre y cierra periodos.',
-            422: 'Falta la tarifa vigente de un servicio sin medidor (aseo o alcantarillado): defínela antes de cerrar.',
+            422:
+              'No se puede cerrar: hay lecturas con desviación por revisar, o falta la tarifa vigente de un ' +
+              'servicio sin medidor (aseo o alcantarillado).',
           }),
       });
   }

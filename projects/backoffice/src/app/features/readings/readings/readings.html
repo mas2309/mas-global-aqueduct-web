@@ -108,6 +108,9 @@
         @if (unusual() > 0) {
           · <span class="unusual">{{ unusual() }} con consumo inusual</span>
         }
+        @if (toReview() > 0) {
+          · <span class="unusual">{{ toReview() }} por revisar antes de facturar</span>
+        }
         @if (billed() > 0) {
           · Facturado {{ billed() | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
         }

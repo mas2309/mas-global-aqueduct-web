@@ -125,6 +125,8 @@
                   @if (row.connection; as connection) {
                     @if (connection.status === 'SUSPENDED') {
                       <span class="status suspended">Suspendido</span>
+                    } @else if (connection.status === 'CUT') {
+                      <span class="status suspended">Cortado</span>
                     }
                     @if (canOperate) {
                       <button
@@ -149,6 +151,11 @@
                           <button mat-menu-item (click)="suspend(property, row.serviceType)">
                             <mat-icon>block</mat-icon>
                             <span>Suspender (corte)</span>
+                          </button>
+                        } @else if (connection.status === 'CUT') {
+                          <button mat-menu-item (click)="restore(property, row.serviceType)">
+                            <mat-icon>check_circle</mat-icon>
+                            <span>Reinstalar</span>
                           </button>
                         } @else {
                           <button mat-menu-item (click)="reconnect(property, row.serviceType)">
