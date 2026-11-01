@@ -33,6 +33,8 @@ const FREE_PROFILE: RegulatoryProfile = {
   rules: FREE_RULES,
   preset: FREE_RULES,
   customizedRules: [],
+  serviceAreasEnabled: false,
+  usesServiceAreas: false,
 };
 
 describe('RegulatoryProfilePage', () => {
@@ -63,6 +65,7 @@ describe('RegulatoryProfilePage', () => {
 
     expect(textOf(element)).toContain('Perfil regulatorio');
     page['form'].controls.stratificationSource.setValue('MUNICIPAL_DECREE');
+    page['form'].controls.serviceAreasEnabled.setValue(true);
     page['form'].controls.rules.controls.deviation.controls.percentBelow.setValue(100);
     page['form'].controls.rules.controls.caps.controls.s1.setValue(70);
     page['submit']();
@@ -73,6 +76,7 @@ describe('RegulatoryProfilePage', () => {
       framework: 'NONE',
       altitudeBand: null,
       stratificationSource: 'MUNICIPAL_DECREE',
+      serviceAreasEnabled: true,
       census: null,
       rules: {
         ...FREE_RULES,

@@ -55,6 +55,10 @@ export interface RegulatoryProfile {
   preset: RegulatoryRules;
   /** Reglas que el prestador ajustó respecto a `preset`. */
   customizedRules: string[];
+  /** La plataforma le activó las áreas de prestación aunque no tenga marco. */
+  serviceAreasEnabled: boolean;
+  /** Trabaja con áreas: tiene marco regulado o se le activaron. */
+  usesServiceAreas: boolean;
 }
 
 export interface RegulatoryProfileRequest {
@@ -63,6 +67,7 @@ export interface RegulatoryProfileRequest {
   stratificationSource: StratificationSource | null;
   census: Census | null;
   rules: RegulatoryRules;
+  serviceAreasEnabled: boolean;
 }
 
 export const REGULATORY_PROFILE_URL = '/api/v1/regulatory-profile';

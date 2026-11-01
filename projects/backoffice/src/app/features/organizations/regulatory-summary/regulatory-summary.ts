@@ -31,6 +31,9 @@ import { ORGANIZATIONS_URL } from '../organizations-api';
               {{ classification.subsegment }}
             }
           </p>
+          @if (current.usesServiceAreas) {
+            <p class="muted">Con áreas de prestación</p>
+          }
           <a
             mat-stroked-button
             [routerLink]="['/prestadores', organizationId(), 'perfil-regulatorio']"

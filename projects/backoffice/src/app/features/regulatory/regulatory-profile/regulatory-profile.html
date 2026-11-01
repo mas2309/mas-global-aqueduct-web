@@ -51,6 +51,14 @@
               </mat-select>
             </mat-form-field>
           </div>
+          <div class="checks">
+            <mat-checkbox formControlName="serviceAreasEnabled">
+              Usa áreas de prestación (tarifa o altitud distinta por vereda o sector)
+            </mat-checkbox>
+            @if (regulated) {
+              <span class="muted">Con un marco regulado siempre están disponibles.</span>
+            }
+          </div>
           @if (current.methodology) {
             <p class="muted">Metodología vigente: {{ current.methodology }}</p>
           }

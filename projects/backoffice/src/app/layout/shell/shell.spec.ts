@@ -14,16 +14,18 @@ describe('Shell', () => {
   });
 
   /** Responde las consultas pendientes del perfil regulatorio; por defecto, sin marco. */
-  function answerProfile(framework = 'NONE', reportsToSui = false): void {
+  function answerProfile(framework = 'NONE', reportsToSui = false, usesServiceAreas = false): void {
     context.http
       .match(REGULATORY_PROFILE_URL)
-      .forEach((request) => request.flush({ framework, rules: { reportsToSui } }));
+      .forEach((request) =>
+        request.flush({ framework, usesServiceAreas, rules: { reportsToSui } }),
+      );
   }
 
-  async function render(framework = 'NONE', reportsToSui = false) {
+  async function render(framework = 'NONE', reportsToSui = false, usesServiceAreas = false) {
     const fixture = TestBed.createComponent(Shell);
     await settle();
-    answerProfile(framework, reportsToSui);
+    answerProfile(framework, reportsToSui, usesServiceAreas);
     await settle();
     return fixture;
   }
@@ -79,6 +81,21 @@ describe('Shell', () => {
 
     expect(menu).toContain('Archivos SUI');
     expect(menu).not.toContain('Perfil regulatorio');
+  });
+
+  it('las áreas solo aparecen si el prestador las usa', async () => {
+    context = setUpPage();
+    const basic = await render();
+    expect(textOf(basic.nativeElement.querySelector('mat-nav-list'))).not.toContain('Áreas');
+    answerProfile();
+    context.http.verify();
+
+    TestBed.resetTestingModule();
+    context = setUpPage();
+    const withAreas = await render('NONE', false, true);
+    expect(textOf(withAreas.nativeElement.querySelector('mat-nav-list'))).toContain(
+      'Áreas de prestación',
+    );
   });
 
   it('sin marco pero reportando al SUI muestra los archivos', async () => {

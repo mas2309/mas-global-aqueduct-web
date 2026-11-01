@@ -109,6 +109,7 @@ export class RegulatoryProfilePage {
     framework: this.fb.control<RegulatoryFramework>('NONE'),
     altitudeBand: this.fb.control<AltitudeBand | null>(null),
     stratificationSource: this.fb.control<StratificationSource | null>(null),
+    serviceAreasEnabled: [false],
     census: this.fb.group({
       waterSubscribers: this.fb.control<number | null>(null, [Validators.min(0)]),
       sewerageSubscribers: this.fb.control<number | null>(null, [Validators.min(0)]),
@@ -204,6 +205,7 @@ export class RegulatoryProfilePage {
       framework: profile.framework,
       altitudeBand: profile.altitudeBand,
       stratificationSource: profile.stratificationSource,
+      serviceAreasEnabled: profile.serviceAreasEnabled,
     });
     if (profile.census) {
       this.form.controls.census.patchValue(profile.census);
@@ -244,6 +246,7 @@ export class RegulatoryProfilePage {
       framework: value.framework,
       altitudeBand: value.altitudeBand,
       stratificationSource: value.stratificationSource,
+      serviceAreasEnabled: value.serviceAreasEnabled,
       census:
         this.needsCensus && census.waterSubscribers !== null && census.sewerageSubscribers !== null
           ? {

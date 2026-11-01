@@ -72,7 +72,9 @@ export class Shell {
       if (this.regulatory.reportsToSui()) {
         items.push({ path: '/sui', label: 'Archivos SUI', icon: 'upload_file' });
       }
-      items.push({ path: '/areas', label: 'Áreas de prestación', icon: 'map' });
+      if (this.regulatory.usesServiceAreas()) {
+        items.push({ path: '/areas', label: 'Áreas de prestación', icon: 'map' });
+      }
       items.push({ path: '/finanzas', label: 'Ingresos y gastos', icon: 'account_balance_wallet' });
       items.push({ path: '/informes', label: 'Informes', icon: 'bar_chart' });
       items.push({ path: '/documentos', label: 'Documentos', icon: 'folder_open' });
