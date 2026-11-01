@@ -54,6 +54,9 @@ const STRATA = [1, 2, 3, 4, 5, 6] as const;
   ],
   templateUrl: './regulatory-profile.html',
   styles: `
+    mat-card-content {
+      padding-top: 12px;
+    }
     .fields {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

@@ -67,12 +67,12 @@ type ComponentName = (typeof COMPONENTS)[number][0];
           }
           @if (data.associate) {
             <mat-form-field appearance="outline">
-              <mat-label>Reconocimiento de inversiones comunitarias</mat-label>
+              <mat-label>Inversiones comunitarias</mat-label>
               <input matInput type="number" min="0" formControlName="communityInvestment" />
             </mat-form-field>
           }
           <mat-form-field appearance="outline">
-            <mat-label>Costos por condiciones técnicas particulares</mat-label>
+            <mat-label>Costos técnicos particulares</mat-label>
             <input matInput type="number" min="0" formControlName="additionalCost" />
           </mat-form-field>
         </div>

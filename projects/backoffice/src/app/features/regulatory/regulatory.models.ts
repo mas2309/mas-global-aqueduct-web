@@ -77,9 +77,9 @@ export const FRAMEWORKS: readonly RegulatoryFramework[] = [
 ];
 
 export const FRAMEWORK_LABELS: Record<RegulatoryFramework, string> = {
-  NONE: 'Sin régimen: el prestador define sus reglas',
-  SMALL_PROVIDERS: 'Pequeños prestadores (CRA 825 hasta 2026, CRA 1038 desde 2027)',
-  LARGE_PROVIDERS: 'Más de 5.000 suscriptores (CRA 688 de 2014)',
+  NONE: 'Sin régimen (reglas propias)',
+  SMALL_PROVIDERS: 'Pequeños prestadores (CRA 825 y 1038)',
+  LARGE_PROVIDERS: 'Más de 5.000 suscriptores (CRA 688)',
 };
 
 export const ALTITUDE_BANDS: readonly AltitudeBand[] = [

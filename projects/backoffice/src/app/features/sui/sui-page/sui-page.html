@@ -131,6 +131,7 @@
                   <td>
                     <mat-form-field appearance="outline" subscriptSizing="dynamic">
                       <mat-select
+                        placeholder="Del predio"
                         [attr.aria-label]="'Servicio de la columna ' + ($index + 1)"
                         [ngModel]="column.service"
                         (ngModelChange)="setService($index, $event)"
