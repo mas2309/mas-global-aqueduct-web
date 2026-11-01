@@ -49,7 +49,9 @@ import { SERVICE_AREAS_URL, ServiceArea } from '../service-area.models';
               <div>
                 <strong>{{ area.name }}</strong>
                 <div class="muted">
-                  {{ area.municipalityCode ? 'Municipio ' + area.municipalityCode : 'Sin municipio' }}
+                  {{
+                    area.municipalityCode ? 'Municipio ' + area.municipalityCode : 'Sin municipio'
+                  }}
                   ·
                   {{
                     area.altitudeBand

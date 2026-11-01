@@ -3,8 +3,8 @@
     <div>
       <h1>Perfil regulatorio</h1>
       <span class="muted">
-        Sin régimen, el prestador define sus reglas. Con un marco regulado se parte de los valores de
-        la norma, y se pueden ajustar.
+        Sin régimen, el prestador define sus reglas. Con un marco regulado se parte de los valores
+        de la norma, y se pueden ajustar.
       </span>
     </div>
   </header>
@@ -142,13 +142,7 @@
             @for (stratum of strata; track stratum) {
               <mat-form-field appearance="outline">
                 <mat-label>Tope de subsidio estrato {{ stratum }} (%)</mat-label>
-                <input
-                  matInput
-                  type="number"
-                  min="0"
-                  max="100"
-                  [formControlName]="'s' + stratum"
-                />
+                <input matInput type="number" min="0" max="100" [formControlName]="'s' + stratum" />
                 <mat-hint>Vacío: sin tope</mat-hint>
               </mat-form-field>
             }
@@ -158,7 +152,13 @@
           <div class="fields">
             <mat-form-field appearance="outline">
               <mat-label>Días entre entrega y vencimiento</mat-label>
-              <input matInput type="number" min="1" max="60" formControlName="minDeliveryDaysBeforeDue" />
+              <input
+                matInput
+                type="number"
+                min="1"
+                max="60"
+                formControlName="minDeliveryDaysBeforeDue"
+              />
               <mat-hint>Vacío si no se exige</mat-hint>
             </mat-form-field>
           </div>

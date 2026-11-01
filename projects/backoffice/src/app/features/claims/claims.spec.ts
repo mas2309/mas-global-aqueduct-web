@@ -154,9 +154,7 @@ describe('PQR', () => {
 
       dialog['subscriber'].set(subscriber());
       await settle();
-      context.http
-        .expectOne(`/api/v1/subscribers/${SUBSCRIBER_ID}/properties`)
-        .flush([]);
+      context.http.expectOne(`/api/v1/subscribers/${SUBSCRIBER_ID}/properties`).flush([]);
       context.http
         .expectOne(`/api/v1/invoices?subscriberId=${SUBSCRIBER_ID}&size=12`)
         .flush({ items: [], page: 0, size: 12, totalItems: 0, totalPages: 0 });

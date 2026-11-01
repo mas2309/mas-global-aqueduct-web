@@ -51,7 +51,8 @@ import { Settlement, SETTLEMENTS_URL } from '../settlement.models';
 })
 export class SettlementUsageDialog {
   private readonly http = inject(HttpClient);
-  private readonly dialogRef = inject<MatDialogRef<SettlementUsageDialog, Settlement>>(MatDialogRef);
+  private readonly dialogRef =
+    inject<MatDialogRef<SettlementUsageDialog, Settlement>>(MatDialogRef);
   protected readonly settlement = inject<Settlement>(MAT_DIALOG_DATA);
 
   protected readonly form = inject(NonNullableFormBuilder).group({

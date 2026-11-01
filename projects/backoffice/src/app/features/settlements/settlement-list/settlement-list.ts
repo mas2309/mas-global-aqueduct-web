@@ -37,7 +37,9 @@ const FORBIDDEN = 'Disponible para el administrador de la plataforma, sin presta
       <header class="page-header">
         <div>
           <h1>Liquidación de MAS</h1>
-          <span class="muted">Los borradores se recalculan al generar; las emitidas no cambian</span>
+          <span class="muted"
+            >Los borradores se recalculan al generar; las emitidas no cambian</span
+          >
         </div>
         <button mat-flat-button [disabled]="busy()" (click)="generate()">
           <mat-icon>calculate</mat-icon>
@@ -102,13 +104,19 @@ const FORBIDDEN = 'Disponible para el administrador de la plataforma, sin presta
                   <td>{{ settlement.planCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
                   <td>{{ extras(settlement) | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
                   <td>
-                    <strong>{{ settlement.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</strong>
+                    <strong>{{
+                      settlement.total | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                    }}</strong>
                   </td>
                   <td>{{ settlement.status === 'ISSUED' ? 'Emitida' : 'Borrador' }}</td>
                   <td>
                     @if (settlement.status === 'DRAFT') {
-                      <button mat-button [disabled]="busy()" (click)="editUsage(settlement)">Consumos</button>
-                      <button mat-stroked-button [disabled]="busy()" (click)="issue(settlement)">Emitir</button>
+                      <button mat-button [disabled]="busy()" (click)="editUsage(settlement)">
+                        Consumos
+                      </button>
+                      <button mat-stroked-button [disabled]="busy()" (click)="issue(settlement)">
+                        Emitir
+                      </button>
                     }
                   </td>
                 </tr>

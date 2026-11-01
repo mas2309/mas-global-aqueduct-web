@@ -3,8 +3,8 @@
     <div>
       <h1>Archivos SUI</h1>
       <span class="muted">
-        CSV para pasar por el SUI-Validador y cargar con el usuario del prestador. No incluyen nombres
-        ni documentos.
+        CSV para pasar por el SUI-Validador y cargar con el usuario del prestador. No incluyen
+        nombres ni documentos.
       </span>
     </div>
   </header>
@@ -23,11 +23,11 @@
     <mat-card-content>
       <p class="notice" role="note">
         @if (format() === 'USER_CATALOG') {
-          <strong>Borrador sin validar:</strong> las columnas y los códigos de este archivo aún no se
-          han confirmado con el SUI-Validador. Ajústalos abajo si el validador pide otra cosa.
+          <strong>Borrador sin validar:</strong> las columnas y los códigos de este archivo aún no
+          se han confirmado con el SUI-Validador. Ajústalos abajo si el validador pide otra cosa.
         } @else {
-          Los valores siguen el instructivo de la SSPD (versión 3 de 2023), pero los encabezados y los
-          códigos de los usos especial y oficial son supuestos: confírmalos antes de entregarlo.
+          Los valores siguen el instructivo de la SSPD (versión 3 de 2023), pero los encabezados y
+          los códigos de los usos especial y oficial son supuestos: confírmalos antes de entregarlo.
         }
       </p>
 
@@ -180,8 +180,8 @@
 
         <h3>Códigos</h3>
         <p class="muted">
-          Clave y valor que toma cada dato codificado, p. ej. usage.RESIDENTIAL = 1. Un código que falte
-          aparece como dato por corregir.
+          Clave y valor que toma cada dato codificado, p. ej. usage.RESIDENTIAL = 1. Un código que
+          falte aparece como dato por corregir.
         </p>
         <table class="rows" aria-label="Códigos de la plantilla">
           <thead>
@@ -244,8 +244,8 @@
           </button>
           @if (!valid()) {
             <p class="error" role="alert">
-              Revisa la plantilla: los encabezados solo admiten letras, números, espacios y guion bajo,
-              y no se repiten; los valores de los códigos, solo letras y números.
+              Revisa la plantilla: los encabezados solo admiten letras, números, espacios y guion
+              bajo, y no se repiten; los valores de los códigos, solo letras y números.
             </p>
           }
           <div class="actions">

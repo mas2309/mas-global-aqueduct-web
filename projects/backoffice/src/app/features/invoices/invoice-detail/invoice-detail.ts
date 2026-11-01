@@ -60,7 +60,9 @@ export class InvoiceDetail {
   protected readonly invoice = httpResource<Invoice>(() => `${INVOICES_URL}/${this.id()}`);
 
   /** Las facturas del documento conjunto: los servicios del predio en el periodo. */
-  private readonly document = httpResource<Invoice[]>(() => `${INVOICES_URL}/${this.id()}/document`);
+  private readonly document = httpResource<Invoice[]>(
+    () => `${INVOICES_URL}/${this.id()}/document`,
+  );
   protected readonly siblings = computed(() =>
     (this.document.hasValue() ? this.document.value() : []).filter(
       (other) => other.id !== this.id(),
@@ -102,7 +104,8 @@ export class InvoiceDetail {
   protected deliver(invoice: Invoice): void {
     const data: DeliveryDialogData = {
       title: `Registrar la entrega de la factura n.º ${invoice.number}`,
-      message: 'Si se entregó tarde y el perfil regulatorio exige días mínimos, se corre su vencimiento.',
+      message:
+        'Si se entregó tarde y el perfil regulatorio exige días mínimos, se corre su vencimiento.',
     };
     this.dialog
       .open<DeliveryDialog, DeliveryDialogData, string>(DeliveryDialog, { data, width: '440px' })

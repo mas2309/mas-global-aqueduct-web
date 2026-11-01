@@ -74,9 +74,9 @@ import {
               @if (form.controls.decision.value === 'FAVORABLE') {
                 No se cobra nada de lo congelado.
               } @else {
-                Lo congelado
-                ({{ claim.disputedAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}) se cobra en
-                su siguiente factura.
+                Lo congelado ({{
+                  claim.disputedAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0'
+                }}) se cobra en su siguiente factura.
               }
             </p>
           }

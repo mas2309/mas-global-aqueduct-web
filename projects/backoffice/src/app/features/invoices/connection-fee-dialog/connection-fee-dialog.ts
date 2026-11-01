@@ -111,7 +111,8 @@ type ComponentName = (typeof COMPONENTS)[number][0];
 })
 export class ConnectionFeeDialog {
   private readonly http = inject(HttpClient);
-  private readonly dialogRef = inject<MatDialogRef<ConnectionFeeDialog, ConnectionFee>>(MatDialogRef);
+  private readonly dialogRef =
+    inject<MatDialogRef<ConnectionFeeDialog, ConnectionFee>>(MatDialogRef);
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly data = inject<ConnectionFeeDialogData>(MAT_DIALOG_DATA);
 

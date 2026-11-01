@@ -42,7 +42,9 @@ import {
       <header class="page-header">
         <div>
           <h1>PQR</h1>
-          <span class="muted">Se responden en 15 días hábiles desde el día siguiente a la radicación</span>
+          <span class="muted"
+            >Se responden en 15 días hábiles desde el día siguiente a la radicación</span
+          >
         </div>
         @if (session.canOperateOrganization()) {
           <button mat-flat-button (click)="file()">
@@ -55,8 +57,8 @@ import {
       @if (urgent() > 0) {
         <p class="alert" role="status">
           <mat-icon aria-hidden="true">warning</mat-icon>
-          {{ urgent() }} sin responder a 3 días hábiles o menos de vencer. Sin respuesta a tiempo quedan
-          en silencio positivo.
+          {{ urgent() }} sin responder a 3 días hábiles o menos de vencer. Sin respuesta a tiempo
+          quedan en silencio positivo.
         </p>
       }
 
@@ -99,7 +101,9 @@ import {
             <tbody>
               @for (claim of claims.value(); track claim.id) {
                 <tr>
-                  <td><a [routerLink]="['/pqr', claim.id]">{{ claim.number }}</a></td>
+                  <td>
+                    <a [routerLink]="['/pqr', claim.id]">{{ claim.number }}</a>
+                  </td>
                   <td>{{ formatCode(claim.subscriberCode) }} · {{ claim.subscriberName }}</td>
                   <td>{{ typeLabels[claim.type] }}: {{ claim.cause }}</td>
                   <td>{{ claim.filedOn | date: 'mediumDate' }}</td>

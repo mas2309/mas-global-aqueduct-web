@@ -21,8 +21,8 @@
 
     @if (item.state === 'POSITIVE_SILENCE') {
       <p class="error" role="status">
-        Sin respuesta a tiempo: se entiende resuelta a favor del suscriptor y no se puede cobrar nada
-        de lo reclamado.
+        Sin respuesta a tiempo: se entiende resuelta a favor del suscriptor y no se puede cobrar
+        nada de lo reclamado.
       </p>
     }
 
@@ -87,7 +87,8 @@
             <dt>Notificación</dt>
             <dd>
               @if (item.notifiedOn && item.notificationChannel) {
-                {{ channelLabels[item.notificationChannel] }} · {{ item.notifiedOn | date: 'longDate' }}
+                {{ channelLabels[item.notificationChannel] }} ·
+                {{ item.notifiedOn | date: 'longDate' }}
               } @else {
                 Sin notificar
               }

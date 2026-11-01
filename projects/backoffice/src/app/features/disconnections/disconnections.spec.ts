@@ -79,7 +79,10 @@ describe('Suspensión y corte', () => {
       const fixture = await open([]);
       const page = fixture.componentInstance;
 
-      page['form'].patchValue({ suspendAfterUnpaidPeriods: 2, causes: ' Falta de pago \n\nFraude ' });
+      page['form'].patchValue({
+        suspendAfterUnpaidPeriods: 2,
+        causes: ' Falta de pago \n\nFraude ',
+      });
       page['save']();
       const request = context.http.expectOne(`${DISCONNECTIONS_URL}/rules`);
       expect(request.request.method).toBe('PUT');

@@ -224,7 +224,9 @@ export class SuiPage {
   }
 
   private fill(template: SuiTemplate): void {
-    this.columns.set(template.columns.map((column) => ({ ...column, service: column.service ?? null })));
+    this.columns.set(
+      template.columns.map((column) => ({ ...column, service: column.service ?? null })),
+    );
     this.codes.set(
       Object.entries(template.codes)
         .sort(([first], [second]) => first.localeCompare(second))

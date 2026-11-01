@@ -41,7 +41,12 @@ describe('RegulatoryProfilePage', () => {
   async function open(role: 'ORG_ADMIN' | 'VIEWER' = 'ORG_ADMIN'): Promise<RegulatoryProfilePage> {
     context = setUpPage(
       role === 'VIEWER'
-        ? { session: authResponse({ organization: access({ role }), organizations: [access({ role })] }) }
+        ? {
+            session: authResponse({
+              organization: access({ role }),
+              organizations: [access({ role })],
+            }),
+          }
         : {},
     );
     const fixture = TestBed.createComponent(RegulatoryProfilePage);

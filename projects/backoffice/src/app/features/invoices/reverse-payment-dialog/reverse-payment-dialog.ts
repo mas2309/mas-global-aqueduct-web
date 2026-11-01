@@ -26,8 +26,7 @@ import { InvoicesApi } from '../invoices-api';
         <p>
           La factura n.º {{ invoice.number }} de {{ invoice.subscriberName }} volverá a quedar
           pendiente, junto con los demás servicios de ese documento y las anteriores que se saldaron
-          con ese pago. Úsalo solo si el pago se
-          registró por error.
+          con ese pago. Úsalo solo si el pago se registró por error.
         </p>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Motivo</mat-label>

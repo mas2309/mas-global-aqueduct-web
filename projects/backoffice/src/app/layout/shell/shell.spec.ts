@@ -152,7 +152,9 @@ describe('Shell', () => {
     await settle();
 
     // El menú se ajusta al marco del nuevo prestador
-    context.http.expectOne(REGULATORY_PROFILE_URL).flush({ framework: 'LARGE_PROVIDERS', rules: { reportsToSui: true } });
+    context.http
+      .expectOne(REGULATORY_PROFILE_URL)
+      .flush({ framework: 'LARGE_PROVIDERS', rules: { reportsToSui: true } });
     await settle();
     expect(textOf(fixture.nativeElement)).toContain('Archivos SUI');
 

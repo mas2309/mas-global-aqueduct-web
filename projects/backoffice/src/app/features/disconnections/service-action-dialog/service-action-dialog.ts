@@ -65,14 +65,18 @@ export interface ServiceActionData {
           </mat-form-field>
         }
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Observaciones{{ form.controls.override.value ? '' : ' (opcional)' }}</mat-label>
+          <mat-label
+            >Observaciones{{ form.controls.override.value ? '' : ' (opcional)' }}</mat-label
+          >
           <input matInput formControlName="notes" maxlength="300" autocomplete="off" />
           @if (form.controls.notes.invalid) {
             <mat-error>Indica por qué se autoriza</mat-error>
           }
         </mat-form-field>
         @if (restoring && session.canAdministerOrganization()) {
-          <mat-checkbox formControlName="override">Autorizar aunque tenga deuda vencida</mat-checkbox>
+          <mat-checkbox formControlName="override"
+            >Autorizar aunque tenga deuda vencida</mat-checkbox
+          >
         }
         <div aria-live="assertive">
           @if (error(); as message) {
@@ -89,7 +93,8 @@ export interface ServiceActionData {
 })
 export class ServiceActionDialog {
   private readonly http = inject(HttpClient);
-  private readonly dialogRef = inject<MatDialogRef<ServiceActionDialog, ServiceEvent>>(MatDialogRef);
+  private readonly dialogRef =
+    inject<MatDialogRef<ServiceActionDialog, ServiceEvent>>(MatDialogRef);
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly session = inject(SessionStore);
   protected readonly data = inject<ServiceActionData>(MAT_DIALOG_DATA);

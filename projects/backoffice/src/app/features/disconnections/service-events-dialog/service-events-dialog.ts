@@ -4,11 +4,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { SERVICE_LABELS } from '../../../core/i18n/labels';
-import {
-  DISCONNECTIONS_URL,
-  SERVICE_ACTION_LABELS,
-  ServiceEvent,
-} from '../disconnection.models';
+import { DISCONNECTIONS_URL, SERVICE_ACTION_LABELS, ServiceEvent } from '../disconnection.models';
 
 export interface ServiceEventsData {
   propertyId: string;

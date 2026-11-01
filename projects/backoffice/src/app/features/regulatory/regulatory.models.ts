@@ -5,10 +5,7 @@ export type RegulatoryFramework = 'NONE' | 'SMALL_PROVIDERS' | 'LARGE_PROVIDERS'
 export type AltitudeBand = 'ABOVE_2000' | 'BETWEEN_1000_AND_2000' | 'BELOW_1000';
 
 export type StratificationSource =
-  | 'MUNICIPAL_DECREE'
-  | 'OWN_DESPITE_DECREE'
-  | 'OWN_WITHOUT_DECREE'
-  | 'FLAT_RATE';
+  'MUNICIPAL_DECREE' | 'OWN_DESPITE_DECREE' | 'OWN_WITHOUT_DECREE' | 'FLAT_RATE';
 
 /** Condiciones al 31 de diciembre de 2024 con las que la CRA 1038 de 2026 clasifica al prestador. */
 export interface Census {
