@@ -15,7 +15,7 @@
       } @else {
         @if (current.classification; as classification) {
           <p>
-            Clasificación: segmento {{ classification.segment }}, subsegmento
+            Clasificación: segmento {{ segmentLabels[classification.segment] }}, subsegmento
             {{ classification.subsegment }}.
           </p>
         }

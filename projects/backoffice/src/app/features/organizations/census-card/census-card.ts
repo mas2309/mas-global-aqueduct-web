@@ -18,7 +18,11 @@ import { MatInputModule } from '@angular/material/input';
 import { filter, switchMap } from 'rxjs';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog } from '../../../shared/ui/confirm-dialog';
-import { FRAMEWORK_LABELS, RegulatoryProfile } from '../../regulatory/regulatory.models';
+import {
+  FRAMEWORK_LABELS,
+  RegulatoryProfile,
+  SEGMENT_LABELS,
+} from '../../regulatory/regulatory.models';
 import { ORGANIZATIONS_URL } from '../organizations-api';
 
 /**
@@ -72,6 +76,7 @@ export class CensusCard {
     () => `${ORGANIZATIONS_URL}/${this.organizationId()}/regulatory-profile`,
   );
   protected readonly frameworkLabels = FRAMEWORK_LABELS;
+  protected readonly segmentLabels = SEGMENT_LABELS;
   protected readonly saving = signal(false);
 
   private readonly fb = inject(NonNullableFormBuilder);

@@ -55,8 +55,8 @@
           }
           @if (current.classification; as classification) {
             <p class="muted">
-              Clasificación CRA 1038: segmento {{ classification.segment }}, subsegmento
-              {{ classification.subsegment }}.
+              Clasificación CRA 1038: segmento {{ segmentLabels[classification.segment] }},
+              subsegmento {{ classification.subsegment }}.
             </p>
           }
         </mat-card-content>

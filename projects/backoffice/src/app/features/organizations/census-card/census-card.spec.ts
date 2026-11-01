@@ -64,7 +64,7 @@ describe('CensusCard', () => {
 
   it('corrige las condiciones tras confirmar y muestra la nueva clasificación', async () => {
     await open(PROFILE);
-    expect(textOf(element)).toContain('subsegmento 3');
+    expect(textOf(element)).toContain('segmento primero, subsegmento 3');
 
     setWater('1500');
     element.querySelector<HTMLFormElement>('form')?.dispatchEvent(new Event('submit'));

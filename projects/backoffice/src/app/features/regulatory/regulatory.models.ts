@@ -67,6 +67,11 @@ export interface RegulatoryProfileRequest {
 
 export const REGULATORY_PROFILE_URL = '/api/v1/regulatory-profile';
 
+export const SEGMENT_LABELS: Record<Classification['segment'], string> = {
+  FIRST: 'primero',
+  SECOND: 'segundo',
+};
+
 export const FRAMEWORKS: readonly RegulatoryFramework[] = [
   'NONE',
   'SMALL_PROVIDERS',

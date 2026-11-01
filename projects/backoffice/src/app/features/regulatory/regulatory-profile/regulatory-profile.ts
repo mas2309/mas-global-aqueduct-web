@@ -25,6 +25,7 @@ import {
   FRAMEWORK_LABELS,
   FRAMEWORKS,
   REGULATORY_PROFILE_URL,
+  SEGMENT_LABELS,
   RegulatoryFramework,
   RegulatoryProfile,
   RegulatoryProfileRequest,
@@ -94,6 +95,7 @@ export class RegulatoryProfilePage {
 
   protected readonly frameworks = FRAMEWORKS;
   protected readonly frameworkLabels = FRAMEWORK_LABELS;
+  protected readonly segmentLabels = SEGMENT_LABELS;
   protected readonly altitudes = ALTITUDE_BANDS;
   protected readonly altitudeLabels = ALTITUDE_LABELS;
   protected readonly sources = STRATIFICATION_SOURCES;
