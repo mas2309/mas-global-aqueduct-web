@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { filter, map, Observable, switchMap, tap } from 'rxjs';
@@ -8,6 +9,14 @@ import { Invoice, isOpen, PAYMENT_METHOD_LABELS, PaymentMethod } from './invoice
 import { InvoicesApi } from './invoices-api';
 
 const PESOS = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+
+/** El servidor rechaza un cobro si la factura ya se incluyó en otra o si su lectura está en revisión. */
+function paymentRejection(error: unknown): string {
+  const detail = error instanceof HttpErrorResponse ? String(error.error?.detail ?? '') : '';
+  return detail.includes('waiting for review')
+    ? 'La lectura de esta factura está en revisión: resuélvela en Lecturas antes de cobrar.'
+    : 'Esta factura está incluida en una posterior: cobra la más reciente.';
+}
 
 /** Registrar el pago de una factura, con confirmación: lo comparten el listado y el detalle. */
 @Injectable({ providedIn: 'root' })
@@ -36,7 +45,7 @@ export class InvoicePayments {
           this.notifier.apiError(error, {
             403: 'Tu rol solo permite consultar.',
             409: 'Esta factura ya estaba pagada.',
-            422: 'Esta factura está incluida en una posterior: cobra la más reciente.',
+            422: paymentRejection(error),
           }),
       }),
     );

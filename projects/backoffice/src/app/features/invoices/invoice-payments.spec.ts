@@ -13,9 +13,11 @@ describe('InvoicePayments', () => {
   let context: PageTestContext;
   let payments: InvoicePayments;
   let shown: ConfirmDialogData | undefined;
+  let confirmed = false;
 
   beforeEach(() => {
     shown = undefined;
+    confirmed = false;
     context = setUpPage({
       providers: [
         {
@@ -23,7 +25,7 @@ describe('InvoicePayments', () => {
           useValue: {
             open: (_component: unknown, config: { data: ConfirmDialogData }) => {
               shown = config.data;
-              return { afterClosed: () => of(false) };
+              return { afterClosed: () => of(confirmed) };
             },
           },
         },
@@ -33,6 +35,32 @@ describe('InvoicePayments', () => {
   });
 
   afterEach(() => context.http.verify());
+
+  /** Confirma el cobro y hace que el servidor lo rechace con ese detalle. */
+  function rejectPayment(detail: string): void {
+    confirmed = true;
+    payments.pay(invoice(), 'CASH').subscribe({ error: () => undefined });
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
+    context.http
+      .expectOne(`${INVOICES_URL}/${INVOICE_ID}/pay`)
+      .flush({ detail }, { status: 422, statusText: 'Unprocessable Content' });
+  }
+
+  it('dice que la lectura está en revisión si por eso no se puede cobrar', () => {
+    rejectPayment(
+      'The reading of invoice 7 is waiting for review: review it before collecting the payment',
+    );
+
+    expect(document.body.textContent).toContain('La lectura de esta factura está en revisión');
+  });
+
+  it('dice que se cobra la más reciente si la factura ya pasó a otra', () => {
+    rejectPayment(
+      'Invoice 7 is included as previous debt in a later invoice: work with the latest one',
+    );
+
+    expect(document.body.textContent).toContain('cobra la más reciente');
+  });
 
   it('confirma el total de una factura de un solo servicio', () => {
     payments.pay(invoice(), 'CASH').subscribe();
