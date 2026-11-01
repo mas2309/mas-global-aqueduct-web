@@ -109,6 +109,11 @@ describe('PQR', () => {
       return fixture;
     }
 
+    async function reopenAsViewer(item: Claim) {
+      TestBed.resetTestingModule();
+      return open(item, 'VIEWER');
+    }
+
     it('sin responder ofrece responder, y un rol de consulta no', async () => {
       const fixture = await open(claim());
       expect(textOf(fixture.nativeElement)).toContain('Aún sin responder');
@@ -134,6 +139,22 @@ describe('PQR', () => {
       expect(text).toContain('Favorable al suscriptor');
       expect(text).toContain('Sin notificar');
       expect(text).toContain('Registrar notificación');
+    });
+
+    it('ofrece congelar un reclamo con factura y sin valor, no a un rol de consulta', async () => {
+      const unfrozen = claim({
+        type: 'CLAIM',
+        invoiceId: 'invoice-1',
+        disputedAmount: 0,
+        state: 'OPEN',
+      });
+
+      const fixture = await open(unfrozen);
+      expect(textOf(fixture.nativeElement)).toContain('Congelar valor');
+      context.http.verify();
+
+      const viewer = await reopenAsViewer(unfrozen);
+      expect(textOf(viewer.nativeElement)).not.toContain('Congelar valor');
     });
 
     it('explica el silencio positivo', async () => {

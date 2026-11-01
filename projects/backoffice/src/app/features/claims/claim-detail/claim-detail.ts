@@ -12,6 +12,7 @@ import { Notifier } from '../../../core/ui/notifier';
 import { saveFile } from '../../../shared/ui/save-file';
 import { formatCode } from '../../subscribers/subscriber.models';
 import { ClaimAnswerDialog } from '../claim-answer-dialog/claim-answer-dialog';
+import { ClaimFreezeDialog } from '../claim-freeze-dialog/claim-freeze-dialog';
 import { ClaimNotifyDialog } from '../claim-notify-dialog/claim-notify-dialog';
 import {
   Claim,
@@ -95,6 +96,18 @@ export class ClaimDetail {
         if (answered) {
           this.claim.set(answered);
           this.notifier.success('Respuesta registrada: falta notificarla');
+        }
+      });
+  }
+
+  protected freeze(claim: Claim): void {
+    this.dialog
+      .open<ClaimFreezeDialog, Claim, Claim>(ClaimFreezeDialog, { data: claim, width: '440px' })
+      .afterClosed()
+      .subscribe((frozen) => {
+        if (frozen) {
+          this.claim.set(frozen);
+          this.notifier.success('Valor congelado');
         }
       });
   }

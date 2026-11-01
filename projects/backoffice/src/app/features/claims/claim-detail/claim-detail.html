@@ -53,6 +53,14 @@
           @if (item.disputedAmount > 0) {
             <dt>Valor congelado</dt>
             <dd>{{ item.disputedAmount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</dd>
+          } @else if (
+            canOperate && item.type === 'CLAIM' && item.invoiceId && item.state === 'OPEN'
+          ) {
+            <dt>Valor congelado</dt>
+            <dd>
+              Ninguno
+              <button mat-button type="button" (click)="freeze(item)">Congelar valor</button>
+            </dd>
           }
           <dt>Responder hasta</dt>
           <dd>

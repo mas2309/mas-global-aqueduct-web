@@ -96,5 +96,90 @@
         <li class="notice">Todavía no tienes facturas.</li>
       }
     </ul>
+
+    <section class="claims">
+      <h2>Tus peticiones, quejas y reclamos</h2>
+
+      <div aria-live="polite">
+        @if (filed(); as claim) {
+          <p class="filed">
+            Radicamos tu {{ claimTypeLabels[claim.type].toLowerCase() }} con el número
+            <strong>{{ claim.number }}</strong
+            >. Fecha límite de respuesta: {{ claim.dueDate | date: 'longDate' }}.
+          </p>
+        }
+      </div>
+
+      @if (writing()) {
+        <form class="claim-form" [formGroup]="claimForm" (ngSubmit)="fileClaim()" novalidate>
+          <label>
+            Tipo
+            <select formControlName="type">
+              @for (type of claimTypes; track type) {
+                <option [ngValue]="type">{{ claimTypeLabels[type] }}</option>
+              }
+            </select>
+          </label>
+          @if (claimForm.controls.type.value === 'CLAIM') {
+            <label>
+              Factura (opcional)
+              <select formControlName="invoiceId">
+                <option [ngValue]="null">No es de una factura en particular</option>
+                @for (invoice of account.invoices; track invoice.id) {
+                  <option [ngValue]="invoice.id">
+                    {{ periodLabel(invoice) }} · {{ serviceLabels[invoice.serviceType] }} · n.º
+                    {{ invoice.number }}
+                  </option>
+                }
+              </select>
+            </label>
+            <p class="muted hint">
+              La oficina revisará el valor en reclamo y te informará qué pasa con esa factura.
+            </p>
+          }
+          <label>
+            Motivo
+            <input type="text" formControlName="cause" maxlength="150" />
+          </label>
+          <label>
+            Descripción
+            <textarea rows="5" formControlName="description" maxlength="2000"></textarea>
+          </label>
+          <p class="muted hint">No incluyas documentos de identidad ni datos de otras personas.</p>
+          <div aria-live="assertive">
+            @if (claimError(); as message) {
+              <p class="error">{{ message }}</p>
+            }
+          </div>
+          <div class="claim-actions">
+            <button type="button" class="secondary" (click)="writing.set(false)">Cancelar</button>
+            <button type="submit" [disabled]="sending()">Radicar</button>
+          </div>
+        </form>
+      } @else {
+        <button type="button" (click)="startClaim()">Radicar una PQR</button>
+      }
+
+      @if (account.claims.length > 0) {
+        <ul class="claim-list">
+          @for (claim of account.claims; track claim.number) {
+            <li>
+              <div class="what">
+                <strong>{{ claimTypeLabels[claim.type] }} n.º {{ claim.number }}</strong>
+                <span class="muted">Radicada el {{ claim.filedOn | date: 'longDate' }}</span>
+                @if (claim.state === 'OPEN') {
+                  <span class="muted"
+                    >Respuesta hasta el {{ claim.dueDate | date: 'longDate' }}</span
+                  >
+                }
+              </div>
+              <span class="chip" [attr.data-claim-state]="claim.state">
+                {{ claimStateLabels[claim.state] }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
   }
 </main>
