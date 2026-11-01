@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { access, authResponse } from '../../../../testing/fixtures';
 import { PageTestContext, settle, setUpPage, textOf } from '../../../../testing/setup';
 import { REGULATORY_PROFILE_URL, RegulatoryProfile, RegulatoryRules } from '../regulatory.models';
+import { RegulatoryStatus } from '../regulatory-status';
 import { RegulatoryProfilePage } from './regulatory-profile';
 
 const FREE_RULES: RegulatoryRules = {
@@ -73,9 +74,15 @@ describe('RegulatoryProfilePage', () => {
         deviation: { ...FREE_RULES.deviation, percentBelow: 100 },
       },
     });
-    request.flush({ ...FREE_PROFILE, stratificationSource: 'MUNICIPAL_DECREE' });
+    request.flush({
+      ...FREE_PROFILE,
+      framework: 'LARGE_PROVIDERS',
+      stratificationSource: 'MUNICIPAL_DECREE',
+    });
     await settle();
     expect(document.body.textContent).toContain('Perfil regulatorio guardado');
+    // El menú comparte el perfil: se entera sin volver a consultarlo
+    expect(TestBed.inject(RegulatoryStatus).regulated()).toBe(true);
   });
 
   it('propone los valores por defecto del marco elegido', async () => {

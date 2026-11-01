@@ -63,6 +63,12 @@
       }
     </div>
     <mat-divider />
+    @if (session.organization() && session.canAdministerOrganization() && !regulatory.regulated()) {
+      <a mat-menu-item routerLink="/perfil-regulatorio">
+        <mat-icon>gavel</mat-icon>
+        <span>Perfil regulatorio</span>
+      </a>
+    }
     <a mat-menu-item routerLink="/cambiar-clave">
       <mat-icon>key</mat-icon>
       <span>Cambiar contraseña</span>

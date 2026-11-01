@@ -1,17 +1,30 @@
 import { TestBed } from '@angular/core/testing';
 import { access, authResponse, UTILITY_ID, user } from '../../../testing/fixtures';
-import { PageTestContext, setUpPage, textOf } from '../../../testing/setup';
+import { PageTestContext, settle, setUpPage, textOf } from '../../../testing/setup';
 import { AUTH_URL } from '../../core/auth/auth-api';
+import { REGULATORY_PROFILE_URL } from '../../features/regulatory/regulatory.models';
 import { Shell } from './shell';
 
 describe('Shell', () => {
   let context: PageTestContext;
 
-  afterEach(() => context.http.verify());
+  afterEach(() => {
+    answerProfile();
+    context.http.verify();
+  });
 
-  async function render() {
+  /** Responde las consultas pendientes del perfil regulatorio; por defecto, sin marco. */
+  function answerProfile(framework = 'NONE', reportsToSui = false): void {
+    context.http
+      .match(REGULATORY_PROFILE_URL)
+      .forEach((request) => request.flush({ framework, rules: { reportsToSui } }));
+  }
+
+  async function render(framework = 'NONE', reportsToSui = false) {
     const fixture = TestBed.createComponent(Shell);
-    await fixture.whenStable();
+    await settle();
+    answerProfile(framework, reportsToSui);
+    await settle();
     return fixture;
   }
 
@@ -43,6 +56,63 @@ describe('Shell', () => {
     expect(text).not.toContain('Usuarios');
   });
 
+  it('sin marco regulatorio el menú queda básico', async () => {
+    context = setUpPage({ session: authResponse({ organization: access({ role: 'ORG_ADMIN' }) }) });
+    const fixture = await render();
+    const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
+
+    expect(menu).not.toContain('Archivos SUI');
+    expect(menu).not.toContain('Perfil regulatorio');
+    expect(menu).toContain('PQR');
+    expect(menu).toContain('Suspensión y corte');
+
+    // El administrador puede activar un marco desde su menú de usuario
+    fixture.nativeElement.querySelector('button[aria-label="Opciones de usuario"]').click();
+    await settle();
+    expect(menuItem('Perfil regulatorio').getAttribute('href')).toBe('/perfil-regulatorio');
+  });
+
+  it('un rol sin administración no ve el perfil en su menú de usuario', async () => {
+    context = setUpPage();
+    const fixture = await render();
+
+    fixture.nativeElement.querySelector('button[aria-label="Opciones de usuario"]').click();
+    await settle();
+    expect(() => menuItem('Perfil regulatorio')).toThrow();
+  });
+
+  it('con marco regulado el menú trae el perfil y los archivos SUI', async () => {
+    context = setUpPage();
+    const fixture = await render('SMALL_PROVIDERS', true);
+    const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
+
+    expect(menu).toContain('Archivos SUI');
+    expect(menu).toContain('Perfil regulatorio');
+  });
+
+  it('sin marco pero reportando al SUI muestra los archivos', async () => {
+    context = setUpPage();
+    const fixture = await render('NONE', true);
+    const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
+
+    expect(menu).toContain('Archivos SUI');
+    expect(menu).not.toContain('Perfil regulatorio');
+  });
+
+  it('si el perfil no se puede leer muestra todo el menú', async () => {
+    context = setUpPage();
+    const fixture = TestBed.createComponent(Shell);
+    await settle();
+    context.http
+      .expectOne(REGULATORY_PROFILE_URL)
+      .flush({ status: 500 }, { status: 500, statusText: 'Server Error' });
+    await settle();
+    const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
+
+    expect(menu).toContain('Archivos SUI');
+    expect(menu).toContain('Perfil regulatorio');
+  });
+
   it('el administrador del prestador ve la gestión de usuarios', async () => {
     context = setUpPage({ session: authResponse({ organization: access({ role: 'ORG_ADMIN' }) }) });
     const fixture = await render();
@@ -70,16 +140,21 @@ describe('Shell', () => {
     const fixture = await render();
 
     fixture.nativeElement.querySelector('.organization-switcher').click();
-    await fixture.whenStable();
+    await settle();
     menuItem('Acueducto El Hato').click(); // el actual: no hace nada
     fixture.nativeElement.querySelector('.organization-switcher').click();
-    await fixture.whenStable();
+    await settle();
     menuItem('ESP Sabana').click();
 
     const request = context.http.expectOne(`${AUTH_URL}/refresh`);
     expect(request.request.body.organizationId).toBe(UTILITY_ID);
     request.flush(authResponse({ organization: utility, organizations: [access(), utility] }));
-    await fixture.whenStable();
+    await settle();
+
+    // El menú se ajusta al marco del nuevo prestador
+    context.http.expectOne(REGULATORY_PROFILE_URL).flush({ framework: 'LARGE_PROVIDERS', rules: { reportsToSui: true } });
+    await settle();
+    expect(textOf(fixture.nativeElement)).toContain('Archivos SUI');
 
     expect(context.router.navigateByUrl).toHaveBeenCalledWith('/inicio');
     expect(textOf(fixture.nativeElement)).toContain('ESP Sabana');
@@ -91,12 +166,12 @@ describe('Shell', () => {
     const fixture = await render();
 
     fixture.nativeElement.querySelector('.organization-switcher').click();
-    await fixture.whenStable();
+    await settle();
     menuItem('ESP Sabana').click();
     context.http
       .expectOne(`${AUTH_URL}/refresh`)
       .flush({ status: 403 }, { status: 403, statusText: 'Forbidden' });
-    await fixture.whenStable();
+    await settle();
 
     expect(document.body.textContent).toContain('Ya no tienes acceso a este prestador');
   });
@@ -106,11 +181,11 @@ describe('Shell', () => {
     const fixture = await render();
 
     fixture.nativeElement.querySelector('button[aria-label="Opciones de usuario"]').click();
-    await fixture.whenStable();
+    await settle();
     expect(document.body.textContent).toContain('ana@elhato.co');
     menuItem('Cerrar sesión').click();
     context.http.expectOne(`${AUTH_URL}/logout`).flush(null);
-    await fixture.whenStable();
+    await settle();
 
     expect(context.store.isAuthenticated()).toBe(false);
     expect(context.router.navigateByUrl).toHaveBeenCalledWith('/ingresar');

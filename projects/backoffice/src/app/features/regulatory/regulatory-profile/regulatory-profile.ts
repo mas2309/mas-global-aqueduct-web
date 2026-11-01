@@ -1,4 +1,4 @@
-import { HttpClient, httpResource } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -33,6 +33,7 @@ import {
   STRATIFICATION_SOURCES,
   StratificationSource,
 } from '../regulatory.models';
+import { RegulatoryStatus } from '../regulatory-status';
 
 const STRATA = [1, 2, 3, 4, 5, 6] as const;
 
@@ -86,7 +87,8 @@ export class RegulatoryProfilePage {
   private readonly notifier = inject(Notifier);
   private readonly session = inject(SessionStore);
 
-  protected readonly profile = httpResource<RegulatoryProfile>(() => REGULATORY_PROFILE_URL);
+  /** El mismo que usa el menú: al guardar, el menú se actualiza. */
+  protected readonly profile = inject(RegulatoryStatus).profile;
   protected readonly canEdit = computed(() => this.session.canAdministerOrganization());
   protected readonly saving = signal(false);
 

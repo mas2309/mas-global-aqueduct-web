@@ -15,6 +15,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { SessionStore } from '../../core/auth/session-store';
 import { ROLE_LABELS } from '../../core/i18n/labels';
 import { Notifier } from '../../core/ui/notifier';
+import { RegulatoryStatus } from '../../features/regulatory/regulatory-status';
 
 interface NavItem {
   path: string;
@@ -46,6 +47,7 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly notifier = inject(Notifier);
   protected readonly session = inject(SessionStore);
+  protected readonly regulatory = inject(RegulatoryStatus);
   protected readonly roleLabels = ROLE_LABELS;
 
   /** En pantallas pequeñas el menú lateral se superpone y se cierra al navegar. */
@@ -67,9 +69,13 @@ export class Shell {
       items.push({ path: '/tarifas', label: 'Tarifas', icon: 'payments' });
       items.push({ path: '/pqr', label: 'PQR', icon: 'forum' });
       items.push({ path: '/cortes', label: 'Suspensión y corte', icon: 'content_cut' });
-      items.push({ path: '/sui', label: 'Archivos SUI', icon: 'upload_file' });
+      if (this.regulatory.reportsToSui()) {
+        items.push({ path: '/sui', label: 'Archivos SUI', icon: 'upload_file' });
+      }
       items.push({ path: '/areas', label: 'Áreas de prestación', icon: 'map' });
-      items.push({ path: '/perfil-regulatorio', label: 'Perfil regulatorio', icon: 'gavel' });
+      if (this.regulatory.regulated()) {
+        items.push({ path: '/perfil-regulatorio', label: 'Perfil regulatorio', icon: 'gavel' });
+      }
       items.push({ path: '/finanzas', label: 'Ingresos y gastos', icon: 'account_balance_wallet' });
       items.push({ path: '/informes', label: 'Informes', icon: 'bar_chart' });
       items.push({ path: '/documentos', label: 'Documentos', icon: 'folder_open' });
