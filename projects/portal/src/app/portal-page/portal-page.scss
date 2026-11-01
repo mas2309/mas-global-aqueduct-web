@@ -172,12 +172,6 @@ h2 {
   gap: 8px;
 }
 
-.secondary {
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--outline);
-}
-
 .claim-list {
   display: grid;
   gap: 12px;
@@ -194,5 +188,28 @@ h2 {
     border: 1px solid var(--outline);
     border-radius: 12px;
     background: var(--surface);
+  }
+}
+
+.claims button {
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &.secondary {
+    border-color: var(--outline);
+    background: transparent;
+    color: var(--accent);
   }
 }

@@ -111,7 +111,13 @@
       </div>
 
       @if (writing()) {
-        <form class="claim-form" [formGroup]="claimForm" (ngSubmit)="fileClaim()" novalidate>
+        <form
+          class="claim-form"
+          [formGroup]="claimForm"
+          (ngSubmit)="fileClaim()"
+          (input)="claimError.set(null)"
+          novalidate
+        >
           <label>
             Tipo
             <select formControlName="type">
