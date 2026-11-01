@@ -73,7 +73,7 @@ export class Shell {
         items.push({ path: '/sui', label: 'Archivos SUI', icon: 'upload_file' });
       }
       items.push({ path: '/areas', label: 'Áreas de prestación', icon: 'map' });
-      if (this.regulatory.regulated()) {
+      if (this.regulatory.regulated() && this.session.canAdministerOrganization()) {
         items.push({ path: '/perfil-regulatorio', label: 'Perfil regulatorio', icon: 'gavel' });
       }
       items.push({ path: '/finanzas', label: 'Ingresos y gastos', icon: 'account_balance_wallet' });

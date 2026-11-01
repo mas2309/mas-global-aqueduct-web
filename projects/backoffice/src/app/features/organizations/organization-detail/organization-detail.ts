@@ -32,6 +32,8 @@ import {
 import { AFFILIATIONS_URL, ORGANIZATIONS_URL, OrganizationsApi } from '../organizations-api';
 import { MemberTarget } from '../../members/member.models';
 import { MemberList } from '../../members/member-list/member-list';
+import { CensusCard } from '../census-card/census-card';
+import { statusChangeConfirmation } from '../organization-status';
 
 /** Prestadores que se cargan para elegir a quién vincular (y mostrar nombres de los vinculados). */
 const CATALOG_SIZE = 100;
@@ -50,6 +52,7 @@ const CATALOG_SIZE = 100;
     MatFormFieldModule,
     MatProgressBarModule,
     MemberList,
+    CensusCard,
   ],
   templateUrl: './organization-detail.html',
   styleUrl: './organization-detail.scss',
@@ -138,19 +141,7 @@ export class OrganizationDetail {
 
   protected changeStatus(organization: Organization): void {
     const suspending = organization.status === 'ACTIVE';
-    const data: ConfirmDialogData = suspending
-      ? {
-          title: 'Suspender prestador',
-          message: `${displayName(organization)} no podrá facturar ni recaudar. Sus usuarios seguirán consultando el historial.`,
-          confirmLabel: 'Suspender',
-          danger: true,
-        }
-      : {
-          title: 'Reactivar prestador',
-          message: `${displayName(organization)} volverá a operar normalmente.`,
-          confirmLabel: 'Reactivar',
-        };
-    this.confirm(data, () =>
+    this.confirm(statusChangeConfirmation(organization), () =>
       suspending ? this.api.suspend(organization.id) : this.api.activate(organization.id),
     ).subscribe({
       next: (updated) => {

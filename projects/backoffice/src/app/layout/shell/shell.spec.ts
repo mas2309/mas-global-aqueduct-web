@@ -81,8 +81,17 @@ describe('Shell', () => {
     expect(() => menuItem('Perfil regulatorio')).toThrow();
   });
 
-  it('con marco regulado el menú trae el perfil y los archivos SUI', async () => {
+  it('con marco regulado quien no administra no ve el perfil', async () => {
     context = setUpPage();
+    const fixture = await render('SMALL_PROVIDERS', true);
+    const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
+
+    expect(menu).toContain('Archivos SUI');
+    expect(menu).not.toContain('Perfil regulatorio');
+  });
+
+  it('con marco regulado el administrador ve el perfil y los archivos SUI', async () => {
+    context = setUpPage({ session: authResponse({ organization: access({ role: 'ORG_ADMIN' }) }) });
     const fixture = await render('SMALL_PROVIDERS', true);
     const menu = textOf(fixture.nativeElement.querySelector('mat-nav-list'));
 
@@ -100,7 +109,7 @@ describe('Shell', () => {
   });
 
   it('si el perfil no se puede leer muestra todo el menú', async () => {
-    context = setUpPage();
+    context = setUpPage({ session: authResponse({ organization: access({ role: 'ORG_ADMIN' }) }) });
     const fixture = TestBed.createComponent(Shell);
     await settle();
     context.http

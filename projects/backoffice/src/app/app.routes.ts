@@ -206,7 +206,7 @@ export const routes: Routes = [
           {
             path: 'perfil-regulatorio',
             title: 'Perfil regulatorio · MAS Acueductos',
-            canActivate: [organizationGuard],
+            canActivate: [organizationAdminGuard],
             loadComponent: () =>
               import('./features/regulatory/regulatory-profile/regulatory-profile').then(
                 (m) => m.RegulatoryProfilePage,

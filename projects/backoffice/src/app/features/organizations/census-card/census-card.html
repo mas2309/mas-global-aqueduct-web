@@ -1,0 +1,54 @@
+<mat-card appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>Condiciones CRA 1038</mat-card-title>
+    @if (profile.hasValue()) {
+      <mat-card-subtitle>{{ frameworkLabels[profile.value().framework] }}</mat-card-subtitle>
+    }
+  </mat-card-header>
+  <mat-card-content>
+    @if (profile.error()) {
+      <p class="error" role="alert">No pudimos cargar sus condiciones.</p>
+    } @else if (profile.hasValue()) {
+      @let current = profile.value();
+      @if (!current.census) {
+        <p class="muted">El prestador aún no registró sus condiciones: no hay nada que corregir.</p>
+      } @else {
+        @if (current.classification; as classification) {
+          <p>
+            Clasificación: segmento {{ classification.segment }}, subsegmento
+            {{ classification.subsegment }}.
+          </p>
+        }
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="fields">
+            <mat-form-field appearance="outline">
+              <mat-label>Suscriptores de acueducto</mat-label>
+              <input matInput type="number" min="0" formControlName="waterSubscribers" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Suscriptores de alcantarillado</mat-label>
+              <input matInput type="number" min="0" formControlName="sewerageSubscribers" />
+            </mat-form-field>
+          </div>
+          <div class="checks">
+            <mat-checkbox formControlName="ruralMajority">
+              La mitad o más de sus suscriptores son rurales
+            </mat-checkbox>
+            <mat-checkbox formControlName="onlyRural">Atiende solo zona rural</mat-checkbox>
+            <mat-checkbox formControlName="communityManager">
+              Es gestor comunitario del agua
+            </mat-checkbox>
+            <mat-checkbox formControlName="communityInFirstSegment">
+              El gestor comunitario eligió la metodología del primer segmento
+            </mat-checkbox>
+          </div>
+          <div class="actions">
+            <button mat-stroked-button type="submit" [disabled]="saving()">
+              Corregir condiciones
+            </button>
+          </div>
+        </form>
+      }
+    }
+  </mat-card-content>
+</mat-card>
