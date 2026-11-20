@@ -11,6 +11,11 @@ export interface Member {
   memberSince: string;
   /** Solo al agregar: la cuenta se creó ahora y hay que entregarle la contraseña temporal. */
   accountCreated: boolean;
+  /**
+   * El administrador del prestador puede cambiar su nombre y su contraseña: la cuenta es solo de este prestador.
+   * Si trabaja también en otros, lo hace el administrador de plataforma.
+   */
+  accountEditable?: boolean;
 }
 
 /** `fullName` y `password` solo se usan si el correo aún no tiene cuenta. */
