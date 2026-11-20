@@ -35,6 +35,7 @@ export interface MemberTarget {
 export const ORGANIZATION_ROLES: readonly OrganizationRole[] = [
   'ORG_ADMIN',
   'OPERATOR',
+  'TECHNICIAN',
   'COLLECTOR',
   'VIEWER',
 ];
@@ -43,6 +44,7 @@ export const ORGANIZATION_ROLES: readonly OrganizationRole[] = [
 export const ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
   ORG_ADMIN: 'Administra usuarios y configuración',
   OPERATOR: 'Registra lecturas, factura y recauda',
+  TECHNICIAN: 'Registra lecturas y factura; no recibe pagos',
   COLLECTOR: 'Punto de recaudo: solo cobra e imprime el comprobante',
   VIEWER: 'Solo consulta',
 };

@@ -133,7 +133,7 @@ export class InvoiceList {
   }
 
   protected canCollect(invoice: Invoice): boolean {
-    return isOpen(invoice) && this.session.canOperateOrganization();
+    return isOpen(invoice) && this.session.canCollect();
   }
 
   protected filterBy(state: StateFilter): void {

@@ -44,15 +44,28 @@ export class SessionStore {
       organization !== null &&
       (this.isPlatformAdmin() ||
         organization.role === 'ORG_ADMIN' ||
-        organization.role === 'OPERATOR')
+        organization.role === 'OPERATOR' ||
+        organization.role === 'TECHNICIAN')
     );
   });
   /** Punto de recaudo: solo ve la sección Recaudo. */
   readonly isCollector = computed(
     () => !this.isPlatformAdmin() && this.organization()?.role === 'COLLECTOR',
   );
-  /** Puede recibir pagos en la sección Recaudo. */
-  readonly canCollect = computed(() => this.canOperateOrganization() || this.isCollector());
+  /**
+   * Puede recibir pagos. Lista explícita, aparte de operar: el operador sin recaudo opera pero no cobra, y el
+   * punto de recaudo cobra pero no opera.
+   */
+  readonly canCollect = computed(() => {
+    const organization = this.organization();
+    return (
+      organization !== null &&
+      (this.isPlatformAdmin() ||
+        organization.role === 'ORG_ADMIN' ||
+        organization.role === 'OPERATOR' ||
+        organization.role === 'COLLECTOR')
+    );
+  });
 
   accessToken(): string | null {
     return this.state()?.accessToken ?? null;

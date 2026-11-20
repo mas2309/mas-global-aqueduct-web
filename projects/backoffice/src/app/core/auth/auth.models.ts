@@ -1,6 +1,6 @@
 /** Contratos de /api/v1/auth. Reflejan los DTO del módulo identity de mas-global-aqueduct-service. */
 
-export type OrganizationRole = 'ORG_ADMIN' | 'OPERATOR' | 'COLLECTOR' | 'VIEWER';
+export type OrganizationRole = 'ORG_ADMIN' | 'OPERATOR' | 'TECHNICIAN' | 'COLLECTOR' | 'VIEWER';
 
 export type UserStatus = 'ACTIVE' | 'DISABLED';
 

@@ -18,7 +18,7 @@
     @let bill = invoice.value();
     @let unit = unitOf(bill.serviceType);
     @let metered = meteredServices.has(bill.serviceType);
-    @let canCollect = isOpen(bill) && session.canOperateOrganization();
+    @let canCollect = isOpen(bill) && session.canCollect();
 
     <header class="page-header">
       <div>
