@@ -110,9 +110,12 @@
         </mat-card-header>
         <mat-card-content>
           @if (current.customizedRules.length > 0) {
-            <p class="muted">
-              Reglas ajustadas respecto a los valores por defecto:
-              {{ current.customizedRules.length }}.
+            <p class="adjusted" role="status">
+              <strong>
+                Reglas ajustadas respecto a los valores por defecto:
+                {{ current.customizedRules.length }}.
+              </strong>
+              {{ adjustedRules(current.customizedRules) }}
             </p>
           }
 

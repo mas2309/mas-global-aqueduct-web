@@ -53,6 +53,8 @@ export interface PaymentReversal {
   paidAt: string;
   reason: string;
   reversedAt: string;
+  /** Quién lo reversó; `null` si su usuario ya no existe. */
+  reversedByName: string | null;
 }
 
 /** Tablero de una ESP o municipio: sus cifras, las de cada prestador vinculado y la suma de todos. */

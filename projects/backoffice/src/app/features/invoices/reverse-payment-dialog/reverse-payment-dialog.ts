@@ -8,6 +8,9 @@ import { problemMessage, toProblem } from '../../../core/api/problem';
 import { Invoice } from '../invoice.models';
 import { InvoicesApi } from '../invoices-api';
 
+/** El mismo límite del backend. */
+const MAX_REASON = 200;
+
 /** Deshace un pago registrado por error, dejando el motivo. Devuelve la factura otra vez pendiente. */
 @Component({
   selector: 'aq-reverse-payment-dialog',
@@ -30,9 +33,13 @@ import { InvoicesApi } from '../invoices-api';
         </p>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Motivo</mat-label>
-          <input matInput formControlName="reason" maxlength="200" autocomplete="off" />
+          <!-- Sin maxlength: cortar en silencio un texto pegado lo dejaría incompleto sin avisar -->
+          <input matInput formControlName="reason" autocomplete="off" />
           <mat-hint>Queda guardado con tu usuario y la fecha</mat-hint>
-          @if (form.controls.reason.invalid) {
+          <mat-hint align="end">{{ form.controls.reason.value.length }} / {{ maxReason }}</mat-hint>
+          @if (form.controls.reason.hasError('maxlength')) {
+            <mat-error>Máximo {{ maxReason }} caracteres: resume el motivo</mat-error>
+          } @else if (form.controls.reason.invalid) {
             <mat-error>Indica por qué se reversa el pago</mat-error>
           }
         </mat-form-field>
@@ -66,8 +73,9 @@ export class ReversePaymentDialog {
   private readonly dialogRef = inject<MatDialogRef<ReversePaymentDialog, Invoice>>(MatDialogRef);
   protected readonly invoice = inject<Invoice>(MAT_DIALOG_DATA);
 
+  protected readonly maxReason = MAX_REASON;
   protected readonly form = inject(NonNullableFormBuilder).group({
-    reason: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(200)]],
+    reason: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(MAX_REASON)]],
   });
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);

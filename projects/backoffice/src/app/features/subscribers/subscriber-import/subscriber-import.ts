@@ -73,7 +73,7 @@ export class SubscriberImport {
       error: (error: unknown) => {
         this.busy.set(false);
         this.notifier.apiError(error, {
-          400: 'No pudimos leer el archivo. Debe ser un CSV con las columnas «nombre» y «direccion», de máximo 2.000 filas.',
+          400: 'No pudimos leer el archivo. Debe ser un CSV con las columnas «nombre» y «dirección», de máximo 2.000 filas.',
           403: 'Solo el administrador del prestador importa suscriptores.',
           413: 'El archivo no puede pesar más de 5 MB.',
         });

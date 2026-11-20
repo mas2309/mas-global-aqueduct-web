@@ -66,6 +66,25 @@ describe('SettlementList', () => {
     expect(text).toContain('Borrador');
   });
 
+  it('desglosa los adicionales: el aseo conjunto no se confunde con suscriptores extra', async () => {
+    // 1.099 suscriptores: plan de hasta 2.000, sin cobro por suscriptor adicional
+    const fixture = await open([
+      settlement({
+        activeSubscribers: 1099,
+        planCharge: 250000,
+        brebPaymentsCharge: 0,
+        jointSanitation: true,
+        jointSanitationCharge: 25000,
+        total: 275000,
+      }),
+    ]);
+    const text = textOf(fixture.nativeElement);
+
+    expect(text).toContain('Aseo conjunto: $25,000');
+    expect(text).not.toContain('Suscriptores sobre 2.000');
+    expect(text).not.toContain('Pagos Bre-B');
+  });
+
   it('una liquidación emitida ya no ofrece cambios', async () => {
     const fixture = await open([settlement({ status: 'ISSUED' })]);
     const text = textOf(fixture.nativeElement);

@@ -102,7 +102,16 @@ const FORBIDDEN = 'Disponible para el administrador de la plataforma, sin presta
                   <td>{{ settlement.organizationName }}</td>
                   <td>{{ settlement.activeSubscribers }}</td>
                   <td>{{ settlement.planCharge | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
-                  <td>{{ extras(settlement) | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+                  <td>
+                    {{ extras(settlement) | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                    <!-- Cada concepto por separado: el aseo conjunto no se confunde con suscriptores extra -->
+                    @for (extra of extraLines(settlement); track extra.label) {
+                      <div class="extra muted">
+                        {{ extra.label }}:
+                        {{ extra.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                      </div>
+                    }
+                  </td>
                   <td>
                     <strong>{{
                       settlement.total | currency: 'COP' : 'symbol-narrow' : '1.0-0'
@@ -149,6 +158,9 @@ const FORBIDDEN = 'Disponible para el administrador de la plataforma, sin presta
         border-bottom: 1px solid var(--mat-sys-outline-variant);
       }
     }
+    .extra {
+      font-size: 0.85em;
+    }
   `,
 })
 export class SettlementList {
@@ -174,6 +186,18 @@ export class SettlementList {
 
   protected extras(settlement: Settlement): number {
     return settlement.total - settlement.planCharge;
+  }
+
+  /** Los conceptos que suman en «Adicionales», solo los que tienen valor. */
+  protected extraLines(settlement: Settlement): { label: string; amount: number }[] {
+    return [
+      { label: 'Suscriptores sobre 2.000', amount: settlement.extraSubscribersCharge },
+      { label: 'Aseo conjunto', amount: settlement.jointSanitationCharge },
+      { label: 'Facturas electrónicas', amount: settlement.electronicInvoicesCharge },
+      { label: 'Pagos Bre-B', amount: settlement.brebPaymentsCharge },
+      { label: 'Dispersiones', amount: settlement.dispersionsCharge },
+      { label: 'Reportes SUI', amount: settlement.suiReportsCharge },
+    ].filter((line) => line.amount > 0);
   }
 
   protected generate(): void {

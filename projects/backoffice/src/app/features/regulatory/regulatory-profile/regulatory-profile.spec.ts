@@ -88,9 +88,14 @@ describe('RegulatoryProfilePage', () => {
       ...FREE_PROFILE,
       framework: 'LARGE_PROVIDERS',
       stratificationSource: 'MUNICIPAL_DECREE',
+      customizedRules: ['subsidyCaps'],
     });
     await settle();
-    expect(document.body.textContent).toContain('Perfil regulatorio guardado');
+    // El conteo de reglas ajustadas sale en la confirmación y en la tarjeta, con el nombre de la regla
+    expect(document.body.textContent).toContain(
+      'Perfil regulatorio guardado. Reglas ajustadas respecto a los valores por defecto: 1.',
+    );
+    expect(document.body.textContent).toContain('topes de subsidio');
   });
 
   it('propone los valores por defecto del marco elegido', async () => {

@@ -39,6 +39,16 @@ import {
 
 const STRATA = [1, 2, 3, 4, 5, 6] as const;
 
+/** Nombre de cada regla que el backend reporta en `customizedRules`. */
+const RULE_LABELS: Record<string, string> = {
+  basicConsumption: 'consumo básico',
+  subsidyCaps: 'topes de subsidio',
+  deviation: 'desviaciones de consumo',
+  minDeliveryDaysBeforeDue: 'días de entrega antes del vencimiento',
+  legalInvoiceContent: 'contenido mínimo de la factura',
+  reportsToSui: 'reporte al SUI',
+};
+
 /**
  * Marco regulatorio del prestador y reglas que se derivan de él. Al cambiar de marco o altitud se proponen los valores
  * por defecto de la norma; todos se pueden ajustar antes de guardar. La gestiona el administrador de plataforma desde
@@ -82,6 +92,12 @@ const STRATA = [1, 2, 3, 4, 5, 6] as const;
       gap: 8px;
       justify-content: flex-end;
     }
+    .adjusted {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -104,6 +120,11 @@ export class RegulatoryProfilePage {
   protected readonly sources = STRATIFICATION_SOURCES;
   protected readonly sourceLabels = STRATIFICATION_LABELS;
   protected readonly strata = STRATA;
+
+  /** Las reglas ajustadas, por su nombre, para mostrarlas junto al conteo. */
+  protected adjustedRules(rules: string[]): string {
+    return rules.map((rule) => RULE_LABELS[rule] ?? rule).join(', ');
+  }
 
   protected readonly form = this.fb.group({
     framework: this.fb.control<RegulatoryFramework>('NONE'),
@@ -183,7 +204,12 @@ export class RegulatoryProfilePage {
       next: (saved) => {
         this.saving.set(false);
         this.profile.set(saved);
-        this.notifier.success('Perfil regulatorio guardado');
+        const adjusted = saved.customizedRules.length;
+        this.notifier.success(
+          adjusted > 0
+            ? `Perfil regulatorio guardado. Reglas ajustadas respecto a los valores por defecto: ${adjusted}.`
+            : 'Perfil regulatorio guardado con los valores por defecto.',
+        );
       },
       error: (error: unknown) => {
         this.saving.set(false);

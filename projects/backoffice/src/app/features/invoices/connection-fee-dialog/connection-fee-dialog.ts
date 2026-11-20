@@ -65,12 +65,14 @@ type ComponentName = (typeof COMPONENTS)[number][0];
               <input matInput type="number" min="0" [formControlName]="component[0]" />
             </mat-form-field>
           }
-          @if (data.associate) {
-            <mat-form-field appearance="outline">
-              <mat-label>Inversiones comunitarias</mat-label>
-              <input matInput type="number" min="0" formControlName="communityInvestment" />
-            </mat-form-field>
-          }
+          <!-- A la vista aunque no aplique, para que se entienda por qué no se cobra -->
+          <mat-form-field appearance="outline">
+            <mat-label>Inversiones comunitarias</mat-label>
+            <input matInput type="number" min="0" formControlName="communityInvestment" />
+            @if (!data.associate) {
+              <mat-hint>Solo a asociados del gestor: márcalo en la ficha del suscriptor</mat-hint>
+            }
+          </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Costos técnicos particulares</mat-label>
             <input matInput type="number" min="0" formControlName="additionalCost" />
@@ -133,6 +135,12 @@ export class ConnectionFeeDialog {
   });
   protected readonly saving = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  constructor() {
+    if (!this.data.associate) {
+      this.form.controls.communityInvestment.disable();
+    }
+  }
 
   /** Solo orienta: el total definitivo y los topes los calcula el servidor. */
   protected total(): number {

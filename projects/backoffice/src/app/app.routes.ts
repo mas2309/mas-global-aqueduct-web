@@ -61,6 +61,8 @@ export const routes: Routes = [
               {
                 path: 'importar',
                 title: 'Importar suscriptores · MAS Acueductos',
+                // Solo el administrador importa: el operador ni siquiera ve la pantalla
+                canActivate: [organizationAdminGuard],
                 loadComponent: () =>
                   import('./features/subscribers/subscriber-import/subscriber-import').then(
                     (m) => m.SubscriberImport,

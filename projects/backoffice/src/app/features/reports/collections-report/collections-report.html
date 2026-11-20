@@ -269,6 +269,9 @@
               {{ reversal.reversedAt | date: 'd MMM y, h:mm a' }}
             </strong>
             <span>{{ reversal.reason }}</span>
+            <span
+              >Reversado por {{ reversal.reversedByName ?? 'un usuario que ya no existe' }}</span
+            >
             <span class="muted">
               Se deshizo un pago en {{ methodLabels[reversal.method].toLowerCase() }} del
               {{ reversal.paidAt | date: 'd MMM y, h:mm a' }}
