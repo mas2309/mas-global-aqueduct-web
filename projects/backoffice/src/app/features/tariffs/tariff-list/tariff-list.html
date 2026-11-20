@@ -5,7 +5,7 @@
       <div class="actions">
         <button mat-stroked-button (click)="openBillingRules()">
           <mat-icon>settings</mat-icon>
-          Plazo y recargo
+          Configuración de facturas y recaudo
         </button>
         @if (selected(); as service) {
           <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="newTariffParams(service)">

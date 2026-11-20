@@ -90,7 +90,7 @@ describe('InvoiceList', () => {
     expect(element.querySelector(`a[href="/facturas/${INVOICE_ID}"]`)).not.toBeNull();
     // Solo se cobran las pendientes y las vencidas
     expect(element.querySelectorAll('button[aria-label^="Pago en efectivo"]')).toHaveLength(2);
-    expect(textOf(element)).not.toContain('Plazo y recargo');
+    expect(textOf(element)).not.toContain('Configuración de facturas y recaudo');
   });
 
   it('las facturas de servicios sin medidor no muestran consumo', async () => {
@@ -225,7 +225,7 @@ describe('InvoiceList', () => {
 
     await open('ORG_ADMIN');
     await load([invoice()]);
-    expect(textOf(element)).toContain('Plazo y recargo');
+    expect(textOf(element)).toContain('Configuración de facturas y recaudo');
     dialogResult = { paymentDueDay: 15, lateFee: 2000 };
     actions.openSettings();
     expect(document.body.textContent).toContain('Configuración guardada');

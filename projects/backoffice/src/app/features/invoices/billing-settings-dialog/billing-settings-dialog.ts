@@ -31,7 +31,7 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2 mat-dialog-title>Configuración de las facturas</h2>
+    <h2 mat-dialog-title>Configuración de facturas y recaudo</h2>
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <mat-dialog-content>
         <p class="muted">
