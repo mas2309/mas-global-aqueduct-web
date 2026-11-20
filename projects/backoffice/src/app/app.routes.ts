@@ -157,6 +157,53 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'pqr',
+            title: 'PQR · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/claims/claim-list/claim-list').then((m) => m.ClaimList),
+          },
+          {
+            path: 'pqr/:id',
+            title: 'PQR · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/claims/claim-detail/claim-detail').then((m) => m.ClaimDetail),
+          },
+          {
+            path: 'cortes',
+            title: 'Suspensión y corte · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/disconnections/disconnections-page/disconnections-page').then(
+                (m) => m.DisconnectionsPage,
+              ),
+          },
+          {
+            path: 'sui',
+            title: 'Archivos SUI · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () => import('./features/sui/sui-page/sui-page').then((m) => m.SuiPage),
+          },
+          {
+            path: 'areas',
+            title: 'Áreas de prestación · MAS Acueductos',
+            canActivate: [organizationGuard],
+            loadComponent: () =>
+              import('./features/service-areas/service-area-list/service-area-list').then(
+                (m) => m.ServiceAreaList,
+              ),
+          },
+          {
+            path: 'liquidaciones',
+            title: 'Liquidación de MAS · MAS Acueductos',
+            canActivate: [platformAdminGuard],
+            loadComponent: () =>
+              import('./features/settlements/settlement-list/settlement-list').then(
+                (m) => m.SettlementList,
+              ),
+          },
+          {
             path: 'tarifas',
             title: 'Tarifas · MAS Acueductos',
             canActivate: [organizationGuard],
@@ -195,6 +242,14 @@ export const routes: Routes = [
                 loadComponent: () =>
                   import('./features/organizations/organization-form/organization-form').then(
                     (m) => m.OrganizationForm,
+                  ),
+              },
+              {
+                path: ':id/perfil-regulatorio',
+                title: 'Perfil regulatorio · MAS Acueductos',
+                loadComponent: () =>
+                  import('./features/regulatory/regulatory-profile/regulatory-profile').then(
+                    (m) => m.RegulatoryProfilePage,
                   ),
               },
               {

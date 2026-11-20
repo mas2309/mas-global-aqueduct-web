@@ -8,6 +8,10 @@
     facturado conserva sus valores.
   </p>
 
+  @if (area()) {
+    <p class="muted">Esta tarifa aplica solo a los predios del área de prestación elegida.</p>
+  }
+
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
     <mat-card appearance="outlined">
       <mat-card-content class="form-grid">

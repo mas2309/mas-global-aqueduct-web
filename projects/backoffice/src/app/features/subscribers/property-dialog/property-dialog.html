@@ -36,6 +36,51 @@
       </mat-form-field>
     }
 
+    @if (areas.hasValue() && areas.value().length > 0) {
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Área de prestación</mat-label>
+        <mat-select formControlName="serviceAreaId">
+          @if (!data.property?.serviceAreaId) {
+            <mat-option value="">Sin área: tarifa general</mat-option>
+          }
+          @for (area of areas.value(); track area.id) {
+            <mat-option [value]="area.id">{{ area.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    <h3>Datos catastrales (opcionales)</h3>
+    @if (data.property) {
+      <p class="muted">NUIU del predio: {{ data.property.code }}</p>
+    }
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Código DANE del municipio</mat-label>
+      <input matInput formControlName="municipalityCode" maxlength="5" inputmode="numeric" />
+      <mat-hint>Si no se indica, se toma del número predial o del prestador</mat-hint>
+      @if (form.controls.municipalityCode.invalid) {
+        <mat-error>Debe tener 5 dígitos</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Número predial nacional</mat-label>
+      <input matInput formControlName="cadastralNumber" maxlength="30" inputmode="numeric" />
+      @if (form.controls.cadastralNumber.invalid) {
+        <mat-error>Debe tener 30 dígitos</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Dirección catastral</mat-label>
+      <input matInput formControlName="cadastralAddress" maxlength="60" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Código del centro poblado</mat-label>
+      <input matInput formControlName="settlementCode" maxlength="3" inputmode="numeric" />
+      @if (form.controls.settlementCode.invalid) {
+        <mat-error>Debe tener 3 dígitos</mat-error>
+      }
+    </mat-form-field>
+
     <div aria-live="assertive">
       @if (error(); as message) {
         <p class="error">{{ message }}</p>

@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
@@ -20,6 +21,7 @@ import { ServiceType } from '../../organizations/organization.models';
 import { formatCode } from '../../subscribers/subscriber.models';
 import { Reading, RouteEntry } from '../reading.models';
 import { ReadingsApi } from '../readings-api';
+import { ReviewDialog, ReviewDialogData } from '../review-dialog/review-dialog';
 
 /**
  * Un medidor de la ruta: muestra la lectura anterior y captura la actual. Se guarda con Enter o con el botón, y
@@ -42,6 +44,7 @@ import { ReadingsApi } from '../readings-api';
 })
 export class ReadingRow {
   private readonly api = inject(ReadingsApi);
+  private readonly dialog = inject(MatDialog);
 
   readonly entry = input.required<RouteEntry>();
   readonly periodId = input.required<string>();
@@ -127,6 +130,25 @@ export class ReadingRow {
             }),
           );
         },
+      });
+  }
+
+  /** Al resolver la revisión se genera la factura. */
+  protected review(): void {
+    const reading = this.saved();
+    if (!reading) {
+      return;
+    }
+    this.dialog
+      .open<ReviewDialog, ReviewDialogData, Reading>(ReviewDialog, {
+        data: { reading, subscriberName: this.entry().subscriberName, unit: this.unit() },
+        width: '480px',
+      })
+      .afterClosed()
+      .subscribe((reviewed) => {
+        if (reviewed) {
+          this.changed.emit(reviewed);
+        }
       });
   }
 

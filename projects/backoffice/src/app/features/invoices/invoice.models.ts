@@ -22,6 +22,8 @@ export interface Invoice {
   periodId: string;
   year: number;
   month: number;
+  /** Meses que cubre el periodo: 1 si es mensual, 2 si es bimestral... */
+  months: number;
   /** `null` en los servicios sin medidor, que se facturan al cerrar el periodo. */
   readingId: string | null;
   propertyId: string;
@@ -33,6 +35,8 @@ export interface Invoice {
   previousReading: number;
   currentReading: number;
   consumption: number;
+  /** El consumo es un promedio porque no se pudo medir. */
+  estimated: boolean;
   fixedCharge: number;
   consumptionCharge: number;
   adjustmentPercent: number;
@@ -46,9 +50,14 @@ export interface Invoice {
   otherChargesDescription: string | null;
   /** Cuotas de financiación cobradas en la factura; vacío si no hay. */
   installments: InvoiceInstallment[];
+  /** Lo que se cobra: ya descuenta `disputedAmount`. */
   total: number;
+  /** Valor en reclamo que no se cobra mientras se resuelve. */
+  disputedAmount: number;
   /** Fecha ISO `yyyy-MM-dd`. */
   dueDate: string;
+  /** Fecha ISO en que se entregó al suscriptor; `null` si no se ha registrado. */
+  deliveredOn: string | null;
   state: InvoiceState;
   paymentMethod: PaymentMethod | null;
   paidAt: string | null;

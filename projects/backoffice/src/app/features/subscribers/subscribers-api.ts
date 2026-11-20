@@ -60,20 +60,6 @@ export class SubscribersApi {
     });
   }
 
-  suspendService(propertyId: string, service: ServiceType): Observable<Property> {
-    return this.http.post<Property>(
-      `${PROPERTIES_URL}/${propertyId}/services/${service}/suspend`,
-      null,
-    );
-  }
-
-  reconnectService(propertyId: string, service: ServiceType): Observable<Property> {
-    return this.http.post<Property>(
-      `${PROPERTIES_URL}/${propertyId}/services/${service}/reconnect`,
-      null,
-    );
-  }
-
   disconnectService(propertyId: string, service: ServiceType): Observable<Property> {
     return this.http.delete<Property>(`${PROPERTIES_URL}/${propertyId}/services/${service}`);
   }

@@ -48,6 +48,7 @@ describe('CollectionsReport', () => {
 
   afterEach(() => {
     context.http.verify();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -108,23 +109,23 @@ describe('CollectionsReport', () => {
   });
 
   it('cambia el rango con los atajos y avisa si no hay pagos', async () => {
+    // Fecha fija a mitad de mes: el día 1, «Este mes» y «Hoy» son el mismo rango y no hay nueva consulta
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 15, 12));
     await open();
-    expectCollections(TODAY, TODAY).flush(report([payment()]));
+    expectCollections('2026-10-15', '2026-10-15').flush(report([payment()]));
     await settle();
     expect(textOf(element)).toContain('1 pago');
 
     button('Este mes')?.click();
     await settle();
-    expectCollections(`${TODAY.slice(0, 8)}01`, TODAY).flush(report([]));
+    expectCollections('2026-10-01', '2026-10-15').flush(report([]));
     await settle();
     expect(textOf(element)).toContain('No se registraron pagos en estas fechas');
 
-    // Si hoy es día 1, «Este mes» y «Hoy» son el mismo rango y no hay nueva consulta
     button('Hoy')?.click();
     await settle();
-    context.http
-      .match((request) => request.url === COLLECTIONS_URL)
-      .forEach((request) => request.flush(report([])));
+    expectCollections('2026-10-15', '2026-10-15').flush(report([]));
   });
 
   it('no consulta con un rango inválido', async () => {

@@ -34,6 +34,8 @@ interface Actions {
   usage: { set: (usage: PropertyUsage) => void };
 }
 
+const SERVICE_AREAS_URL = '/api/v1/service-areas';
+
 describe('TariffList', () => {
   let context: PageTestContext;
   let fixture: ComponentFixture<TariffList>;
@@ -61,6 +63,7 @@ describe('TariffList', () => {
     element = fixture.nativeElement;
     actions = fixture.componentInstance as unknown as Actions;
     await settle();
+    context.http.expectOne(SERVICE_AREAS_URL).flush([]);
     context.http
       .expectOne(CURRENT_ORGANIZATION_URL)
       .flush(organization({ services: ['WATER', 'SANITATION'] }));
@@ -73,6 +76,23 @@ describe('TariffList', () => {
     }
     await settle();
   }
+
+  it('la nueva tarifa conserva el área elegida', async () => {
+    await open([tariff()]);
+    const page = fixture.componentInstance as unknown as {
+      newTariffParams: (service: ServiceType) => Record<string, string>;
+      selectArea: (area: string | null) => void;
+    };
+
+    expect(page.newTariffParams('WATER')).toEqual({ servicio: 'WATER' });
+    page.selectArea('area-1');
+    expect(page.newTariffParams('WATER')).toEqual({ servicio: 'WATER', area: 'area-1' });
+
+    // Sin tarifa propia, sus predios usan la general: no es que falte tarifa
+    await settle();
+    expect(textOf(element)).toContain('Esta área no tiene tarifa propia');
+    expect(textOf(element)).toContain('se facturan con la tarifa general');
+  });
 
   it('muestra la tarifa vigente, la programada y las anteriores', async () => {
     await open([

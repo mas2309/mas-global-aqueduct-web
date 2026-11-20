@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { click, PageTestContext, setUpPage, textOf, type } from '../../../../testing/setup';
+import { click, PageTestContext, settle, setUpPage, textOf, type } from '../../../../testing/setup';
 import { property, PROPERTY_ID, SUBSCRIBER_ID } from '../../../../testing/subscriber-fixtures';
 import { MeterDialog, MeterDialogData } from '../meter-dialog/meter-dialog';
 import { PropertyUsage } from '../subscriber.models';
@@ -19,17 +19,48 @@ function setUp(data: PropertyDialogData | MeterDialogData): PageTestContext {
   });
 }
 
+const SERVICE_AREAS_URL = '/api/v1/service-areas';
+
 describe('PropertyDialog', () => {
   let context: PageTestContext;
 
   afterEach(() => context.http.verify());
 
-  async function render(data: PropertyDialogData) {
+  async function render(data: PropertyDialogData, areas: unknown[] = []) {
     context = setUp(data);
     const fixture = TestBed.createComponent(PropertyDialog);
+    await settle();
+    context.http.expectOne(SERVICE_AREAS_URL).flush(areas);
     await fixture.whenStable();
     return fixture;
   }
+
+  it('envía los datos catastrales y valida su formato', async () => {
+    const fixture = await render({ subscriberId: SUBSCRIBER_ID });
+    const element: HTMLElement = fixture.nativeElement;
+    const component = fixture.componentInstance as unknown as {
+      form: { patchValue: (value: object) => void };
+    };
+
+    type(element, 'input[formcontrolname=address]', 'Vereda El Hato, casa 12');
+    component.form.patchValue({ stratum: 1, municipalityCode: '155' });
+    click(element, 'button[type=submit]');
+    await fixture.whenStable();
+    context.http.expectNone(`${SUBSCRIBERS_URL}/${SUBSCRIBER_ID}/properties`);
+
+    component.form.patchValue({ municipalityCode: '15531' });
+    click(element, 'button[type=submit]');
+    const request = context.http.expectOne(`${SUBSCRIBERS_URL}/${SUBSCRIBER_ID}/properties`);
+    expect(request.request.body.municipalityCode).toBe('15531');
+    expect(request.request.body.cadastralNumber).toBeUndefined();
+    request.flush({});
+  });
+
+  it('solo pregunta el área si el prestador registró alguna', async () => {
+    const without = await render({ subscriberId: SUBSCRIBER_ID });
+    expect(textOf(without.nativeElement)).not.toContain('Área de prestación');
+    without.destroy();
+  });
 
   it('exige el estrato en predios residenciales', async () => {
     const fixture = await render({ subscriberId: SUBSCRIBER_ID });

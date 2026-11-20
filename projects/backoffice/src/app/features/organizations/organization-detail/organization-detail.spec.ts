@@ -55,6 +55,9 @@ describe('OrganizationDetail', () => {
     context.http.expectOne(`${ORGANIZATIONS_URL}/${org.id}`).flush(org);
     await settle();
     context.http.expectOne(membersUrl(org.id)).flush(members);
+    context.http
+      .expectOne(`${ORGANIZATIONS_URL}/${org.id}/regulatory-profile`)
+      .flush({ framework: 'NONE', census: null, classification: null });
     await settle();
   }
 

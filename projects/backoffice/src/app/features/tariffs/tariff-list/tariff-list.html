@@ -8,7 +8,7 @@
           Plazo y recargo
         </button>
         @if (selected(); as service) {
-          <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="{ servicio: service }">
+          <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="newTariffParams(service)">
             <mat-icon>add</mat-icon>
             Nueva tarifa
           </a>
@@ -31,6 +31,18 @@
         </mat-button-toggle>
       }
     </mat-button-toggle-group>
+  }
+
+  @if (areas.hasValue() && areas.value().length > 0) {
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="area-filter">
+      <mat-label>Área de prestación</mat-label>
+      <mat-select [ngModel]="area()" (ngModelChange)="selectArea($event)">
+        <mat-option [value]="null">Tarifa general</mat-option>
+        @for (option of areas.value(); track option.id) {
+          <mat-option [value]="option.id">{{ option.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
   }
 
   @if (tariffs.isLoading()) {
@@ -61,10 +73,15 @@
     } @else {
       <div class="state">
         <mat-icon aria-hidden="true">payments</mat-icon>
-        <p>{{ serviceLabels[service] }} aún no tiene una tarifa vigente.</p>
-        <p class="muted">Sin tarifa no se puede calcular el valor de las facturas.</p>
+        @if (area()) {
+          <p>Esta área no tiene tarifa propia de {{ serviceLabels[service].toLowerCase() }}.</p>
+          <p class="muted">Sus predios se facturan con la tarifa general.</p>
+        } @else {
+          <p>{{ serviceLabels[service] }} aún no tiene una tarifa vigente.</p>
+          <p class="muted">Sin tarifa no se puede calcular el valor de las facturas.</p>
+        }
         @if (session.canAdministerOrganization()) {
-          <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="{ servicio: service }">
+          <a mat-flat-button routerLink="/tarifas/nueva" [queryParams]="newTariffParams(service)">
             Definir la tarifa
           </a>
         }

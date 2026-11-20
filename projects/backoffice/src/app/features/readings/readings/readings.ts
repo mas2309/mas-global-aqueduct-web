@@ -24,6 +24,7 @@ import { SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { saveFile } from '../../../shared/ui/save-file';
+import { DeliveryDialog, DeliveryDialogData } from '../../invoices/delivery-dialog/delivery-dialog';
 import { Invoice } from '../../invoices/invoice.models';
 import { InvoicesApi } from '../../invoices/invoices-api';
 import { Organization, SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
@@ -126,6 +127,12 @@ export class Readings {
   protected readonly unusual = computed(() =>
     this.route.hasValue() ? this.route.value().filter((entry) => entry.reading?.unusual).length : 0,
   );
+  /** Solo si el perfil regulatorio exige revisar: estas lecturas no se facturan y frenan el cierre. */
+  protected readonly toReview = computed(() =>
+    this.route.hasValue()
+      ? this.route.value().filter((entry) => entry.reading?.reviewStatus === 'PENDING').length
+      : 0,
+  );
   /** Sin tarifa vigente no se puede facturar la lectura, así que el servidor tampoco la registra. */
   private readonly tariffs = httpResource<Tariff[]>(() => {
     const serviceType = this.service();
@@ -183,7 +190,7 @@ export class Readings {
     return periodLabel(nextPeriod(period));
   }
 
-  /** El primer periodo se elige; los demás son siempre el mes siguiente. */
+  /** El primer periodo se elige; los demás siguen al anterior y conservan su periodicidad. */
   protected openPeriod(): void {
     const latest = this.latest();
     const which: Observable<FirstPeriod> = latest
@@ -196,19 +203,25 @@ export class Readings {
           .open<OpenPeriodDialog, void, FirstPeriod>(OpenPeriodDialog, { width: '440px' })
           .afterClosed()
           .pipe(filter((period) => period !== undefined));
-    which.pipe(switchMap((period) => this.api.openPeriod(period.year, period.month))).subscribe({
-      next: (opened) => {
-        this.periodId.set(opened.id);
-        this.periods.reload();
-        this.notifier.success(`Periodo ${periodLabel(opened)} abierto`);
-      },
-      error: (error: unknown) =>
-        this.notifier.apiError(error, {
-          403: 'Solo el administrador del prestador abre y cierra periodos.',
-          409: 'Ese periodo ya existe.',
-          422: 'Cierra el periodo abierto antes de abrir el siguiente.',
-        }),
-    });
+    which
+      .pipe(
+        switchMap((period) =>
+          this.api.openPeriod(period.year, period.month, latest ? undefined : period.months),
+        ),
+      )
+      .subscribe({
+        next: (opened) => {
+          this.periodId.set(opened.id);
+          this.periods.reload();
+          this.notifier.success(`Periodo ${periodLabel(opened)} abierto`);
+        },
+        error: (error: unknown) =>
+          this.notifier.apiError(error, {
+            403: 'Solo el administrador del prestador abre y cierra periodos.',
+            409: 'Ese periodo ya existe.',
+            422: 'Cierra el periodo abierto antes de abrir el siguiente.',
+          }),
+      });
   }
 
   protected closePeriod(period: BillingPeriod): void {
@@ -233,7 +246,9 @@ export class Readings {
         error: (error: unknown) =>
           this.notifier.apiError(error, {
             403: 'Solo el administrador del prestador abre y cierra periodos.',
-            422: 'Falta la tarifa vigente de un servicio sin medidor (aseo o alcantarillado): defínela antes de cerrar.',
+            422:
+              'No se puede cerrar: hay lecturas con desviación por revisar, o falta la tarifa vigente de un ' +
+              'servicio sin medidor (aseo o alcantarillado).',
           }),
       });
   }
@@ -246,6 +261,32 @@ export class Readings {
       error: (error: unknown) =>
         this.notifier.apiError(error, { 422: 'Este periodo aún no tiene facturas.' }),
     });
+  }
+
+  /** Reparto masivo: registra la entrega de las facturas del periodo que aún no la tienen. */
+  protected deliverInvoices(period: BillingPeriod): void {
+    const data: DeliveryDialogData = {
+      title: `Registrar la entrega de ${periodLabel(period)}`,
+      message: 'Aplica a las facturas del periodo que aún no tienen entrega registrada.',
+    };
+    this.dialog
+      .open<DeliveryDialog, DeliveryDialogData, string>(DeliveryDialog, { data, width: '440px' })
+      .afterClosed()
+      .pipe(
+        filter((deliveredOn) => deliveredOn !== undefined),
+        switchMap((deliveredOn) => this.invoicesApi.deliverPeriod(period.id, deliveredOn)),
+      )
+      .subscribe({
+        next: ({ delivered }) => {
+          this.invoices.reload();
+          this.notifier.success(`${delivered} facturas con entrega registrada`);
+        },
+        error: (error: unknown) =>
+          this.notifier.apiError(error, {
+            400: 'La fecha de entrega no puede ser anterior a la emisión de la factura.',
+            403: 'Tu rol solo permite consultar.',
+          }),
+      });
   }
 
   protected invoiceOf(entry: RouteEntry): Invoice | null {

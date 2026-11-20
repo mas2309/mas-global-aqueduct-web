@@ -15,6 +15,7 @@ import { BILLING_SETTINGS_URL, INVOICES_URL } from '../invoices-api';
 import { InvoiceList } from './invoice-list';
 
 const PAY_URL = `${INVOICES_URL}/${INVOICE_ID}/pay`;
+const DOCUMENT_URL = `${INVOICES_URL}/${INVOICE_ID}/document`;
 
 function page(items: Invoice[], totalItems = items.length): Page<Invoice> {
   return { items, page: 0, size: 20, totalItems, totalPages: 1 };
@@ -185,6 +186,7 @@ describe('InvoiceList', () => {
     await load([invoice()]);
 
     click(element, 'button[aria-label^="Pago en efectivo"]');
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     const request = context.http.expectOne(PAY_URL);
     expect(request.request.body).toEqual({ method: 'CASH' });
     request.flush(invoice({ state: 'PAID', paymentMethod: 'CASH' }));
@@ -201,10 +203,12 @@ describe('InvoiceList', () => {
 
     dialogResult = false;
     click(element, 'button[aria-label^="Pago por banco"]');
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     context.http.expectNone(PAY_URL);
 
     dialogResult = true;
     click(element, 'button[aria-label^="Pago por banco"]');
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     const request = context.http.expectOne(PAY_URL);
     expect(request.request.body).toEqual({ method: 'BANK' });
     request.flush({ status: 422 }, { status: 422, statusText: 'Unprocessable' });
