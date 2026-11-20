@@ -16,6 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { problemMessage, toProblem } from '../../../core/api/problem';
+import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { Invoice } from '../../invoices/invoice.models';
 import { ServiceType } from '../../organizations/organization.models';
 import { formatCode } from '../../subscribers/subscriber.models';
@@ -104,6 +105,42 @@ export class ReadingRow {
       this.error.set(this.lowerThanPrevious());
       return;
     }
+    // Un consumo muy distinto a su promedio suele ser un error de digitación: se pregunta antes de guardar. Con
+    // medidor nuevo no se compara: el consumo arranca de su lectura inicial.
+    const consumption = current - this.previous();
+    if (!this.meterReplaced() && this.isUnusual(consumption)) {
+      const average = this.entry().averageConsumption;
+      const data: ConfirmDialogData = {
+        title: '¿La lectura es correcta?',
+        message:
+          `El consumo sería de ${consumption} ${this.unit()}, muy distinto a lo normal en este predio` +
+          (typeof average === 'number' ? ` (su promedio es de ${average} ${this.unit()})` : '') +
+          '. Revisa la lectura antes de guardarla.',
+        confirmLabel: 'Sí, guardar',
+      };
+      this.dialog
+        .open<ConfirmDialog, ConfirmDialogData, boolean>(ConfirmDialog, { data, width: '440px' })
+        .afterClosed()
+        .subscribe((confirmed) => {
+          if (confirmed) {
+            this.send(current);
+          }
+        });
+      return;
+    }
+    this.send(current);
+  }
+
+  /** Fuera de lo esperado para el predio; sin historia no hay con qué comparar. */
+  private isUnusual(consumption: number): boolean {
+    const { unusualAbove, unusualBelow } = this.entry();
+    return (
+      (typeof unusualAbove === 'number' && consumption > unusualAbove) ||
+      (typeof unusualBelow === 'number' && consumption < unusualBelow)
+    );
+  }
+
+  private send(current: number): void {
     this.saving.set(true);
     this.error.set(null);
     this.api

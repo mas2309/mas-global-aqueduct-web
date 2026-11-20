@@ -55,6 +55,12 @@ export interface RouteEntry {
   previousReading: number | null;
   /** Lectura de este periodo; `null` si está pendiente. */
   reading: Reading | null;
+  /** Promedio de sus últimos consumos; `null` si aún no tiene historia. */
+  averageConsumption?: number | null;
+  /** Un consumo mayor es inusual (la misma regla del servidor); `null` sin historia. */
+  unusualAbove?: number | null;
+  /** Un consumo menor es inusual; `null` si no hay mínimo. */
+  unusualBelow?: number | null;
 }
 
 export interface ReadingRequest {

@@ -7,6 +7,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { Notifier } from '../../../core/ui/notifier';
 import { saveFile } from '../../../shared/ui/save-file';
+import { HistoryImport } from '../history-import/history-import';
 import { ImportResult } from '../subscriber.models';
 
 export const IMPORT_URL = '/api/v1/imports/subscribers';
@@ -17,7 +18,14 @@ export const IMPORT_URL = '/api/v1/imports/subscribers';
  */
 @Component({
   selector: 'aq-subscriber-import',
-  imports: [RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule],
+  imports: [
+    RouterLink,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    HistoryImport,
+  ],
   templateUrl: './subscriber-import.html',
   styleUrl: './subscriber-import.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

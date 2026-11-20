@@ -1,0 +1,90 @@
+<mat-card appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>Historial de consumos (opcional)</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p>
+      Si el acueducto viene de otro sistema, sube los consumos de sus últimos meses (por ejemplo,
+      6). No se facturan: sirven para que desde la primera lectura se avise si un consumo es inusual
+      y se pueda estimar cuando no se lee el medidor.
+    </p>
+    <ul class="notes">
+      <li>Importa primero los suscriptores: el historial se une a sus predios.</li>
+      <li>
+        Cada fila es un predio en un periodo. Identifícalo con <strong>medidor</strong> o, si no
+        tiene, con el código de <strong>predio</strong>.
+      </li>
+      <li>
+        <strong>periodo</strong> es año y mes (2026-05 o 05/2026), anterior al mes actual;
+        <strong>consumo</strong> es lo consumido en ese periodo; <strong>servicio</strong> es
+        acueducto si se deja vacío.
+      </li>
+      <li>Volver a subir un periodo reemplaza el consumo que tenía. Las lecturas reales mandan.</li>
+    </ul>
+    <div class="actions">
+      <button mat-button (click)="downloadTemplate()">
+        <mat-icon>download</mat-icon>
+        Descargar plantilla
+      </button>
+      <input
+        #picker
+        type="file"
+        accept=".csv,text/csv"
+        class="cdk-visually-hidden"
+        aria-label="Archivo CSV del historial de consumos"
+        (change)="chooseFile($event)"
+      />
+      <button mat-stroked-button [disabled]="busy()" (click)="picker.click()">
+        <mat-icon>upload_file</mat-icon>
+        Elegir archivo
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+@if (busy()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Procesando historial" />
+}
+
+@if (review(); as result) {
+  <div aria-live="polite">
+    @if (imported() !== null) {
+      <div class="state">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        <p>Se importaron {{ imported() }} consumos.</p>
+      </div>
+    } @else if (result.errors.length === 0) {
+      <div class="state">
+        <p>
+          <strong>{{ file()?.name }}</strong> está bien: {{ result.rows }}
+          {{ result.rows === 1 ? 'consumo' : 'consumos' }} para importar.
+        </p>
+        <button mat-flat-button [disabled]="busy() || result.rows === 0" (click)="importFile()">
+          Importar historial
+        </button>
+      </div>
+    } @else {
+      <h2 class="section-title">{{ file()?.name }} tiene errores: no se importó nada</h2>
+      <table class="errors">
+        <caption class="cdk-visually-hidden">
+          Errores del historial
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Línea</th>
+            <th scope="col">Problema</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (error of result.errors; track error.line) {
+            <tr>
+              <td>{{ error.line }}</td>
+              <td>{{ error.message }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <p class="muted">La línea 1 es el encabezado. Se muestran máximo 50 errores.</p>
+    }
+  </div>
+}
