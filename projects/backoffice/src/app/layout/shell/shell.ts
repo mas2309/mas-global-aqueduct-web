@@ -60,10 +60,17 @@ export class Shell {
 
   protected readonly navigation = computed<NavItem[]>(() => {
     const items: NavItem[] = [];
+    // El punto de recaudo solo cobra
+    if (this.session.isCollector()) {
+      return [{ path: '/recaudo', label: 'Recaudo', icon: 'point_of_sale' }];
+    }
     if (this.session.organization()) {
       items.push({ path: '/inicio', label: 'Inicio', icon: 'home' });
       items.push({ path: '/suscriptores', label: 'Suscriptores', icon: 'groups' });
       items.push({ path: '/lecturas', label: 'Lecturas', icon: 'speed' });
+      if (this.session.canCollect()) {
+        items.push({ path: '/recaudo', label: 'Recaudo', icon: 'point_of_sale' });
+      }
       items.push({ path: '/facturas', label: 'Facturas', icon: 'receipt_long' });
       items.push({ path: '/financiaciones', label: 'Financiaciones', icon: 'event_repeat' });
       items.push({ path: '/tarifas', label: 'Tarifas', icon: 'payments' });

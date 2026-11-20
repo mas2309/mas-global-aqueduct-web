@@ -10,6 +10,7 @@ import {
 export const ROLE_LABELS: Record<OrganizationRole, string> = {
   ORG_ADMIN: 'Administrador',
   OPERATOR: 'Operador',
+  COLLECTOR: 'Recaudador',
   VIEWER: 'Consulta',
 };
 

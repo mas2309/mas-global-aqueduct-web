@@ -102,6 +102,8 @@ export interface BillingSettings {
   invoiceHeader?: string | null;
   /** El prestador ya subió su logo. Solo lectura: el logo se cambia con su propia operación. */
   hasLogo?: boolean;
+  /** El fontanero cobra en campo desde la app; apagado, se recauda solo en oficina y puntos de recaudo. */
+  fieldCollection?: boolean;
 }
 
 export const INVOICE_STATE_LABELS: Record<InvoiceState, string> = {

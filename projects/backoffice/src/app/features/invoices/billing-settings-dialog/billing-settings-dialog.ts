@@ -45,6 +45,12 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
             <mat-error>Debe ser un día entre 1 y 31</mat-error>
           }
         </mat-form-field>
+        <mat-slide-toggle formControlName="fieldCollection" class="late-fee-toggle">
+          El fontanero cobra en campo desde la app
+        </mat-slide-toggle>
+        <p class="hint">
+          Apágalo si el acueducto recauda solo en la oficina o en puntos de recaudo.
+        </p>
         <mat-slide-toggle formControlName="chargeLateFee" class="late-fee-toggle">
           Cobrar recargo por no pago oportuno
         </mat-slide-toggle>
@@ -129,6 +135,12 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
       margin: 8px 0 0;
     }
 
+    .hint {
+      margin: 4px 0 0;
+      color: var(--mat-sys-on-surface-variant);
+      font: var(--mat-sys-body-small);
+    }
+
     .logo {
       display: flex;
       flex-wrap: wrap;
@@ -156,6 +168,7 @@ export class BillingSettingsDialog {
     lateFee: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
     invoiceHeader: ['', Validators.maxLength(200)],
     invoiceNote: ['', Validators.maxLength(300)],
+    fieldCollection: [true],
   });
   /** El logo se sube y se quita aparte, de inmediato: no espera a «Guardar». */
   protected readonly hasLogo = signal(false);
@@ -165,7 +178,7 @@ export class BillingSettingsDialog {
   constructor() {
     effect(() => {
       if (this.current.hasValue()) {
-        const { paymentDueDay, lateFee, invoiceNote, invoiceHeader, hasLogo } =
+        const { paymentDueDay, lateFee, invoiceNote, invoiceHeader, hasLogo, fieldCollection } =
           this.current.value();
         this.form.setValue({
           paymentDueDay,
@@ -173,6 +186,7 @@ export class BillingSettingsDialog {
           lateFee,
           invoiceHeader: invoiceHeader ?? '',
           invoiceNote: invoiceNote ?? '',
+          fieldCollection: fieldCollection ?? true,
         });
         this.hasLogo.set(hasLogo ?? false);
       }
@@ -211,7 +225,7 @@ export class BillingSettingsDialog {
     }
     this.saving.set(true);
     this.error.set(null);
-    const { paymentDueDay, chargeLateFee, lateFee, invoiceNote, invoiceHeader } =
+    const { paymentDueDay, chargeLateFee, lateFee, invoiceNote, invoiceHeader, fieldCollection } =
       this.form.getRawValue();
     this.api
       .updateSettings({
@@ -219,6 +233,7 @@ export class BillingSettingsDialog {
         lateFee: chargeLateFee ? lateFee : 0,
         invoiceNote: invoiceNote.trim() || null,
         invoiceHeader: invoiceHeader.trim() || null,
+        fieldCollection,
       })
       .subscribe({
         next: (settings) => this.dialogRef.close(settings),

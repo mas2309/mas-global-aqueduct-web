@@ -1,0 +1,70 @@
+mat-card {
+  margin-bottom: 16px;
+}
+
+.search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+
+  .grow {
+    flex: 1 1 280px;
+  }
+
+  button {
+    margin-top: 8px;
+  }
+}
+
+.section-title {
+  margin: 16px 0 8px;
+  font: var(--mat-sys-title-medium);
+}
+
+.matches {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.document-header,
+.line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.line {
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+.total {
+  font-weight: 600;
+  border-bottom: none;
+}
+
+.overdue {
+  color: var(--mat-sys-error);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+}

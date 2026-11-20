@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import {
   authGuard,
+  collectGuard,
   guestGuard,
   organizationAdminGuard,
   organizationGuard,
@@ -45,6 +46,15 @@ export const routes: Routes = [
             title: 'Inicio · MAS Acueductos',
             canActivate: [organizationGuard],
             loadComponent: () => import('./features/home/home').then((m) => m.Home),
+          },
+          {
+            path: 'recaudo',
+            title: 'Recaudo · MAS Acueductos',
+            canActivate: [collectGuard],
+            loadComponent: () =>
+              import('./features/collection/collection-page/collection-page').then(
+                (m) => m.CollectionPage,
+              ),
           },
           {
             path: 'suscriptores',

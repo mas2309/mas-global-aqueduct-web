@@ -109,6 +109,11 @@ export class InvoicesApi {
     return this.http.get(`${INVOICES_URL}/${invoiceId}/pdf`, { responseType: 'blob' });
   }
 
+  /** Comprobante del pago en papel de 80 mm, para el punto de recaudo. */
+  receipt(invoiceId: string): Observable<Blob> {
+    return this.http.get(`${INVOICES_URL}/${invoiceId}/receipt`, { responseType: 'blob' });
+  }
+
   /** Todas las facturas de un periodo en un solo PDF, una por página. */
   periodPdf(periodId: string): Observable<Blob> {
     return this.http.get(`/api/v1/billing-periods/${periodId}/invoices/pdf`, {

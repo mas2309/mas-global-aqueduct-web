@@ -273,6 +273,7 @@ describe('BillingSettingsDialog', () => {
       lateFee: 3000,
       invoiceNote: null,
       invoiceHeader: null,
+      fieldCollection: true,
     });
     request.flush({ paymentDueDay: 15, lateFee: 3000 });
 
@@ -281,7 +282,9 @@ describe('BillingSettingsDialog', () => {
 
   it('el recargo es opcional: apagado se guarda en cero', async () => {
     await render();
-    const toggle = element.querySelector<HTMLButtonElement>('button[role=switch]')!;
+    const toggle = element.querySelector<HTMLButtonElement>(
+      'mat-slide-toggle[formcontrolname=chargeLateFee] button[role=switch]',
+    )!;
     expect(toggle.getAttribute('aria-checked')).toBe('true');
 
     toggle.click();
@@ -295,8 +298,24 @@ describe('BillingSettingsDialog', () => {
       lateFee: 0,
       invoiceNote: null,
       invoiceHeader: null,
+      fieldCollection: true,
     });
     request.flush({ paymentDueDay: 15, lateFee: 0 });
+  });
+
+  it('apaga el cobro en campo para recaudar solo en oficina y puntos de recaudo', async () => {
+    await render();
+    const toggle = element.querySelector<HTMLButtonElement>(
+      'mat-slide-toggle[formcontrolname=fieldCollection] button[role=switch]',
+    )!;
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+
+    toggle.click();
+    await settle();
+    click(element, 'button[type=submit]');
+    const request = context.http.expectOne(BILLING_SETTINGS_URL);
+    expect(request.request.body).toMatchObject({ fieldCollection: false });
+    request.flush({ paymentDueDay: 15, lateFee: 2000, fieldCollection: false });
   });
 
   it('encendido exige un recargo mayor que cero', async () => {
