@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
@@ -46,6 +47,7 @@ type ComponentName = (typeof COMPONENTS)[number][0];
 @Component({
   selector: 'aq-connection-fee-dialog',
   imports: [
+    MoneyInput,
     CurrencyPipe,
     ReactiveFormsModule,
     MatDialogModule,
@@ -62,20 +64,20 @@ type ComponentName = (typeof COMPONENTS)[number][0];
           @for (component of components; track component[0]) {
             <mat-form-field appearance="outline">
               <mat-label>{{ component[1] }}</mat-label>
-              <input matInput type="number" min="0" [formControlName]="component[0]" />
+              <input matInput aqMoney min="0" [formControlName]="component[0]" />
             </mat-form-field>
           }
           <!-- A la vista aunque no aplique, para que se entienda por qué no se cobra -->
           <mat-form-field appearance="outline">
             <mat-label>Inversiones comunitarias</mat-label>
-            <input matInput type="number" min="0" formControlName="communityInvestment" />
+            <input matInput aqMoney min="0" formControlName="communityInvestment" />
             @if (!data.associate) {
               <mat-hint>Solo a asociados del gestor: márcalo en la ficha del suscriptor</mat-hint>
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Costos técnicos particulares</mat-label>
-            <input matInput type="number" min="0" formControlName="additionalCost" />
+            <input matInput aqMoney min="0" formControlName="additionalCost" />
           </mat-form-field>
         </div>
         @if (form.controls.additionalCost.value > 0) {

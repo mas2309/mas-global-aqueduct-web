@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
 import {
@@ -41,6 +42,7 @@ import {
 @Component({
   selector: 'aq-disconnections-page',
   imports: [
+    MoneyInput,
     CurrencyPipe,
     ReactiveFormsModule,
     RouterLink,

@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
@@ -23,6 +24,7 @@ import {
 @Component({
   selector: 'aq-claim-answer-dialog',
   imports: [
+    MoneyInput,
     CurrencyPipe,
     ReactiveFormsModule,
     MatDialogModule,
@@ -57,7 +59,7 @@ import {
               <mat-label>Lo que debe de lo congelado</mat-label>
               <input
                 matInput
-                type="number"
+                aqMoney
                 min="0"
                 [max]="claim.disputedAmount"
                 formControlName="owedAmount"

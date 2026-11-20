@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +13,7 @@ import { InvoicesApi } from '../invoices-api';
 @Component({
   selector: 'aq-other-charges-dialog',
   imports: [
+    MoneyInput,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -26,7 +28,7 @@ import { InvoicesApi } from '../invoices-api';
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Valor</mat-label>
           <span matTextPrefix>$&nbsp;</span>
-          <input matInput type="number" min="0" formControlName="amount" inputmode="numeric" />
+          <input matInput aqMoney min="0" formControlName="amount" />
           <mat-hint>Cero para quitar el cobro</mat-hint>
           @if (form.controls.amount.invalid) {
             <mat-error>Debe ser cero o más</mat-error>

@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -20,6 +21,7 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
 @Component({
   selector: 'aq-billing-settings-dialog',
   imports: [
+    MoneyInput,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -50,7 +52,7 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Valor del recargo</mat-label>
             <span matTextPrefix>$&nbsp;</span>
-            <input matInput type="number" min="1" formControlName="lateFee" inputmode="numeric" />
+            <input matInput aqMoney min="1" formControlName="lateFee" />
             <mat-hint>Se suma a la factura cuando la anterior no se pagó</mat-hint>
             @if (form.controls.lateFee.invalid) {
               <mat-error>Indica un valor mayor que cero</mat-error>

@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -12,6 +13,7 @@ import { Claim, CLAIMS_URL } from '../claim.models';
 @Component({
   selector: 'aq-claim-freeze-dialog',
   imports: [
+    MoneyInput,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -25,7 +27,7 @@ import { Claim, CLAIMS_URL } from '../claim.models';
       <mat-dialog-content>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Valor a congelar</mat-label>
-          <input matInput type="number" min="1" formControlName="amount" />
+          <input matInput aqMoney min="1" formControlName="amount" />
           <mat-hint>Deja de cobrarse mientras se resuelve. Solo se hace una vez</mat-hint>
           @if (form.controls.amount.invalid) {
             <mat-error>Indica un valor mayor que cero</mat-error>

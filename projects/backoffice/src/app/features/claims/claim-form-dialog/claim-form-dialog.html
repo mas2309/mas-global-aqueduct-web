@@ -76,7 +76,7 @@
           @if (form.controls.invoiceId.value) {
             <mat-form-field appearance="outline">
               <mat-label>Valor reclamado a congelar</mat-label>
-              <input matInput type="number" min="0" formControlName="disputedAmount" />
+              <input matInput aqMoney min="0" formControlName="disputedAmount" />
               <mat-hint>Deja de cobrarse mientras se resuelve</mat-hint>
             </mat-form-field>
           }

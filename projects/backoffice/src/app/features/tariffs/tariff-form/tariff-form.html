@@ -26,7 +26,7 @@
         <mat-form-field appearance="outline">
           <mat-label>Cargo fijo mensual</mat-label>
           <span matTextPrefix>$&nbsp;</span>
-          <input matInput type="number" min="0" formControlName="fixedCharge" inputmode="numeric" />
+          <input matInput aqMoney min="0" formControlName="fixedCharge" />
           @if (form.controls.fixedCharge.invalid) {
             <mat-error>Debe ser cero o más</mat-error>
           }
@@ -59,7 +59,7 @@
               <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price">
                 <mat-label>Precio por {{ unit() }}</mat-label>
                 <span matTextPrefix>$&nbsp;</span>
-                <input matInput type="number" min="0" formControlName="pricePerUnit" />
+                <input matInput aqMoney min="0" formControlName="pricePerUnit" />
               </mat-form-field>
               <button
                 mat-icon-button
@@ -80,7 +80,7 @@
             <mat-form-field appearance="outline" subscriptSizing="dynamic" class="price">
               <mat-label>Precio por {{ unit() }}</mat-label>
               <span matTextPrefix>$&nbsp;</span>
-              <input matInput type="number" min="0" formControlName="lastPrice" />
+              <input matInput aqMoney min="0" formControlName="lastPrice" />
             </mat-form-field>
           </div>
           <button mat-button type="button" (click)="addBlock()">

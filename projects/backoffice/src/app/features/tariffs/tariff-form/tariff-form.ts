@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { httpResource } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -73,6 +74,7 @@ function firstDayOfNextMonth(): string {
 @Component({
   selector: 'aq-tariff-form',
   imports: [
+    MoneyInput,
     ReactiveFormsModule,
     RouterLink,
     MatCardModule,

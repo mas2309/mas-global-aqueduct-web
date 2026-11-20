@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
@@ -35,6 +36,7 @@ import {
 @Component({
   selector: 'aq-claim-form-dialog',
   imports: [
+    MoneyInput,
     FormsModule,
     ReactiveFormsModule,
     MatDialogModule,
