@@ -115,6 +115,32 @@ table {
   }
 }
 
+.concept-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+
+  h3 {
+    margin: 0 0 8px;
+    font: var(--mat-sys-title-small);
+  }
+
+  ul {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+}
+
 .ranges {
   width: 100%;
   border-collapse: collapse;

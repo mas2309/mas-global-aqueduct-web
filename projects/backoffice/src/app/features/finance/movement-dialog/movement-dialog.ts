@@ -1,4 +1,5 @@
 import { MoneyInput } from '../../../shared/ui/money-input';
+import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -18,6 +19,7 @@ import {
   CATEGORY_SUGGESTIONS,
   Movement,
   MovementRequest,
+  MOVEMENTS_URL,
 } from '../finance.models';
 
 /** Registra o corrige un ingreso o un gasto, con su soporte opcional. Devuelve el movimiento guardado. */
@@ -57,7 +59,31 @@ export class MovementDialog {
   private readonly type = toSignal(this.form.controls.type.valueChanges, {
     initialValue: this.form.controls.type.value,
   });
-  protected readonly categories = computed(() => CATEGORY_SUGGESTIONS[this.type()]);
+  private readonly category = toSignal(this.form.controls.category.valueChanges, {
+    initialValue: this.form.controls.category.value,
+  });
+  /** Las categorías que el prestador ya usa en este tipo, de la más usada a la menos. */
+  private readonly used = httpResource<string[]>(() => ({
+    url: `${MOVEMENTS_URL}/categories`,
+    params: { type: this.type() },
+  }));
+  /**
+   * Primero las ya usadas y después las sugeridas, sin repetir ni distinguir mayúsculas, filtradas por lo que se
+   * va escribiendo: así el mismo gasto no queda en dos categorías escritas distinto.
+   */
+  protected readonly categories = computed(() => {
+    const used = this.used.hasValue() ? this.used.value() : [];
+    const typed = this.category().trim().toLowerCase();
+    const seen = new Set<string>();
+    return [...used, ...CATEGORY_SUGGESTIONS[this.type()]].filter((candidate) => {
+      const key = candidate.trim().toLowerCase();
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return key.includes(typed);
+    });
+  });
 
   /** Archivo elegido para subir como soporte al guardar. */
   protected readonly file = signal<File | null>(null);
