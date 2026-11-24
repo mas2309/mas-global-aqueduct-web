@@ -81,7 +81,7 @@ export class SubscriberImport {
       error: (error: unknown) => {
         this.busy.set(false);
         this.notifier.apiError(error, {
-          400: 'No pudimos leer el archivo. Debe ser un CSV con las columnas «nombre» y «dirección», de máximo 2.000 filas.',
+          400: 'No pudimos leer el archivo. Usa el de «Descargar plantilla»: necesita las columnas «nombre» y «dirección» y máximo 2.000 filas. El archivo «Para Excel» de la lista de suscriptores no sirve para importar.',
           403: 'Solo el administrador del prestador importa suscriptores.',
           413: 'El archivo no puede pesar más de 5 MB.',
         });
