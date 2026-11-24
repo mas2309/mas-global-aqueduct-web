@@ -21,6 +21,25 @@ export class InvoicesApi {
   private readonly http = inject(HttpClient);
 
   /** Recaudo en la oficina. Pagar la factura más reciente salda también las anteriores incluidas en ella. */
+  /** Las facturas del documento: los servicios del predio en el periodo, que se cobran juntos. */
+  document(invoiceId: string): Observable<Invoice[]> {
+    return this.http.get<Invoice[]>(`${INVOICES_URL}/${invoiceId}/document`);
+  }
+
+  /** Registra la entrega. Si fue tarde y el perfil exige días mínimos, el servidor corre el vencimiento. */
+  deliver(invoiceId: string, deliveredOn: string): Observable<Invoice[]> {
+    return this.http.post<Invoice[]>(`${INVOICES_URL}/${invoiceId}/deliver`, { deliveredOn });
+  }
+
+  /** Registra la entrega de las facturas del periodo que aún no la tienen. */
+  deliverPeriod(periodId: string, deliveredOn: string): Observable<{ delivered: number }> {
+    return this.http.post<{ delivered: number }>(
+      `/api/v1/billing-periods/${periodId}/invoices/deliver`,
+      { deliveredOn },
+    );
+  }
+
+  /** Paga el documento completo: también los demás servicios pendientes. */
   pay(invoiceId: string, method: PaymentMethod): Observable<Invoice> {
     return this.http.post<Invoice>(`${INVOICES_URL}/${invoiceId}/pay`, { method });
   }
@@ -88,6 +107,11 @@ export class InvoicesApi {
   /** La factura en PDF, para descargarla o imprimirla. */
   pdf(invoiceId: string): Observable<Blob> {
     return this.http.get(`${INVOICES_URL}/${invoiceId}/pdf`, { responseType: 'blob' });
+  }
+
+  /** Comprobante del pago en papel de 80 mm, para el punto de recaudo. */
+  receipt(invoiceId: string): Observable<Blob> {
+    return this.http.get(`${INVOICES_URL}/${invoiceId}/receipt`, { responseType: 'blob' });
   }
 
   /** Todas las facturas de un periodo en un solo PDF, una por página. */

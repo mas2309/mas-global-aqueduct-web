@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -23,6 +24,7 @@ import {
 @Component({
   selector: 'aq-movement-dialog',
   imports: [
+    MoneyInput,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,

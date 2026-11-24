@@ -11,6 +11,11 @@ export interface Member {
   memberSince: string;
   /** Solo al agregar: la cuenta se creó ahora y hay que entregarle la contraseña temporal. */
   accountCreated: boolean;
+  /**
+   * El administrador del prestador puede cambiar su nombre y su contraseña: la cuenta es solo de este prestador.
+   * Si trabaja también en otros, lo hace el administrador de plataforma.
+   */
+  accountEditable?: boolean;
 }
 
 /** `fullName` y `password` solo se usan si el correo aún no tiene cuenta. */
@@ -27,11 +32,19 @@ export interface MemberTarget {
   name: string;
 }
 
-export const ORGANIZATION_ROLES: readonly OrganizationRole[] = ['ORG_ADMIN', 'OPERATOR', 'VIEWER'];
+export const ORGANIZATION_ROLES: readonly OrganizationRole[] = [
+  'ORG_ADMIN',
+  'OPERATOR',
+  'TECHNICIAN',
+  'COLLECTOR',
+  'VIEWER',
+];
 
 /** Qué puede hacer cada rol, para que quien asigna el acceso elija con criterio. */
 export const ROLE_DESCRIPTIONS: Record<OrganizationRole, string> = {
   ORG_ADMIN: 'Administra usuarios y configuración',
   OPERATOR: 'Registra lecturas, factura y recauda',
+  TECHNICIAN: 'Registra lecturas y factura; no recibe pagos',
+  COLLECTOR: 'Punto de recaudo: solo cobra e imprime el comprobante',
   VIEWER: 'Solo consulta',
 };

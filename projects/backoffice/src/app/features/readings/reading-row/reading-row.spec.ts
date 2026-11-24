@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
+import { ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { PERIOD_ID, reading, READING_ID, routeEntry } from '../../../../testing/billing-fixtures';
 import { PageTestContext, settle, setUpPage, textOf, type } from '../../../../testing/setup';
 import { PROPERTY_ID } from '../../../../testing/subscriber-fixtures';
@@ -94,6 +97,42 @@ describe('ReadingRow', () => {
     context.http.expectNone(RECORD_URL);
   });
 
+  it('pregunta antes de guardar un consumo muy distinto a su promedio', async () => {
+    // Promedio 20 m³: más de 40 es inusual. 120 → 300 serían 180 m³
+    await render(routeEntry({ averageConsumption: 20, unusualAbove: 40, unusualBelow: null }));
+    const dialog = TestBed.inject(MatDialog);
+    let answer = false;
+    const open = vi
+      .spyOn(dialog, 'open')
+      .mockImplementation(() => ({ afterClosed: () => of(answer) }) as never);
+
+    await enter(CURRENT, '300');
+    button('Guardar').click();
+    expect(open).toHaveBeenCalledTimes(1);
+    const data = open.mock.calls[0][1]?.data as ConfirmDialogData;
+    expect(data.message).toContain('180 m³');
+    expect(data.message).toContain('su promedio es de 20 m³');
+    // Si elige corregir, no se guarda nada
+    context.http.expectNone(RECORD_URL);
+
+    answer = true;
+    button('Guardar').click();
+    const request = context.http.expectOne(RECORD_URL);
+    expect(request.request.body).toMatchObject({ currentReading: 300 });
+    request.flush(reading({ currentReading: 300, consumption: 180, unusual: true }));
+  });
+
+  it('no pregunta por un consumo normal', async () => {
+    await render(routeEntry({ averageConsumption: 20, unusualAbove: 40, unusualBelow: null }));
+    const open = vi.spyOn(TestBed.inject(MatDialog), 'open');
+
+    await enter(CURRENT, '135');
+    button('Guardar').click();
+
+    expect(open).not.toHaveBeenCalled();
+    context.http.expectOne(RECORD_URL).flush(reading({ currentReading: 135, consumption: 15 }));
+  });
+
   it('pide la lectura inicial la primera vez que se lee el predio', async () => {
     await render(routeEntry({ previousReading: null, meterSerial: null, sector: null }));
 
@@ -123,6 +162,20 @@ describe('ReadingRow', () => {
       meterReplaced: true,
     });
     request.flush(reading({ previousReading: 0, currentReading: 5, meterReplaced: true }));
+  });
+
+  it('avisa que una lectura en revisión aún no tiene factura y ofrece revisarla', async () => {
+    await render(routeEntry({ reading: reading({ unusual: true, reviewStatus: 'PENDING' }) }));
+
+    expect(textOf(element)).toContain('Por revisar: aún sin factura');
+    expect(button('Revisar')).toBeDefined();
+  });
+
+  it('no ofrece revisar una lectura ya resuelta', async () => {
+    await render(routeEntry({ reading: reading({ unusual: true, reviewStatus: 'RESOLVED' }) }));
+
+    expect(textOf(element)).not.toContain('Por revisar');
+    expect(() => button('Revisar')).toThrow();
   });
 
   it('resalta el consumo inusual y permite eliminar la lectura', async () => {

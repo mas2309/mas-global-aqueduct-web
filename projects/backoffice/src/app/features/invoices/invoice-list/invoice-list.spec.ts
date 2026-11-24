@@ -15,6 +15,7 @@ import { BILLING_SETTINGS_URL, INVOICES_URL } from '../invoices-api';
 import { InvoiceList } from './invoice-list';
 
 const PAY_URL = `${INVOICES_URL}/${INVOICE_ID}/pay`;
+const DOCUMENT_URL = `${INVOICES_URL}/${INVOICE_ID}/document`;
 
 function page(items: Invoice[], totalItems = items.length): Page<Invoice> {
   return { items, page: 0, size: 20, totalItems, totalPages: 1 };
@@ -89,7 +90,7 @@ describe('InvoiceList', () => {
     expect(element.querySelector(`a[href="/facturas/${INVOICE_ID}"]`)).not.toBeNull();
     // Solo se cobran las pendientes y las vencidas
     expect(element.querySelectorAll('button[aria-label^="Pago en efectivo"]')).toHaveLength(2);
-    expect(textOf(element)).not.toContain('Plazo y recargo');
+    expect(textOf(element)).not.toContain('Configuración de facturas y recaudo');
   });
 
   it('las facturas de servicios sin medidor no muestran consumo', async () => {
@@ -185,6 +186,7 @@ describe('InvoiceList', () => {
     await load([invoice()]);
 
     click(element, 'button[aria-label^="Pago en efectivo"]');
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     const request = context.http.expectOne(PAY_URL);
     expect(request.request.body).toEqual({ method: 'CASH' });
     request.flush(invoice({ state: 'PAID', paymentMethod: 'CASH' }));
@@ -201,10 +203,12 @@ describe('InvoiceList', () => {
 
     dialogResult = false;
     click(element, 'button[aria-label^="Pago por banco"]');
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     context.http.expectNone(PAY_URL);
 
     dialogResult = true;
     click(element, 'button[aria-label^="Pago por banco"]');
+    context.http.expectOne(DOCUMENT_URL).flush([invoice()]);
     const request = context.http.expectOne(PAY_URL);
     expect(request.request.body).toEqual({ method: 'BANK' });
     request.flush({ status: 422 }, { status: 422, statusText: 'Unprocessable' });
@@ -221,7 +225,7 @@ describe('InvoiceList', () => {
 
     await open('ORG_ADMIN');
     await load([invoice()]);
-    expect(textOf(element)).toContain('Plazo y recargo');
+    expect(textOf(element)).toContain('Configuración de facturas y recaudo');
     dialogResult = { paymentDueDay: 15, lateFee: 2000 };
     actions.openSettings();
     expect(document.body.textContent).toContain('Configuración guardada');
@@ -269,6 +273,7 @@ describe('BillingSettingsDialog', () => {
       lateFee: 3000,
       invoiceNote: null,
       invoiceHeader: null,
+      fieldCollection: true,
     });
     request.flush({ paymentDueDay: 15, lateFee: 3000 });
 
@@ -277,7 +282,9 @@ describe('BillingSettingsDialog', () => {
 
   it('el recargo es opcional: apagado se guarda en cero', async () => {
     await render();
-    const toggle = element.querySelector<HTMLButtonElement>('button[role=switch]')!;
+    const toggle = element.querySelector<HTMLButtonElement>(
+      'mat-slide-toggle[formcontrolname=chargeLateFee] button[role=switch]',
+    )!;
     expect(toggle.getAttribute('aria-checked')).toBe('true');
 
     toggle.click();
@@ -291,8 +298,24 @@ describe('BillingSettingsDialog', () => {
       lateFee: 0,
       invoiceNote: null,
       invoiceHeader: null,
+      fieldCollection: true,
     });
     request.flush({ paymentDueDay: 15, lateFee: 0 });
+  });
+
+  it('apaga el cobro en campo para recaudar solo en oficina y puntos de recaudo', async () => {
+    await render();
+    const toggle = element.querySelector<HTMLButtonElement>(
+      'mat-slide-toggle[formcontrolname=fieldCollection] button[role=switch]',
+    )!;
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+
+    toggle.click();
+    await settle();
+    click(element, 'button[type=submit]');
+    const request = context.http.expectOne(BILLING_SETTINGS_URL);
+    expect(request.request.body).toMatchObject({ fieldCollection: false });
+    request.flush({ paymentDueDay: 15, lateFee: 2000, fieldCollection: false });
   });
 
   it('encendido exige un recargo mayor que cero', async () => {

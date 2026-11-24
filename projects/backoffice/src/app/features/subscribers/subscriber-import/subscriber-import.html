@@ -15,14 +15,17 @@
         fila crea el suscriptor con su predio y su servicio.
       </p>
       <ul class="notes">
-        <li>Solo <strong>nombre</strong> y <strong>direccion</strong> son obligatorias.</li>
+        <li>
+          Solo <strong>nombre</strong> y <strong>dirección</strong> son obligatorias (con o sin
+          tilde).
+        </li>
         <li>
           <strong>lectura_inicial</strong> es la que trae hoy el medidor: de ahí parte la primera
           lectura.
         </li>
         <li>
           <strong>deuda_anterior</strong> se cobra completa en la primera factura;
-          <strong>financiacion_saldo</strong> se reparte en las cuotas indicadas.
+          <strong>financiación_saldo</strong> se reparte en las cuotas indicadas.
         </li>
         <li>Si una fila tiene un error, no se importa ninguna: corrige el archivo y vuelve.</li>
         <li>
@@ -97,4 +100,6 @@
       }
     </div>
   }
+
+  <aq-history-import />
 </section>

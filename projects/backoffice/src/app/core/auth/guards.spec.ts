@@ -9,6 +9,7 @@ import {
 import { access, authResponse, MemoryStorage, user } from '../../../testing/fixtures';
 import {
   authGuard,
+  collectGuard,
   guestGuard,
   organizationAdminGuard,
   organizationGuard,
@@ -72,6 +73,18 @@ describe('guards', () => {
     expect(run(organizationAdminGuard)).toBe('/inicio');
     store.start(authResponse({ organization: access({ role: 'ORG_ADMIN' }) }));
     expect(run(organizationAdminGuard)).toBe(true);
+  });
+
+  it('el recaudador solo trabaja en Recaudo', () => {
+    store.start(authResponse({ organization: access({ role: 'COLLECTOR' }) }));
+    expect(run(organizationGuard)).toBe('/recaudo');
+    expect(run(collectGuard)).toBe(true);
+    expect(store.canOperateOrganization()).toBe(false);
+
+    store.start(authResponse());
+    expect(run(collectGuard)).toBe(true);
+    store.start(authResponse({ organization: access({ role: 'VIEWER' }) }));
+    expect(run(collectGuard)).toBe('/inicio');
   });
 
   it('platformAdminGuard solo deja pasar al administrador de plataforma', () => {

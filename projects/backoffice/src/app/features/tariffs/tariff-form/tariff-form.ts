@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { httpResource } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -73,6 +74,7 @@ function firstDayOfNextMonth(): string {
 @Component({
   selector: 'aq-tariff-form',
   imports: [
+    MoneyInput,
     ReactiveFormsModule,
     RouterLink,
     MatCardModule,
@@ -96,6 +98,8 @@ export class TariffForm {
 
   /** Servicio de la tarifa (query param `servicio`). */
   readonly servicio = input<ServiceType>('WATER');
+  /** Área de la tarifa (query param `area`); sin ella es la tarifa general. */
+  readonly area = input<string>();
 
   protected readonly metered = computed(() => METERED_SERVICES.has(this.servicio()));
   protected readonly unit = computed(() => unitOf(this.servicio()));
@@ -127,7 +131,9 @@ export class TariffForm {
       if (!this.existing.hasValue() || this.prefilled) {
         return;
       }
-      const latest = this.existing.value()[0];
+      const latest = this.existing
+        .value()
+        .find((tariff) => (tariff.serviceAreaId ?? undefined) === this.area());
       untracked(() => {
         this.prefilled = true;
         if (latest) {
@@ -184,6 +190,7 @@ export class TariffForm {
     }
     const request: TariffRequest = {
       serviceType: this.servicio(),
+      serviceAreaId: this.area(),
       validFrom: value.validFrom,
       fixedCharge: value.fixedCharge,
       blocks: this.metered()

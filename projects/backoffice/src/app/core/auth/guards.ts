@@ -23,13 +23,31 @@ export const guestGuard: CanActivateFn = () => {
 export const passwordChangedGuard: CanActivateFn = () =>
   !inject(SessionStore).mustChangePassword() || inject(Router).parseUrl('/cambiar-clave');
 
-/** Las pantallas operativas requieren un prestador seleccionado. */
+export const COLLECTION_ROUTE = '/recaudo';
+
+/**
+ * Las pantallas operativas requieren un prestador seleccionado. El recaudador solo trabaja en Recaudo: cualquier
+ * otra pantalla lo lleva allá.
+ */
 export const organizationGuard: CanActivateFn = () => {
   const store = inject(SessionStore);
-  return (
-    store.organization() !== null ||
-    inject(Router).parseUrl(store.isPlatformAdmin() ? '/prestadores' : '/seleccionar-prestador')
-  );
+  if (store.organization() === null) {
+    return inject(Router).parseUrl(
+      store.isPlatformAdmin() ? '/prestadores' : '/seleccionar-prestador',
+    );
+  }
+  return !store.isCollector() || inject(Router).parseUrl(COLLECTION_ROUTE);
+};
+
+/** Recaudo: quien puede recibir pagos en el prestador seleccionado. */
+export const collectGuard: CanActivateFn = () => {
+  const store = inject(SessionStore);
+  if (store.organization() === null) {
+    return inject(Router).parseUrl(
+      store.isPlatformAdmin() ? '/prestadores' : '/seleccionar-prestador',
+    );
+  }
+  return store.canCollect() || inject(Router).parseUrl('/inicio');
 };
 
 /** Administrar los usuarios del prestador actual: su administrador o el de plataforma operando en él. */

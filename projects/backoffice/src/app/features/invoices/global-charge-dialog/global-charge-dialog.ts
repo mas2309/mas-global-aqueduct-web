@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -14,6 +15,7 @@ import { InvoicesApi } from '../invoices-api';
 @Component({
   selector: 'aq-global-charge-dialog',
   imports: [
+    MoneyInput,
     CurrencyPipe,
     ReactiveFormsModule,
     MatDialogModule,
@@ -42,7 +44,7 @@ import { InvoicesApi } from '../invoices-api';
           <mat-form-field appearance="outline">
             <mat-label>Valor por suscriptor</mat-label>
             <span matTextPrefix>$&nbsp;</span>
-            <input matInput type="number" min="1" formControlName="amount" inputmode="numeric" />
+            <input matInput aqMoney min="1" formControlName="amount" />
             @if (form.controls.amount.invalid) {
               <mat-error>Debe ser mayor que cero</mat-error>
             }

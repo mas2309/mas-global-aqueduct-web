@@ -1,5 +1,7 @@
 import { TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { of } from 'rxjs';
 import { organization, UTILITY_ID } from '../../../../testing/fixtures';
 import { PageTestContext, settle, setUpPage, textOf } from '../../../../testing/setup';
 import { Organization, Page } from '../organization.models';
@@ -53,6 +55,35 @@ describe('OrganizationList', () => {
     expect(text).toContain('Empresa de servicios públicos');
     expect(text).toContain('Suspendido');
     expect(fixture.nativeElement.querySelector('mat-icon[aria-label="Aseo"]')).not.toBeNull();
+  });
+
+  it('cada fila lleva a editar y permite suspender tras confirmar', async () => {
+    vi.spyOn(TestBed.inject(MatDialog), 'open').mockReturnValue({
+      afterClosed: () => of(true),
+    } as never);
+    const fixture = TestBed.createComponent(OrganizationList);
+    await settle();
+    const active = organization();
+    expectList(0, 20).flush(page([active]));
+    await settle();
+    const element: HTMLElement = fixture.nativeElement;
+
+    expect(element.querySelector('a[aria-label^="Editar"]')?.getAttribute('href')).toBe(
+      `/prestadores/${active.id}/editar`,
+    );
+    element.querySelector<HTMLElement>('button[aria-label^="Suspender"]')?.click();
+    await settle();
+
+    const request = context.http.expectOne(`${ORGANIZATIONS_URL}/${active.id}/suspend`);
+    expect(request.request.method).toBe('POST');
+    request.flush({ ...active, status: 'SUSPENDED' });
+    await settle();
+    expectList(0, 20).flush(page([{ ...active, status: 'SUSPENDED' }]));
+    await settle();
+
+    expect(textOf(element)).toContain('Suspendido');
+    expect(element.querySelector('button[aria-label^="Reactivar"]')).not.toBeNull();
+    expect(document.body.textContent).toContain('Prestador suspendido');
   });
 
   it('cambia de página consultando de nuevo', async () => {

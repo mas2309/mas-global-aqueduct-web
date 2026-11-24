@@ -1,0 +1,108 @@
+<section class="page narrow">
+  <header class="page-header">
+    <h1>Recaudo</h1>
+  </header>
+
+  <mat-card appearance="outlined">
+    <mat-card-content>
+      <form class="search" (ngSubmit)="search()">
+        <mat-form-field appearance="outline" class="grow">
+          <mat-label>Código, nombre, documento o QR de la factura</mat-label>
+          <mat-icon matPrefix>qr_code_scanner</mat-icon>
+          <input
+            matInput
+            name="query"
+            [ngModel]="query()"
+            (ngModelChange)="query.set($event)"
+            autocomplete="off"
+          />
+          <mat-hint>Con un lector de códigos, escanea aquí el QR de la factura</mat-hint>
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="busy() || !query().trim()">Buscar</button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  @if (busy()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Buscando" />
+  }
+
+  @if (matches().length > 0) {
+    <h2 class="section-title">Elige el suscriptor</h2>
+    <ul class="matches">
+      @for (match of matches(); track match.id) {
+        <li>
+          <button mat-button (click)="select(match)">
+            {{ formatCode(match.code) }} · {{ match.fullName }}
+            @if (match.documentNumber) {
+              <span class="muted">· {{ match.documentNumber }}</span>
+            }
+          </button>
+        </li>
+      }
+    </ul>
+  } @else if (searched() && !subscriber() && !busy()) {
+    <p class="muted">No encontramos suscriptores con ese dato.</p>
+  }
+
+  @if (subscriber(); as current) {
+    <h2 class="section-title">{{ formatCode(current.code) }} · {{ current.fullName }}</h2>
+
+    @if (paid(); as invoice) {
+      <div class="state" aria-live="polite">
+        <mat-icon aria-hidden="true">check_circle</mat-icon>
+        <p>Pago de la factura n.º {{ invoice.number }} registrado.</p>
+        <div class="actions">
+          <button mat-flat-button (click)="printReceipt(invoice)">
+            <mat-icon>receipt</mat-icon>
+            Imprimir comprobante
+          </button>
+          <button mat-stroked-button (click)="printInvoice(invoice)">
+            <mat-icon>description</mat-icon>
+            Factura pagada (PDF)
+          </button>
+          <button mat-button (click)="reset()">Siguiente suscriptor</button>
+        </div>
+      </div>
+    }
+
+    @if (documents().length === 0 && !busy()) {
+      <p class="muted">No tiene facturas pendientes.</p>
+    }
+    @for (document of documents(); track document.number) {
+      <mat-card appearance="outlined" class="document">
+        <mat-card-content>
+          <div class="document-header">
+            <strong>Factura n.º {{ document.number }}</strong>
+            <span>{{ document.invoices[0].month }}/{{ document.invoices[0].year }}</span>
+          </div>
+          @for (invoice of document.invoices; track invoice.id) {
+            <div class="line">
+              <span>
+                {{ serviceLabels[invoice.serviceType] }}
+                @if (invoice.state === 'OVERDUE') {
+                  <span class="overdue">· vencida</span>
+                }
+              </span>
+              <span>{{ invoice.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</span>
+            </div>
+          }
+          <div class="line total">
+            <span>Total a pagar</span>
+            <span>{{ document.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</span>
+          </div>
+          <div class="actions">
+            <button mat-flat-button (click)="pay(document, 'CASH')">
+              <mat-icon>payments</mat-icon>
+              Cobrar en efectivo
+            </button>
+            <button mat-stroked-button (click)="pay(document, 'BANK')">
+              <mat-icon>account_balance</mat-icon>
+              Consignación
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  }
+</section>

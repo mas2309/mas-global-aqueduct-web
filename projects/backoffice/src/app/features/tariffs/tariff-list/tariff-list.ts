@@ -26,6 +26,7 @@ import { SERVICE_ICONS, SERVICE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { Organization, SERVICE_TYPES, ServiceType } from '../../organizations/organization.models';
+import { SERVICE_AREAS_URL, ServiceArea } from '../../service-areas/service-area.models';
 import {
   METERED_SERVICES,
   PROPERTY_USAGE_LABELS,
@@ -76,6 +77,10 @@ export class TariffList {
     return SERVICE_TYPES.filter((service) => offered.includes(service));
   });
   protected readonly selected = signal<ServiceType | null>(null);
+  /** Las áreas son opcionales: sin ninguna registrada solo existe la tarifa general. */
+  protected readonly areas = httpResource<ServiceArea[]>(() => SERVICE_AREAS_URL);
+  /** `null`: la tarifa general. */
+  protected readonly area = signal<string | null>(null);
 
   protected readonly tariffs = httpResource<Tariff[]>(() => {
     const serviceType = this.selected();
@@ -115,6 +120,16 @@ export class TariffList {
     });
   }
 
+  protected selectArea(area: string | null): void {
+    this.area.set(area);
+    this.estimate.set(null);
+  }
+
+  protected newTariffParams(service: ServiceType): Record<string, string> {
+    const area = this.area();
+    return area ? { servicio: service, area } : { servicio: service };
+  }
+
   protected select(service: ServiceType): void {
     this.selected.set(service);
     this.estimate.set(null);
@@ -145,6 +160,7 @@ export class TariffList {
         this.isMetered(service) ? Math.max(0, this.consumption()) : 0,
         this.usage(),
         this.usage() === 'RESIDENTIAL' ? this.stratum() : null,
+        this.area(),
       )
       .subscribe({
         next: (charge) => {
@@ -197,8 +213,10 @@ export class TariffList {
       });
   }
 
+  /** Las versiones del área elegida: cada área tiene su propia vigencia. */
   private versions(): Tariff[] {
-    return this.tariffs.hasValue() ? this.tariffs.value() : [];
+    const all = this.tariffs.hasValue() ? this.tariffs.value() : [];
+    return all.filter((tariff) => (tariff.serviceAreaId ?? null) === this.area());
   }
 
   /** Posterior a la vigente (o a hoy, si no hay ninguna vigente): aún no aplica. */

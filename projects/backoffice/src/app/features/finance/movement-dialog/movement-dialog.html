@@ -17,7 +17,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Valor</mat-label>
         <span matTextPrefix>$&nbsp;</span>
-        <input matInput type="number" min="1" formControlName="amount" inputmode="numeric" />
+        <input matInput aqMoney min="1" formControlName="amount" />
         @if (form.controls.amount.invalid) {
           <mat-error>Debe ser mayor que cero</mat-error>
         }

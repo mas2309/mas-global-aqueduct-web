@@ -15,8 +15,13 @@ import { ROLE_LABELS } from '../../../core/i18n/labels';
 import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { AddMemberDialog, AddMemberDialogData } from '../add-member-dialog/add-member-dialog';
+import { EditMemberDialog, EditMemberDialogData } from '../edit-member-dialog/edit-member-dialog';
 import { Member, MemberTarget, ORGANIZATION_ROLES } from '../member.models';
 import { MembersApi, membersUrl } from '../members-api';
+import {
+  ResetPasswordDialog,
+  ResetPasswordDialogData,
+} from '../reset-password-dialog/reset-password-dialog';
 
 const LAST_ADMIN = 'El prestador debe conservar al menos un administrador.';
 
@@ -102,6 +107,37 @@ export class MemberList {
         this.members.reload();
         this.notifier.success(`${member.fullName} ahora tiene acceso`);
       });
+  }
+
+  protected edit(member: Member): void {
+    const organizationId = this.organizationId();
+    if (!organizationId) {
+      return;
+    }
+    this.dialog
+      .open<EditMemberDialog, EditMemberDialogData, Member>(EditMemberDialog, {
+        data: { organizationId, member },
+        width: '480px',
+      })
+      .afterClosed()
+      .pipe(filter((updated) => updated !== undefined))
+      .subscribe((updated) => {
+        this.members.reload();
+        this.notifier.success(`Se guardaron los cambios de ${updated.fullName}`);
+      });
+  }
+
+  protected resetPassword(member: Member): void {
+    const organizationId = this.organizationId();
+    if (!organizationId) {
+      return;
+    }
+    this.dialog.open<ResetPasswordDialog, ResetPasswordDialogData, boolean>(ResetPasswordDialog, {
+      data: { organizationId, member },
+      width: '480px',
+      // La contraseña se muestra una sola vez: que no se cierre por un clic afuera
+      disableClose: true,
+    });
   }
 
   protected changeRole(member: Member, role: OrganizationRole): void {

@@ -1,3 +1,4 @@
+import { MoneyInput } from '../../../shared/ui/money-input';
 import { httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -20,6 +21,7 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
 @Component({
   selector: 'aq-billing-settings-dialog',
   imports: [
+    MoneyInput,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -29,7 +31,7 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h2 mat-dialog-title>Configuración de las facturas</h2>
+    <h2 mat-dialog-title>Configuración de facturas y recaudo</h2>
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <mat-dialog-content>
         <p class="muted">
@@ -43,6 +45,12 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
             <mat-error>Debe ser un día entre 1 y 31</mat-error>
           }
         </mat-form-field>
+        <mat-slide-toggle formControlName="fieldCollection" class="late-fee-toggle">
+          El fontanero cobra en campo desde la app
+        </mat-slide-toggle>
+        <p class="hint">
+          Apágalo si el acueducto recauda solo en la oficina o en puntos de recaudo.
+        </p>
         <mat-slide-toggle formControlName="chargeLateFee" class="late-fee-toggle">
           Cobrar recargo por no pago oportuno
         </mat-slide-toggle>
@@ -50,7 +58,7 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Valor del recargo</mat-label>
             <span matTextPrefix>$&nbsp;</span>
-            <input matInput type="number" min="1" formControlName="lateFee" inputmode="numeric" />
+            <input matInput aqMoney min="1" formControlName="lateFee" />
             <mat-hint>Se suma a la factura cuando la anterior no se pagó</mat-hint>
             @if (form.controls.lateFee.invalid) {
               <mat-error>Indica un valor mayor que cero</mat-error>
@@ -127,6 +135,12 @@ import { BILLING_SETTINGS_URL, InvoicesApi } from '../invoices-api';
       margin: 8px 0 0;
     }
 
+    .hint {
+      margin: 4px 0 0;
+      color: var(--mat-sys-on-surface-variant);
+      font: var(--mat-sys-body-small);
+    }
+
     .logo {
       display: flex;
       flex-wrap: wrap;
@@ -154,6 +168,7 @@ export class BillingSettingsDialog {
     lateFee: [{ value: 0, disabled: true }, [Validators.required, Validators.min(1)]],
     invoiceHeader: ['', Validators.maxLength(200)],
     invoiceNote: ['', Validators.maxLength(300)],
+    fieldCollection: [true],
   });
   /** El logo se sube y se quita aparte, de inmediato: no espera a «Guardar». */
   protected readonly hasLogo = signal(false);
@@ -163,7 +178,7 @@ export class BillingSettingsDialog {
   constructor() {
     effect(() => {
       if (this.current.hasValue()) {
-        const { paymentDueDay, lateFee, invoiceNote, invoiceHeader, hasLogo } =
+        const { paymentDueDay, lateFee, invoiceNote, invoiceHeader, hasLogo, fieldCollection } =
           this.current.value();
         this.form.setValue({
           paymentDueDay,
@@ -171,6 +186,7 @@ export class BillingSettingsDialog {
           lateFee,
           invoiceHeader: invoiceHeader ?? '',
           invoiceNote: invoiceNote ?? '',
+          fieldCollection: fieldCollection ?? true,
         });
         this.hasLogo.set(hasLogo ?? false);
       }
@@ -209,7 +225,7 @@ export class BillingSettingsDialog {
     }
     this.saving.set(true);
     this.error.set(null);
-    const { paymentDueDay, chargeLateFee, lateFee, invoiceNote, invoiceHeader } =
+    const { paymentDueDay, chargeLateFee, lateFee, invoiceNote, invoiceHeader, fieldCollection } =
       this.form.getRawValue();
     this.api
       .updateSettings({
@@ -217,6 +233,7 @@ export class BillingSettingsDialog {
         lateFee: chargeLateFee ? lateFee : 0,
         invoiceNote: invoiceNote.trim() || null,
         invoiceHeader: invoiceHeader.trim() || null,
+        fieldCollection,
       })
       .subscribe({
         next: (settings) => this.dialogRef.close(settings),

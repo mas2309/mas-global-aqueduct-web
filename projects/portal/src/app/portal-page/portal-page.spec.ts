@@ -37,6 +37,7 @@ function statement(invoices: PortalInvoice[]): PortalStatement {
     subscriberCode: 42,
     subscriberName: 'María Gómez',
     invoices,
+    claims: [],
   };
 }
 
@@ -74,6 +75,101 @@ describe('PortalPage', () => {
     http.expectOne(STATEMENT_URL).flush(statement(invoices));
     await settle();
   }
+
+  function fill(selector: string, value: string): void {
+    const field = element.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector);
+    field!.value = value;
+    field!.dispatchEvent(new Event('input'));
+  }
+
+  async function writeClaim(): Promise<void> {
+    await load([invoice()]);
+    element.querySelector<HTMLElement>('.claims > button')?.click();
+    await settle();
+    fill('input[formcontrolname=cause]', '  Corte de agua ');
+    fill('textarea[formcontrolname=description]', 'Llevo dos días sin servicio');
+  }
+
+  function submit(): void {
+    element.querySelector<HTMLFormElement>('.claim-form')?.dispatchEvent(new Event('submit'));
+  }
+
+  it('radica una PQR, confirma su número y la muestra en la lista', async () => {
+    await writeClaim();
+    submit();
+
+    const request = http.expectOne(`${STATEMENT_URL}/claims`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      type: 'PETITION',
+      cause: 'Corte de agua',
+      description: 'Llevo dos días sin servicio',
+      invoiceId: null,
+    });
+    const filed = {
+      number: 7,
+      type: 'PETITION' as const,
+      state: 'OPEN' as const,
+      filedOn: '2026-11-01',
+      dueDate: '2026-11-24',
+    };
+    request.flush(filed);
+    await settle();
+    http.expectOne(STATEMENT_URL).flush({ ...statement([invoice()]), claims: [filed] });
+    await settle();
+
+    expect(textOf(element)).toContain('con el número 7');
+    expect(textOf(element)).toContain('Petición n.º 7');
+    expect(textOf(element)).toContain('En trámite');
+    expect(element.querySelector('.claim-form')).toBeNull();
+  });
+
+  it('en un reclamo deja elegir la factura y no envía nada sin motivo', async () => {
+    await writeClaim();
+    const type = element.querySelector<HTMLSelectElement>('select[formcontrolname=type]');
+    type!.selectedIndex = 2;
+    type!.dispatchEvent(new Event('change'));
+    await settle();
+    expect(textOf(element)).toContain('La oficina revisará el valor en reclamo');
+    const bill = element.querySelector<HTMLSelectElement>('select[formcontrolname=invoiceId]');
+    bill!.selectedIndex = 1;
+    bill!.dispatchEvent(new Event('change'));
+
+    fill('input[formcontrolname=cause]', '   ');
+    submit();
+    await settle();
+    http.expectNone(`${STATEMENT_URL}/claims`);
+    expect(textOf(element)).toContain('Escribe el motivo y la descripción');
+
+    fill('input[formcontrolname=cause]', 'Cobro indebido');
+    submit();
+    const request = http.expectOne(`${STATEMENT_URL}/claims`);
+    expect(request.request.body.type).toBe('CLAIM');
+    expect(request.request.body.invoiceId).toBe('invoice-1');
+    request.flush({
+      number: 8,
+      type: 'CLAIM',
+      state: 'OPEN',
+      filedOn: '2026-11-01',
+      dueDate: '2026-11-24',
+    });
+    await settle();
+    http.expectOne(STATEMENT_URL).flush(statement([invoice()]));
+    await settle();
+  });
+
+  it('explica si ya no puede radicar más hoy, y conserva lo escrito', async () => {
+    await writeClaim();
+    submit();
+
+    http
+      .expectOne(`${STATEMENT_URL}/claims`)
+      .flush({ status: 422 }, { status: 422, statusText: 'Unprocessable Content' });
+    await settle();
+
+    expect(textOf(element)).toContain('Ya radicaste varias PQR hoy');
+    expect(element.querySelector<HTMLTextAreaElement>('textarea')?.value).toContain('dos días');
+  });
 
   async function fail(status: number): Promise<void> {
     await open();

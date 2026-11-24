@@ -7,6 +7,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { Notifier } from '../../../core/ui/notifier';
 import { saveFile } from '../../../shared/ui/save-file';
+import { HistoryImport } from '../history-import/history-import';
 import { ImportResult } from '../subscriber.models';
 
 export const IMPORT_URL = '/api/v1/imports/subscribers';
@@ -17,7 +18,14 @@ export const IMPORT_URL = '/api/v1/imports/subscribers';
  */
 @Component({
   selector: 'aq-subscriber-import',
-  imports: [RouterLink, MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule],
+  imports: [
+    RouterLink,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    HistoryImport,
+  ],
   templateUrl: './subscriber-import.html',
   styleUrl: './subscriber-import.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,7 +81,7 @@ export class SubscriberImport {
       error: (error: unknown) => {
         this.busy.set(false);
         this.notifier.apiError(error, {
-          400: 'No pudimos leer el archivo. Debe ser un CSV con las columnas «nombre» y «direccion», de máximo 2.000 filas.',
+          400: 'No pudimos leer el archivo. Usa el de «Descargar plantilla»: necesita las columnas «nombre» y «dirección» y máximo 2.000 filas. El archivo «Para Excel» de la lista de suscriptores no sirve para importar.',
           403: 'Solo el administrador del prestador importa suscriptores.',
           413: 'El archivo no puede pesar más de 5 MB.',
         });

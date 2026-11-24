@@ -126,7 +126,8 @@ export class AuthService {
       return '/cambiar-clave';
     }
     if (this.store.organization()) {
-      return '/inicio';
+      // El punto de recaudo entra directo a cobrar
+      return this.store.isCollector() ? '/recaudo' : '/inicio';
     }
     return this.store.isPlatformAdmin() ? '/prestadores' : '/seleccionar-prestador';
   }

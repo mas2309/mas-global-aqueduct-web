@@ -29,8 +29,7 @@ const water: PropertyService = {
 interface Actions {
   connect: (property: Property, service: ServiceType) => void;
   openMeter: (property: Property, service: ServiceType, connection?: PropertyService) => void;
-  suspend: (property: Property, service: ServiceType) => void;
-  reconnect: (property: Property, service: ServiceType) => void;
+  act: (property: Property, service: ServiceType, action: string, title: string) => void;
   disconnect: (property: Property, service: ServiceType) => void;
   openProperty: (property?: Property) => void;
   changeStatus: (subscriber: Subscriber) => void;
@@ -70,6 +69,7 @@ describe('SubscriberDetail', () => {
     await settle();
     // La ficha incluye las financiaciones del suscriptor
     context.http.expectOne(`${PLANS_URL}?subscriberId=${SUBSCRIBER_ID}`).flush([]);
+    context.http.expectOne(`/api/v1/connection-fees?subscriberId=${SUBSCRIBER_ID}`).flush([]);
     context.http
       .expectOne(`${SUBSCRIBER_URL}/portal-link`)
       .flush({ url: 'https://portal.test/p/token' });
@@ -142,18 +142,18 @@ describe('SubscriberDetail', () => {
     expect(document.body.textContent).toContain('Medidor actualizado');
   });
 
-  it('suspende, reconecta y retira un servicio', async () => {
+  it('registra la suspensión, muestra el corte y retira un servicio', async () => {
     const connected = property({ services: [water] });
     await open([connected]);
 
-    actions.suspend(connected, 'WATER');
-    context.http.expectOne(`${SERVICE_URL}/WATER/suspend`).flush(connected);
+    actions.act(connected, 'WATER', 'SUSPEND', 'Suspender');
     await expectReload([property({ services: [{ ...water, status: 'SUSPENDED' }] })]);
     expect(textOf(element)).toContain('Suspendido');
+    expect(document.body.textContent).toContain('Registrado: suspender acueducto');
 
-    actions.reconnect(connected, 'WATER');
-    context.http.expectOne(`${SERVICE_URL}/WATER/reconnect`).flush(connected);
-    await expectReload([connected]);
+    actions.act(connected, 'WATER', 'CUT', 'Cortar');
+    await expectReload([property({ services: [{ ...water, status: 'CUT' }] })]);
+    expect(textOf(element)).toContain('Cortado');
 
     actions.disconnect(connected, 'WATER');
     const request = context.http.expectOne(`${SERVICE_URL}/WATER`);
@@ -168,7 +168,7 @@ describe('SubscriberDetail', () => {
     await open([connected]);
     dialogResult = false;
 
-    actions.suspend(connected, 'WATER');
+    actions.act(connected, 'WATER', 'SUSPEND', 'Suspender');
     actions.changeStatus(subscriber());
     await settle();
 

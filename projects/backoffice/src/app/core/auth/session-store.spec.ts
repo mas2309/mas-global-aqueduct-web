@@ -40,6 +40,19 @@ describe('SessionStore', () => {
     expect(store.canAdministerOrganization()).toBe(true);
   });
 
+  it('distingue quién opera de quién recibe pagos', () => {
+    const permissions = (role: 'OPERATOR' | 'TECHNICIAN' | 'COLLECTOR' | 'VIEWER') => {
+      store.start(authResponse({ organization: access({ role }) }));
+      return [store.canOperateOrganization(), store.canCollect()];
+    };
+
+    expect(permissions('OPERATOR')).toEqual([true, true]);
+    // El operador sin recaudo opera pero no cobra; el punto de recaudo cobra pero no opera
+    expect(permissions('TECHNICIAN')).toEqual([true, false]);
+    expect(permissions('COLLECTOR')).toEqual([false, true]);
+    expect(permissions('VIEWER')).toEqual([false, false]);
+  });
+
   it('actualiza el perfil sin perder el token', () => {
     store.start(authResponse());
     store.updateProfile({

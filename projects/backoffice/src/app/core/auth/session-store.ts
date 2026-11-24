@@ -34,10 +34,37 @@ export class SessionStore {
   readonly canAdministerOrganization = computed(
     () => this.isPlatformAdmin() || this.organization()?.role === 'ORG_ADMIN',
   );
-  /** Puede registrar y modificar datos del prestador actual; el rol de consulta solo lee. */
+  /**
+   * Puede registrar y modificar datos del prestador actual. Lista explícita: el de consulta solo lee y el
+   * recaudador solo cobra.
+   */
   readonly canOperateOrganization = computed(() => {
     const organization = this.organization();
-    return organization !== null && (this.isPlatformAdmin() || organization.role !== 'VIEWER');
+    return (
+      organization !== null &&
+      (this.isPlatformAdmin() ||
+        organization.role === 'ORG_ADMIN' ||
+        organization.role === 'OPERATOR' ||
+        organization.role === 'TECHNICIAN')
+    );
+  });
+  /** Punto de recaudo: solo ve la sección Recaudo. */
+  readonly isCollector = computed(
+    () => !this.isPlatformAdmin() && this.organization()?.role === 'COLLECTOR',
+  );
+  /**
+   * Puede recibir pagos. Lista explícita, aparte de operar: el operador sin recaudo opera pero no cobra, y el
+   * punto de recaudo cobra pero no opera.
+   */
+  readonly canCollect = computed(() => {
+    const organization = this.organization();
+    return (
+      organization !== null &&
+      (this.isPlatformAdmin() ||
+        organization.role === 'ORG_ADMIN' ||
+        organization.role === 'OPERATOR' ||
+        organization.role === 'COLLECTOR')
+    );
   });
 
   accessToken(): string | null {

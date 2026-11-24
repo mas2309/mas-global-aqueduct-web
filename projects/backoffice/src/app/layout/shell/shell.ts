@@ -15,6 +15,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { SessionStore } from '../../core/auth/session-store';
 import { ROLE_LABELS } from '../../core/i18n/labels';
 import { Notifier } from '../../core/ui/notifier';
+import { RegulatoryStatus } from '../../features/regulatory/regulatory-status';
 
 interface NavItem {
   path: string;
@@ -46,6 +47,7 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly notifier = inject(Notifier);
   protected readonly session = inject(SessionStore);
+  protected readonly regulatory = inject(RegulatoryStatus);
   protected readonly roleLabels = ROLE_LABELS;
 
   /** En pantallas pequeñas el menú lateral se superpone y se cierra al navegar. */
@@ -58,13 +60,28 @@ export class Shell {
 
   protected readonly navigation = computed<NavItem[]>(() => {
     const items: NavItem[] = [];
+    // El punto de recaudo solo cobra
+    if (this.session.isCollector()) {
+      return [{ path: '/recaudo', label: 'Recaudo', icon: 'point_of_sale' }];
+    }
     if (this.session.organization()) {
       items.push({ path: '/inicio', label: 'Inicio', icon: 'home' });
       items.push({ path: '/suscriptores', label: 'Suscriptores', icon: 'groups' });
       items.push({ path: '/lecturas', label: 'Lecturas', icon: 'speed' });
+      if (this.session.canCollect()) {
+        items.push({ path: '/recaudo', label: 'Recaudo', icon: 'point_of_sale' });
+      }
       items.push({ path: '/facturas', label: 'Facturas', icon: 'receipt_long' });
       items.push({ path: '/financiaciones', label: 'Financiaciones', icon: 'event_repeat' });
       items.push({ path: '/tarifas', label: 'Tarifas', icon: 'payments' });
+      items.push({ path: '/pqr', label: 'PQR', icon: 'forum' });
+      items.push({ path: '/cortes', label: 'Suspensión y corte', icon: 'content_cut' });
+      if (this.regulatory.reportsToSui()) {
+        items.push({ path: '/sui', label: 'Archivos SUI', icon: 'upload_file' });
+      }
+      if (this.regulatory.usesServiceAreas()) {
+        items.push({ path: '/areas', label: 'Áreas de prestación', icon: 'map' });
+      }
       items.push({ path: '/finanzas', label: 'Ingresos y gastos', icon: 'account_balance_wallet' });
       items.push({ path: '/informes', label: 'Informes', icon: 'bar_chart' });
       items.push({ path: '/documentos', label: 'Documentos', icon: 'folder_open' });
@@ -74,6 +91,7 @@ export class Shell {
     }
     if (this.session.isPlatformAdmin()) {
       items.push({ path: '/prestadores', label: 'Prestadores', icon: 'apartment' });
+      items.push({ path: '/liquidaciones', label: 'Liquidación de MAS', icon: 'request_quote' });
     }
     return items;
   });

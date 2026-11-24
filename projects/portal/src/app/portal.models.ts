@@ -18,12 +18,46 @@ export interface PortalInvoice {
   paidAt: string | null;
 }
 
+export type ClaimType = 'PETITION' | 'COMPLAINT' | 'CLAIM';
+export type ClaimState = 'OPEN' | 'ANSWERED' | 'POSITIVE_SILENCE';
+
+export interface PortalClaim {
+  number: number;
+  type: ClaimType;
+  state: ClaimState;
+  filedOn: string;
+  dueDate: string;
+}
+
+export interface PortalClaimRequest {
+  type: ClaimType;
+  cause: string;
+  description: string;
+  invoiceId: string | null;
+}
+
+export const CLAIM_TYPES: readonly ClaimType[] = ['PETITION', 'COMPLAINT', 'CLAIM'];
+
+export const CLAIM_TYPE_LABELS: Record<ClaimType, string> = {
+  PETITION: 'Petición',
+  COMPLAINT: 'Queja',
+  CLAIM: 'Reclamo',
+};
+
+export const CLAIM_STATE_LABELS: Record<ClaimState, string> = {
+  OPEN: 'En trámite',
+  ANSWERED: 'Respondida',
+  POSITIVE_SILENCE: 'Vencida sin respuesta',
+};
+
 export interface PortalStatement {
   organizationName: string;
   subscriberCode: number;
   subscriberName: string;
   /** De la más reciente a la más antigua. */
   invoices: PortalInvoice[];
+  /** Sus PQR, solo con el estado: el texto no se muestra. */
+  claims: PortalClaim[];
 }
 
 export const SERVICE_LABELS: Record<ServiceType, string> = {

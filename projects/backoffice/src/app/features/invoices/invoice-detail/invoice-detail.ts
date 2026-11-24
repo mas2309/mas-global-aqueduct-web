@@ -1,6 +1,6 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { httpResource } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
@@ -16,6 +16,8 @@ import { saveFile } from '../../../shared/ui/save-file';
 import { periodLabel } from '../../readings/reading.models';
 import { formatCode, METERED_SERVICES } from '../../subscribers/subscriber.models';
 import { unitOf } from '../../tariffs/tariff.models';
+import { DeliveryDialog, DeliveryDialogData } from '../delivery-dialog/delivery-dialog';
+import { InvoiceHistoryDialog } from '../invoice-history-dialog/invoice-history-dialog';
 import { InvoicePayments } from '../invoice-payments';
 import {
   Invoice,
@@ -57,6 +59,22 @@ export class InvoiceDetail {
 
   protected readonly invoice = httpResource<Invoice>(() => `${INVOICES_URL}/${this.id()}`);
 
+  /** Las facturas del documento conjunto: los servicios del predio en el periodo. */
+  private readonly document = httpResource<Invoice[]>(
+    () => `${INVOICES_URL}/${this.id()}/document`,
+  );
+  protected readonly siblings = computed(() =>
+    (this.document.hasValue() ? this.document.value() : []).filter(
+      (other) => other.id !== this.id(),
+    ),
+  );
+  /** Lo que falta por pagar del documento, con esta factura. */
+  protected readonly documentDue = computed(() =>
+    (this.document.hasValue() ? this.document.value() : [])
+      .filter(isOpen)
+      .reduce((sum, item) => sum + item.total, 0),
+  );
+
   protected readonly stateLabels = INVOICE_STATE_LABELS;
   protected readonly methodLabels = PAYMENT_METHOD_LABELS;
   protected readonly serviceLabels = SERVICE_LABELS;
@@ -75,9 +93,46 @@ export class InvoiceDetail {
 
   protected pay(invoice: Invoice, method: PaymentMethod): void {
     this.payments.pay(invoice, method).subscribe({
-      next: (paid) => this.invoice.set(paid),
+      next: (paid) => {
+        this.invoice.set(paid);
+        this.document.reload();
+      },
       error: () => undefined,
     });
+  }
+
+  protected deliver(invoice: Invoice): void {
+    const data: DeliveryDialogData = {
+      title: `Registrar la entrega de la factura n.º ${invoice.number}`,
+      message:
+        'Si se entregó tarde y el prestador debe respetar días mínimos, se corre su vencimiento.',
+    };
+    this.dialog
+      .open<DeliveryDialog, DeliveryDialogData, string>(DeliveryDialog, { data, width: '440px' })
+      .afterClosed()
+      .pipe(
+        filter((deliveredOn) => deliveredOn !== undefined),
+        switchMap((deliveredOn) => this.api.deliver(invoice.id, deliveredOn)),
+      )
+      .subscribe({
+        next: (document) => {
+          const delivered = document.find((item) => item.id === invoice.id);
+          if (delivered) {
+            this.invoice.set(delivered);
+          }
+          this.document.reload();
+          this.notifier.success('Entrega registrada');
+        },
+        error: (error: unknown) =>
+          this.notifier.apiError(error, {
+            400: 'La fecha de entrega no puede ser anterior a la emisión de la factura.',
+            403: 'Tu rol solo permite consultar.',
+          }),
+      });
+  }
+
+  protected showHistory(invoice: Invoice): void {
+    this.dialog.open(InvoiceHistoryDialog, { data: invoice, width: '520px' });
   }
 
   protected reversePayment(invoice: Invoice): void {
@@ -90,6 +145,7 @@ export class InvoiceDetail {
       .subscribe((reopened) => {
         if (reopened) {
           this.invoice.set(reopened);
+          this.document.reload();
           this.notifier.success(`Pago de la factura n.º ${invoice.number} reversado`);
         }
       });
