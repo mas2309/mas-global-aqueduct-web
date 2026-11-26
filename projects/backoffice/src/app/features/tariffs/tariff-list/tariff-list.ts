@@ -37,6 +37,7 @@ import {
 import { CURRENT_ORGANIZATION_URL } from '../../subscribers/subscribers-api';
 import {
   blockLabel,
+  ContributionWarning,
   InvoiceDiscount,
   SUBSIDY_BASE_LABELS,
   Tariff,
@@ -172,6 +173,11 @@ export class TariffList {
     return percent < 0
       ? `${target}: subsidio del ${Math.abs(percent)} %${coverage}`
       : `${target}: contribución del ${percent} %`;
+  }
+
+  /** «Estrato 5: contribución del 0 %, el mínimo es 50 %». */
+  protected warningLabel(warning: ContributionWarning): string {
+    return `${targetLabel(warning)}: contribución del ${warning.percent} %, el mínimo es ${warning.minimum} %`;
   }
 
   protected invoiceDiscountLabel(discount: InvoiceDiscount): string {

@@ -236,4 +236,17 @@
       }
     </ul>
   }
+  @if (tariff.contributionWarnings?.length > 0) {
+    <div class="warnings" role="note">
+      <p>
+        <mat-icon aria-hidden="true">warning</mat-icon>
+        Contribuciones por debajo del mínimo del perfil regulatorio:
+      </p>
+      <ul aria-label="Contribuciones por debajo del mínimo">
+        @for (warning of tariff.contributionWarnings; track $index) {
+          <li>{{ warningLabel(warning) }}</li>
+        }
+      </ul>
+    </div>
+  }
 </ng-template>

@@ -47,6 +47,8 @@ const RULE_LABELS: Record<string, string> = {
   minDeliveryDaysBeforeDue: 'días de entrega antes del vencimiento',
   legalInvoiceContent: 'contenido mínimo de la factura',
   reportsToSui: 'reporte al SUI',
+  contributionFloors: 'contribución mínima',
+  invoiceDiscountsAllowed: 'subsidio sobre el total de la factura',
 };
 
 /**
@@ -162,6 +164,13 @@ export class RegulatoryProfilePage {
       ]),
       legalInvoiceContent: [false],
       reportsToSui: [false],
+      contributionFloors: this.fb.group({
+        stratum5: this.cap(),
+        stratum6: this.cap(),
+        commercial: this.cap(),
+        industrial: this.cap(),
+      }),
+      invoiceDiscountsAllowed: [true],
     }),
   });
 
@@ -254,6 +263,13 @@ export class RegulatoryProfilePage {
       minDeliveryDaysBeforeDue: rules.minDeliveryDaysBeforeDue,
       legalInvoiceContent: rules.legalInvoiceContent,
       reportsToSui: rules.reportsToSui,
+      contributionFloors: rules.contributionFloors ?? {
+        stratum5: null,
+        stratum6: null,
+        commercial: null,
+        industrial: null,
+      },
+      invoiceDiscountsAllowed: rules.invoiceDiscountsAllowed ?? true,
     });
   }
 

@@ -21,6 +21,8 @@ const FREE_RULES: RegulatoryRules = {
   minDeliveryDaysBeforeDue: null,
   legalInvoiceContent: false,
   reportsToSui: false,
+  contributionFloors: { stratum5: null, stratum6: null, commercial: null, industrial: null },
+  invoiceDiscountsAllowed: true,
 };
 
 const FREE_PROFILE: RegulatoryProfile = {
@@ -68,6 +70,8 @@ describe('RegulatoryProfilePage', () => {
     page['form'].controls.serviceAreasEnabled.setValue(true);
     page['form'].controls.rules.controls.deviation.controls.percentBelow.setValue(100);
     page['form'].controls.rules.controls.caps.controls.s1.setValue(70);
+    page['form'].controls.rules.controls.contributionFloors.controls.stratum6.setValue(60);
+    page['form'].controls.rules.controls.invoiceDiscountsAllowed.setValue(false);
     page['submit']();
 
     const request = context.http.expectOne(PROFILE_URL);
@@ -82,6 +86,8 @@ describe('RegulatoryProfilePage', () => {
         ...FREE_RULES,
         subsidyCaps: { '1': 70 },
         deviation: { ...FREE_RULES.deviation, percentBelow: 100 },
+        contributionFloors: { ...FREE_RULES.contributionFloors, stratum6: 60 },
+        invoiceDiscountsAllowed: false,
       },
     });
     request.flush({
@@ -116,6 +122,8 @@ describe('RegulatoryProfilePage', () => {
       basicConsumption: 11,
       subsidyCaps: { '1': 70, '2': 40 },
       deviation: { ...FREE_RULES.deviation, reviewRequired: true },
+      contributionFloors: { stratum5: 50, stratum6: 60, commercial: 50, industrial: 30 },
+      invoiceDiscountsAllowed: false,
     });
     await settle();
 
@@ -123,5 +131,7 @@ describe('RegulatoryProfilePage', () => {
     expect(rules.basicConsumption).toBe(11);
     expect(rules.caps.s2).toBe(40);
     expect(rules.deviation.reviewRequired).toBe(true);
+    expect(rules.contributionFloors.industrial).toBe(30);
+    expect(rules.invoiceDiscountsAllowed).toBe(false);
   });
 });

@@ -43,6 +43,14 @@ export interface InvoiceDiscount {
   percent: number;
 }
 
+/** Contribución por debajo del mínimo del perfil: `percent` es la que tiene la tarifa (0 si ninguna). */
+export interface ContributionWarning {
+  usage: PropertyUsage;
+  stratum: number | null;
+  percent: number;
+  minimum: number;
+}
+
 /** Versión de la tarifa de un servicio, vigente desde una fecha. */
 export interface Tariff {
   id: string;
@@ -57,10 +65,12 @@ export interface Tariff {
   blocks: TariffBlock[];
   adjustments: TariffAdjustment[];
   invoiceDiscounts: InvoiceDiscount[];
+  /** Usos y estratos que contribuyen menos del mínimo del perfil regulatorio. Es un aviso: la tarifa se guardó. */
+  contributionWarnings?: ContributionWarning[];
   createdAt: string;
 }
 
-export type TariffRequest = Omit<Tariff, 'id' | 'inEffect' | 'createdAt'>;
+export type TariffRequest = Omit<Tariff, 'id' | 'inEffect' | 'createdAt' | 'contributionWarnings'>;
 
 /** Liquidación de un consumo con la tarifa vigente. */
 export interface TariffCharge {

@@ -159,6 +159,40 @@
               </mat-form-field>
             }
           </div>
+          <div class="checks">
+            <mat-checkbox formControlName="invoiceDiscountsAllowed">
+              Permite un subsidio sobre el total de la factura (también descuenta la deuda anterior;
+              la regulación no lo contempla)
+            </mat-checkbox>
+          </div>
+
+          <h3>Contribuciones</h3>
+          <p class="muted">
+            Contribución mínima de quienes la pagan. Una tarifa por debajo se guarda igual, pero se
+            avisa.
+          </p>
+          <div class="fields" formGroupName="contributionFloors">
+            <mat-form-field appearance="outline">
+              <mat-label>Mínimo estrato 5 (%)</mat-label>
+              <input matInput type="number" min="0" max="100" formControlName="stratum5" />
+              <mat-hint>Vacío: sin mínimo</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Mínimo estrato 6 (%)</mat-label>
+              <input matInput type="number" min="0" max="100" formControlName="stratum6" />
+              <mat-hint>Vacío: sin mínimo</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Mínimo comercial (%)</mat-label>
+              <input matInput type="number" min="0" max="100" formControlName="commercial" />
+              <mat-hint>Vacío: sin mínimo</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Mínimo industrial (%)</mat-label>
+              <input matInput type="number" min="0" max="100" formControlName="industrial" />
+              <mat-hint>Vacío: sin mínimo</mat-hint>
+            </mat-form-field>
+          </div>
 
           <h3>Factura y reportes</h3>
           <div class="fields">

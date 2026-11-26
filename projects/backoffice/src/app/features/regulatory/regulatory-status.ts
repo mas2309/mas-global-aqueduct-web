@@ -24,4 +24,12 @@ export class RegulatoryStatus {
   readonly reportsToSui = computed(() =>
     this.profile.hasValue() ? this.profile.value().rules.reportsToSui : !!this.profile.error(),
   );
+
+  /**
+   * El perfil permite el subsidio sobre el total de la factura. Si el perfil no se puede leer se ofrece: el backend
+   * rechaza la tarifa si no lo permite.
+   */
+  readonly allowsInvoiceDiscounts = computed(() =>
+    this.profile.hasValue() ? (this.profile.value().rules.invoiceDiscountsAllowed ?? true) : true,
+  );
 }

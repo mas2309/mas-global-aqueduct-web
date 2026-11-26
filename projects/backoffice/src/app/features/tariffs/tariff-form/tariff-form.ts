@@ -45,6 +45,7 @@ import {
   unitOf,
 } from '../tariff.models';
 import { TARIFFS_URL, TariffsApi } from '../tariffs-api';
+import { RegulatoryStatus } from '../../regulatory/regulatory-status';
 
 /** Subsidio en porcentaje, subsidio en pesos al mes o contribución en porcentaje. */
 type AdjustmentKind = 'SUBSIDY' | 'SUBSIDY_AMOUNT' | 'CONTRIBUTION';
@@ -149,6 +150,8 @@ export class TariffForm {
   private readonly fb = inject(NonNullableFormBuilder);
   /** Agregar o quitar filas de un FormArray no es una señal: hay que pedir el repintado. */
   private readonly changeDetector = inject(ChangeDetectorRef);
+  /** El perfil regulatorio dice si se permite el subsidio sobre el total de la factura. */
+  protected readonly allowsInvoiceDiscounts = inject(RegulatoryStatus).allowsInvoiceDiscounts;
 
   /** Servicio de la tarifa (query param `servicio`). */
   readonly servicio = input<ServiceType>('WATER');
@@ -300,18 +303,25 @@ export class TariffForm {
             return { usage: adjustment.usage, stratum, percent: adjustment.value };
         }
       }),
-      invoiceDiscounts: value.invoiceDiscounts.map((discount) => ({
-        usage: discount.usage,
-        stratum: discount.usage === 'RESIDENTIAL' ? discount.stratum : null,
-        percent: discount.percent,
-      })),
+      // Si el perfil no lo permite no se envía: el backend rechazaría la tarifa
+      invoiceDiscounts: (this.allowsInvoiceDiscounts() ? value.invoiceDiscounts : []).map(
+        (discount) => ({
+          usage: discount.usage,
+          stratum: discount.usage === 'RESIDENTIAL' ? discount.stratum : null,
+          percent: discount.percent,
+        }),
+      ),
     };
     this.saving.set(true);
     this.error.set(null);
     this.api.create(request).subscribe({
       next: (tariff) => {
+        const saved = tariff.inEffect ? 'Tarifa guardada: ya está vigente' : 'Tarifa programada';
+        const warnings = tariff.contributionWarnings?.length ?? 0;
         this.notifier.success(
-          tariff.inEffect ? 'Tarifa guardada: ya está vigente' : 'Tarifa programada',
+          warnings > 0
+            ? `${saved}. Atención: ${warnings} contribución(es) por debajo del mínimo del perfil regulatorio.`
+            : saved,
         );
         void this.router.navigate(['/tarifas'], { queryParams: { servicio: this.servicio() } });
       },

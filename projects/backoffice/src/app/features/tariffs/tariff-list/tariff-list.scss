@@ -102,3 +102,19 @@
   padding-left: 20px;
   color: var(--mat-sys-on-surface-variant);
 }
+
+.warnings {
+  margin-top: 8px;
+  color: var(--mat-sys-error);
+
+  p {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+  }
+
+  ul {
+    margin: 4px 0 0;
+  }
+}

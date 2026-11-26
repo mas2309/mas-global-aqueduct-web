@@ -194,68 +194,77 @@
       </mat-card-content>
     </mat-card>
 
-    <mat-card appearance="outlined">
-      <mat-card-header>
-        <mat-card-title>Subsidio sobre el total de la factura (opcional)</mat-card-title>
-        <mat-card-subtitle>
-          Un segundo porcentaje que se descuenta de todo lo que trae la factura: el valor del
-          periodo ya subsidiado, la deuda anterior, el recargo, las cuotas y los otros cobros.
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content formArrayName="invoiceDiscounts">
-        @for (discount of invoiceDiscounts.controls; track discount; let index = $index) {
-          <div class="row" [formGroupName]="index">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="usage">
-              <mat-label>Uso</mat-label>
-              <mat-select formControlName="usage">
-                @for (usage of usages; track usage) {
-                  <mat-option [value]="usage">{{ usageLabels[usage] }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            @if (discount.controls.usage.value === 'RESIDENTIAL') {
-              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="stratum">
-                <mat-label>Estrato</mat-label>
-                <mat-select formControlName="stratum">
-                  @for (stratum of strata; track stratum) {
-                    <mat-option [value]="stratum">{{ stratum }}</mat-option>
+    @if (!allowsInvoiceDiscounts() && invoiceDiscounts.length > 0) {
+      <p class="muted" role="note">
+        La tarifa anterior tenía subsidio sobre el total de la factura, pero el perfil regulatorio
+        ya no lo permite: esta versión no lo lleva.
+      </p>
+    }
+
+    @if (allowsInvoiceDiscounts()) {
+      <mat-card appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Subsidio sobre el total de la factura (opcional)</mat-card-title>
+          <mat-card-subtitle>
+            Un segundo porcentaje que se descuenta de todo lo que trae la factura: el valor del
+            periodo ya subsidiado, la deuda anterior, el recargo, las cuotas y los otros cobros.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content formArrayName="invoiceDiscounts">
+          @for (discount of invoiceDiscounts.controls; track discount; let index = $index) {
+            <div class="row" [formGroupName]="index">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="usage">
+                <mat-label>Uso</mat-label>
+                <mat-select formControlName="usage">
+                  @for (usage of usages; track usage) {
+                    <mat-option [value]="usage">{{ usageLabels[usage] }}</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
-            }
-            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="percent">
-              <mat-label>%</mat-label>
-              <input
-                matInput
-                type="number"
-                min="0"
-                max="100"
-                formControlName="percent"
-                [attr.aria-label]="'Porcentaje sobre el total ' + (index + 1)"
-              />
-            </mat-form-field>
-            <button
-              mat-icon-button
-              type="button"
-              (click)="removeInvoiceDiscount(index)"
-              [attr.aria-label]="'Quitar subsidio sobre el total ' + (index + 1)"
-            >
-              <mat-icon>delete</mat-icon>
-            </button>
-          </div>
-        }
-        @if (invoiceDiscounts.length > 0) {
-          <p class="muted warning">
-            Como también descuenta la deuda anterior, quien no paga recibe el descuento otra vez en
-            la factura siguiente. Un recargo por no pago lo compensa.
-          </p>
-        }
-        <button mat-button type="button" (click)="addInvoiceDiscount()">
-          <mat-icon>add</mat-icon>
-          Agregar subsidio sobre el total
-        </button>
-      </mat-card-content>
-    </mat-card>
+              @if (discount.controls.usage.value === 'RESIDENTIAL') {
+                <mat-form-field appearance="outline" subscriptSizing="dynamic" class="stratum">
+                  <mat-label>Estrato</mat-label>
+                  <mat-select formControlName="stratum">
+                    @for (stratum of strata; track stratum) {
+                      <mat-option [value]="stratum">{{ stratum }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              }
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="percent">
+                <mat-label>%</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  min="0"
+                  max="100"
+                  formControlName="percent"
+                  [attr.aria-label]="'Porcentaje sobre el total ' + (index + 1)"
+                />
+              </mat-form-field>
+              <button
+                mat-icon-button
+                type="button"
+                (click)="removeInvoiceDiscount(index)"
+                [attr.aria-label]="'Quitar subsidio sobre el total ' + (index + 1)"
+              >
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+          @if (invoiceDiscounts.length > 0) {
+            <p class="muted warning">
+              Como también descuenta la deuda anterior, quien no paga recibe el descuento otra vez
+              en la factura siguiente. Un recargo por no pago lo compensa.
+            </p>
+          }
+          <button mat-button type="button" (click)="addInvoiceDiscount()">
+            <mat-icon>add</mat-icon>
+            Agregar subsidio sobre el total
+          </button>
+        </mat-card-content>
+      </mat-card>
+    }
 
     <div aria-live="assertive">
       @if (error(); as message) {

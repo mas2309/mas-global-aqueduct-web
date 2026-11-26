@@ -27,6 +27,13 @@ export interface DeviationRule {
   reviewRequired: boolean;
 }
 
+export interface ContributionFloors {
+  stratum5: number | null;
+  stratum6: number | null;
+  commercial: number | null;
+  industrial: number | null;
+}
+
 export interface RegulatoryRules {
   basicConsumption: number | null;
   /** Porcentaje máximo de subsidio por estrato; un estrato sin entrada no tiene tope. */
@@ -35,6 +42,10 @@ export interface RegulatoryRules {
   minDeliveryDaysBeforeDue: number | null;
   legalInvoiceContent: boolean;
   reportsToSui: boolean;
+  /** Contribución mínima en porcentaje (Ley 632 de 2000); vacío: sin mínimo. Por debajo se avisa, no se rechaza. */
+  contributionFloors: ContributionFloors;
+  /** La tarifa puede tener subsidio sobre el total de la factura (deuda anterior incluida). */
+  invoiceDiscountsAllowed: boolean;
 }
 
 export interface Classification {

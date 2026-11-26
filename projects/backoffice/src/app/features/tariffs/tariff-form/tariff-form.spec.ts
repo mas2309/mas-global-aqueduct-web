@@ -3,6 +3,7 @@ import { tariff } from '../../../../testing/billing-fixtures';
 import { access, authResponse } from '../../../../testing/fixtures';
 import { click, PageTestContext, settle, setUpPage, textOf, type } from '../../../../testing/setup';
 import { ServiceType } from '../../organizations/organization.models';
+import { REGULATORY_PROFILE_URL, RegulatoryProfile } from '../../regulatory/regulatory.models';
 import { Tariff } from '../tariff.models';
 import { TARIFFS_URL } from '../tariffs-api';
 import { TariffForm } from './tariff-form';
@@ -28,7 +29,12 @@ describe('TariffForm', () => {
 
   afterEach(() => context.http.verify());
 
-  async function open(existing: Tariff[], servicio: ServiceType = 'WATER'): Promise<void> {
+  /** @param invoiceDiscountsAllowed lo que dice el perfil regulatorio del prestador */
+  async function open(
+    existing: Tariff[],
+    servicio: ServiceType = 'WATER',
+    invoiceDiscountsAllowed = true,
+  ): Promise<void> {
     context = setUpPage({
       session: authResponse({ organization: access({ role: 'ORG_ADMIN' }) }),
     });
@@ -37,6 +43,9 @@ describe('TariffForm', () => {
     element = fixture.nativeElement;
     actions = fixture.componentInstance as unknown as Actions;
     await settle();
+    context.http
+      .expectOne(REGULATORY_PROFILE_URL)
+      .flush({ rules: { invoiceDiscountsAllowed } } as Partial<RegulatoryProfile>);
     context.http.expectOne(`${TARIFFS_URL}?serviceType=${servicio}`).flush(existing);
     await settle();
   }
@@ -133,6 +142,39 @@ describe('TariffForm', () => {
       invoiceDiscounts: [{ usage: 'RESIDENTIAL', stratum: 2, percent: 10 }],
     });
     request.flush(tariff());
+  });
+
+  it('con perfil regulado no ofrece ni copia el subsidio sobre el total', async () => {
+    await open(
+      [tariff({ invoiceDiscounts: [{ usage: 'RESIDENTIAL', stratum: 2, percent: 10 }] })],
+      'WATER',
+      false,
+    );
+
+    expect(textOf(element)).not.toContain('Agregar subsidio sobre el total');
+    expect(textOf(element)).toContain('el perfil regulatorio ya no lo permite');
+    await submit();
+
+    expect(context.http.expectOne(TARIFFS_URL).request.body.invoiceDiscounts).toEqual([]);
+  });
+
+  it('avisa al guardar si una contribución queda por debajo del mínimo', async () => {
+    await open([tariff()]);
+
+    await submit();
+    context.http.expectOne(TARIFFS_URL).flush(
+      tariff({
+        contributionWarnings: [
+          { usage: 'COMMERCIAL', stratum: null, percent: 20, minimum: 50 },
+          { usage: 'INDUSTRIAL', stratum: null, percent: 0, minimum: 30 },
+        ],
+      }),
+    );
+    await settle();
+
+    expect(document.body.textContent).toContain(
+      'Atención: 2 contribución(es) por debajo del mínimo del perfil regulatorio',
+    );
   });
 
   it('un servicio sin medidor no pregunta qué cubre el subsidio', async () => {

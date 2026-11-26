@@ -134,6 +134,23 @@ describe('TariffList', () => {
     expect(text).toContain('Estrato 1: subsidio de $12.000 al mes · solo el cargo fijo');
     expect(text).toContain('Estrato 2: subsidio del 20 % · cargo fijo y consumo básico');
     expect(text).toContain('Estrato 2: 10 % sobre el total de la factura');
+    expect(text).not.toContain('por debajo del mínimo');
+  });
+
+  it('avisa de las contribuciones por debajo del mínimo del perfil regulatorio', async () => {
+    await open([
+      tariff({
+        contributionWarnings: [
+          { usage: 'RESIDENTIAL', stratum: 5, percent: 0, minimum: 50 },
+          { usage: 'COMMERCIAL', stratum: null, percent: 20, minimum: 50 },
+        ],
+      }),
+    ]);
+    const text = textOf(element);
+
+    expect(text).toContain('Contribuciones por debajo del mínimo del perfil regulatorio');
+    expect(text).toContain('Estrato 5: contribución del 0 %, el mínimo es 50 %');
+    expect(text).toContain('Comercial: contribución del 20 %, el mínimo es 50 %');
   });
 
   it('invita a definir la tarifa cuando el servicio no tiene', async () => {
