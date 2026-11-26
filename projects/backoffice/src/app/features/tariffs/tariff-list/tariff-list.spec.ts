@@ -20,6 +20,7 @@ const charge: TariffCharge = {
   consumptionCharge: 27500,
   adjustmentPercent: -50,
   adjustment: -17750,
+  invoiceDiscountPercent: 0,
   total: 17750,
   blocks: [
     { units: 10, pricePerUnit: 1500, amount: 15000 },
@@ -113,6 +114,21 @@ describe('TariffList', () => {
     expect(text).toContain('Simulador');
   });
 
+  it('muestra subsidios en pesos, qué cubren y el subsidio sobre el total', async () => {
+    await open([
+      tariff({
+        adjustments: [{ usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000 }],
+        subsidyBase: 'FIXED_CHARGE',
+        invoiceDiscounts: [{ usage: 'RESIDENTIAL', stratum: 2, percent: 10 }],
+      }),
+    ]);
+    const text = textOf(element);
+
+    expect(text).toContain('Estrato 1: subsidio de $12.000 al mes');
+    expect(text).toContain('El subsidio cubre: solo el cargo fijo');
+    expect(text).toContain('Estrato 2: 10 % sobre el total de la factura');
+  });
+
   it('invita a definir la tarifa cuando el servicio no tiene', async () => {
     await open([]);
 
@@ -154,6 +170,21 @@ describe('TariffList', () => {
     expect(text).toContain('Subsidio (-50 %)');
     expect(text).toContain('Total');
     expect(text).toContain('17,750');
+    expect(text).not.toContain('de todo lo que trae');
+  });
+
+  it('el simulador avisa del subsidio sobre el total de la factura', async () => {
+    await open([tariff()]);
+
+    actions.simulate();
+    context.http
+      .expectOne(
+        `${TARIFFS_URL}/estimate?serviceType=WATER&consumption=15&usage=RESIDENTIAL&stratum=2`,
+      )
+      .flush({ ...charge, invoiceDiscountPercent: 10 });
+    await settle();
+
+    expect(textOf(element)).toContain('la factura descuenta el 10 % de todo lo que trae');
   });
 
   it('simula sin consumo ni estrato un servicio no medido de uso comercial', async () => {

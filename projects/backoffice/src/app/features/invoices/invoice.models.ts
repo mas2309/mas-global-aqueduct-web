@@ -48,6 +48,10 @@ export interface Invoice {
   lateFee: number;
   otherCharges: number;
   otherChargesDescription: string | null;
+  /** Porcentaje del subsidio sobre el total de la factura; 0 si no aplica. */
+  invoiceDiscountPercent: number;
+  /** Subsidio sobre toda la factura, deuda anterior incluida (negativo); `total` ya lo descuenta. */
+  invoiceDiscount: number;
   /** Cuotas de financiación cobradas en la factura; vacío si no hay. */
   installments: InvoiceInstallment[];
   /** Lo que se cobra: ya descuenta `disputedAmount`. */

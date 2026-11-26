@@ -71,7 +71,9 @@ describe('InvoiceDetail', () => {
         otherChargesDescription: 'Reconexión',
         previousDebt: 30000,
         lateFee: 2000,
-        total: 78500,
+        invoiceDiscountPercent: 10,
+        invoiceDiscount: -8250,
+        total: 74250,
         state: 'OVERDUE',
       }),
     );
@@ -87,7 +89,9 @@ describe('InvoiceDetail', () => {
     expect(text).toContain('Otros cobros (Reconexión)');
     expect(text).toContain('Deuda anterior');
     expect(text).toContain('Recargo por no pago');
-    expect(text).toContain('$78,500');
+    expect(text).toContain('Subsidio sobre el total (10 %)');
+    expect(text).toContain('-$8,250');
+    expect(text).toContain('$74,250');
     expect(text).toContain('Vencida');
     expect(button('Pago en efectivo')).toBeDefined();
   });

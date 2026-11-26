@@ -35,10 +35,25 @@ import {
   STRATA,
 } from '../../subscribers/subscriber.models';
 import { CURRENT_ORGANIZATION_URL } from '../../subscribers/subscribers-api';
-import { blockLabel, Tariff, TariffAdjustment, TariffCharge, unitOf } from '../tariff.models';
+import {
+  blockLabel,
+  InvoiceDiscount,
+  SUBSIDY_BASE_LABELS,
+  Tariff,
+  TariffAdjustment,
+  TariffCharge,
+  unitOf,
+} from '../tariff.models';
 import { TARIFFS_URL, TariffsApi } from '../tariffs-api';
 import { BillingSettingsDialog } from '../../invoices/billing-settings-dialog/billing-settings-dialog';
 import { BillingSettings } from '../../invoices/invoice.models';
+
+const PESOS = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+
+/** «Estrato 2» en uso residencial; el nombre del uso en los demás. */
+function targetLabel(rule: { usage: PropertyUsage; stratum: number | null }): string {
+  return rule.stratum !== null ? `Estrato ${rule.stratum}` : PROPERTY_USAGE_LABELS[rule.usage];
+}
 
 /** Tarifas del prestador: la vigente de cada servicio, sus versiones y un simulador de factura. */
 @Component({
@@ -140,12 +155,28 @@ export class TariffList {
   }
 
   protected adjustmentLabel(adjustment: TariffAdjustment): string {
-    const target =
-      adjustment.stratum !== null
-        ? `Estrato ${adjustment.stratum}`
-        : PROPERTY_USAGE_LABELS[adjustment.usage];
-    const kind = adjustment.percent < 0 ? 'subsidio' : 'contribución';
-    return `${target}: ${kind} del ${Math.abs(adjustment.percent)} %`;
+    const target = targetLabel(adjustment);
+    const amount = adjustment.amount ?? null;
+    if (amount !== null) {
+      return `${target}: subsidio de $${PESOS.format(Math.abs(amount))} al mes`;
+    }
+    const percent = adjustment.percent ?? 0;
+    const kind = percent < 0 ? 'subsidio' : 'contribución';
+    return `${target}: ${kind} del ${Math.abs(percent)} %`;
+  }
+
+  protected invoiceDiscountLabel(discount: InvoiceDiscount): string {
+    return `${targetLabel(discount)}: ${discount.percent} % sobre el total de la factura`;
+  }
+
+  protected subsidyBaseLabel(tariff: Tariff): string {
+    return SUBSIDY_BASE_LABELS[tariff.subsidyBase ?? 'FIXED_CHARGE_AND_BASIC_CONSUMPTION'];
+  }
+
+  protected hasSubsidies(tariff: Tariff): boolean {
+    return tariff.adjustments.some(
+      (adjustment) => (adjustment.amount ?? null) !== null || (adjustment.percent ?? 0) < 0,
+    );
   }
 
   protected simulate(): void {

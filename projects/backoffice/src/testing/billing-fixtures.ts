@@ -22,6 +22,8 @@ export function tariff(overrides: Partial<Tariff> = {}): Tariff {
       { usage: 'RESIDENTIAL', stratum: 1, percent: -50 },
       { usage: 'COMMERCIAL', stratum: null, percent: 20 },
     ],
+    subsidyBase: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+    invoiceDiscounts: [],
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides,
   };
@@ -102,6 +104,8 @@ export function invoice(overrides: Partial<Invoice> = {}): Invoice {
     adjustment: 0,
     previousDebt: 0,
     lateFee: 0,
+    invoiceDiscountPercent: 0,
+    invoiceDiscount: 0,
     otherCharges: 0,
     otherChargesDescription: null,
     installments: [],

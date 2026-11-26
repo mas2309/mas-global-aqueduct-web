@@ -9,8 +9,33 @@ export interface TariffBlock {
   pricePerUnit: number;
 }
 
-/** Subsidio (porcentaje negativo) o contribución (positivo) para un uso y estrato. */
+/**
+ * Subsidio o contribución para un uso y estrato. Lleva `percent` (negativo un subsidio, positivo una
+ * contribución) o, solo un subsidio, `amount`: pesos al mes en negativo.
+ */
 export interface TariffAdjustment {
+  usage: PropertyUsage;
+  stratum: number | null;
+  percent: number | null;
+  amount?: number | null;
+}
+
+/**
+ * Qué cubre el subsidio: el cargo fijo y el consumo básico (o todo el consumo si el prestador no tiene básico),
+ * o solo el cargo fijo.
+ */
+export type SubsidyBase = 'FIXED_CHARGE_AND_BASIC_CONSUMPTION' | 'FIXED_CHARGE';
+
+export const SUBSIDY_BASE_LABELS: Record<SubsidyBase, string> = {
+  FIXED_CHARGE_AND_BASIC_CONSUMPTION: 'Cargo fijo y consumo básico',
+  FIXED_CHARGE: 'Solo el cargo fijo',
+};
+
+/**
+ * Segundo subsidio de un uso y estrato: porcentaje (positivo) que se descuenta de toda la factura, incluida la
+ * deuda anterior.
+ */
+export interface InvoiceDiscount {
   usage: PropertyUsage;
   stratum: number | null;
   percent: number;
@@ -29,6 +54,8 @@ export interface Tariff {
   fixedCharge: number;
   blocks: TariffBlock[];
   adjustments: TariffAdjustment[];
+  subsidyBase: SubsidyBase;
+  invoiceDiscounts: InvoiceDiscount[];
   createdAt: string;
 }
 
@@ -38,8 +65,12 @@ export type TariffRequest = Omit<Tariff, 'id' | 'inEffect' | 'createdAt'>;
 export interface TariffCharge {
   fixedCharge: number;
   consumptionCharge: number;
+  /** En un subsidio en pesos, el porcentaje que resulta. */
   adjustmentPercent: number;
   adjustment: number;
+  /** Porcentaje que además se descuenta de toda la factura; 0 si no aplica. */
+  invoiceDiscountPercent: number;
+  /** Lo del servicio en el periodo, antes del descuento sobre toda la factura. */
   total: number;
   blocks: { units: number; pricePerUnit: number; amount: number }[];
 }

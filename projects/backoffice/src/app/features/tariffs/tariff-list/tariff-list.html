@@ -177,6 +177,12 @@
                 {{ charge.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
               </dd>
             </dl>
+            @if (charge.invoiceDiscountPercent > 0) {
+              <p class="muted">
+                Además, la factura descuenta el {{ charge.invoiceDiscountPercent }} % de todo lo que
+                trae, deuda anterior incluida.
+              </p>
+            }
           }
         </mat-card-content>
       </mat-card>
@@ -220,6 +226,16 @@
     <ul class="adjustments" aria-label="Subsidios y contribuciones">
       @for (adjustment of tariff.adjustments; track $index) {
         <li>{{ adjustmentLabel(adjustment) }}</li>
+      }
+    </ul>
+    @if (hasSubsidies(tariff) && tariff.blocks.length > 0) {
+      <p class="muted">El subsidio cubre: {{ subsidyBaseLabel(tariff).toLowerCase() }}.</p>
+    }
+  }
+  @if (tariff.invoiceDiscounts?.length > 0) {
+    <ul class="adjustments" aria-label="Subsidios sobre el total de la factura">
+      @for (discount of tariff.invoiceDiscounts; track $index) {
+        <li>{{ invoiceDiscountLabel(discount) }}</li>
       }
     </ul>
   }

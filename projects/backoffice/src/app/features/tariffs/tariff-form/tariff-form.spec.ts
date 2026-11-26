@@ -51,7 +51,8 @@ describe('TariffForm', () => {
 
     expect(textOf(element)).toContain('Nueva tarifa de acueducto');
     expect(element.querySelectorAll('input[formcontrolname=upTo]')).toHaveLength(1);
-    expect(element.querySelectorAll('input[formcontrolname=percent]')).toHaveLength(2);
+    expect(element.querySelectorAll('input[formcontrolname=value]')).toHaveLength(2);
+    expect(textOf(element)).toContain('El subsidio cubre');
     type(element, 'input[formcontrolname=validFrom]', '2027-01-01');
     type(element, 'input[formcontrolname=fixedCharge]', '9000');
     await submit();
@@ -70,6 +71,8 @@ describe('TariffForm', () => {
         { usage: 'RESIDENTIAL', stratum: 1, percent: -50 },
         { usage: 'COMMERCIAL', stratum: null, percent: 20 },
       ],
+      subsidyBase: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+      invoiceDiscounts: [],
     });
     request.flush(tariff({ validFrom: '2027-01-01', inEffect: false }));
     await settle();
@@ -78,6 +81,63 @@ describe('TariffForm', () => {
     expect(context.router.navigate).toHaveBeenCalledWith(['/tarifas'], {
       queryParams: { servicio: 'WATER' },
     });
+  });
+
+  it('copia y envía subsidios en pesos, qué cubren y el subsidio sobre el total', async () => {
+    // Chiquinquirá: valor por estrato con 40 m³ incluidos; Cucaita: 10 % sobre toda la factura
+    await open([
+      tariff({
+        fixedCharge: 20000,
+        blocks: [
+          { upTo: 40, pricePerUnit: 0 },
+          { upTo: null, pricePerUnit: 1000 },
+        ],
+        adjustments: [
+          { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000 },
+          { usage: 'RESIDENTIAL', stratum: 2, percent: -50 },
+        ],
+        subsidyBase: 'FIXED_CHARGE',
+        invoiceDiscounts: [{ usage: 'RESIDENTIAL', stratum: 2, percent: 10 }],
+      }),
+    ]);
+
+    expect(textOf(element)).toContain('El consumo se cobra completo');
+    expect(textOf(element)).toContain('quien no paga recibe el descuento otra vez');
+    expect(element.querySelectorAll('input[formcontrolname=percent]')).toHaveLength(1);
+    await submit();
+
+    const request = context.http.expectOne(TARIFFS_URL);
+    expect(request.request.body).toMatchObject({
+      adjustments: [
+        { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000 },
+        { usage: 'RESIDENTIAL', stratum: 2, percent: -50 },
+      ],
+      subsidyBase: 'FIXED_CHARGE',
+      invoiceDiscounts: [{ usage: 'RESIDENTIAL', stratum: 2, percent: 10 }],
+    });
+    request.flush(tariff());
+  });
+
+  it('un porcentaje no pasa de 100, un valor en pesos sí', async () => {
+    await open([]);
+
+    actions.addAdjustment();
+    await settle();
+    const adjustment = (
+      fixture.componentInstance as unknown as {
+        adjustments: { at: (i: number) => { patchValue: (v: object) => void } };
+      }
+    ).adjustments.at(0);
+    adjustment.patchValue({ kind: 'SUBSIDY', value: 150 });
+    await submit();
+    expect(textOf(element)).toContain('El porcentaje no puede pasar de 100');
+    context.http.expectNone(TARIFFS_URL);
+
+    adjustment.patchValue({ kind: 'SUBSIDY_AMOUNT', value: 5000 });
+    await submit();
+    expect(context.http.expectOne(TARIFFS_URL).request.body.adjustments).toEqual([
+      { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -5000 },
+    ]);
   });
 
   it('crea la primera tarifa con un único precio', async () => {
