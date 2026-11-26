@@ -90,3 +90,50 @@ export interface ConsumptionRange {
   /** Valor del consumo facturado a quienes cayeron en el rango. */
   charge: number;
 }
+
+/**
+ * Valores por concepto, sin la deuda que venía de periodos anteriores. `subsidies` y `disputed` restan: vienen
+ * en negativo. `total` es la suma de todos.
+ */
+export interface Concepts {
+  fixedCharge: number;
+  consumption: number;
+  subsidies: number;
+  contributions: number;
+  /** Recargos por no haber pagado a tiempo la factura anterior. */
+  lateFees: number;
+  otherCharges: number;
+  /** Cuotas de financiación. */
+  installments: number;
+  /** Lo que no se cobra mientras se resuelve un reclamo. */
+  disputed: number;
+  total: number;
+}
+
+/** Otros cobros o cuotas con la misma descripción. `null` si se registró sin descripción. */
+export interface ConceptDetail {
+  description: string | null;
+  amount: number;
+}
+
+/** Lo facturado en un periodo o lo recaudado en unas fechas, por concepto y servicio. */
+export interface ConceptReport {
+  invoices: number;
+  /** Un renglón por servicio con facturas. */
+  services: { serviceType: ServiceType; invoices: number; concepts: Concepts }[];
+  totals: Concepts;
+  otherCharges: ConceptDetail[];
+  installments: ConceptDetail[];
+}
+
+/** Los conceptos en el orden en que se muestran. Los que no son `always` se ocultan si están en cero. */
+export const CONCEPT_ROWS: { key: keyof Concepts; label: string; always?: boolean }[] = [
+  { key: 'fixedCharge', label: 'Cargo fijo', always: true },
+  { key: 'consumption', label: 'Consumo', always: true },
+  { key: 'subsidies', label: 'Subsidios' },
+  { key: 'contributions', label: 'Contribuciones' },
+  { key: 'lateFees', label: 'Recargos por mora' },
+  { key: 'otherCharges', label: 'Otros cobros' },
+  { key: 'installments', label: 'Cuotas de financiación' },
+  { key: 'disputed', label: 'Valor en reclamo' },
+];

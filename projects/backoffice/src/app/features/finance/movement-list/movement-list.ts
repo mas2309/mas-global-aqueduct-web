@@ -18,6 +18,7 @@ import { Notifier } from '../../../core/ui/notifier';
 import { ConfirmDialog, ConfirmDialogData } from '../../../shared/ui/confirm-dialog';
 import { saveFile } from '../../../shared/ui/save-file';
 import { Page } from '../../organizations/organization.models';
+import { ConceptTable } from '../../reports/concept-table/concept-table';
 import { isoDate } from '../../reports/report.models';
 import { FinanceApi } from '../finance-api';
 import {
@@ -26,6 +27,7 @@ import {
   MOVEMENT_TYPE_LABELS,
   MovementType,
   MOVEMENTS_URL,
+  Statement,
 } from '../finance.models';
 import { MovementDialog } from '../movement-dialog/movement-dialog';
 
@@ -50,6 +52,7 @@ type TypeFilter = MovementType | 'ALL';
     MatInputModule,
     MatProgressBarModule,
     MatTooltipModule,
+    ConceptTable,
   ],
   templateUrl: './movement-list.html',
   styleUrl: './movement-list.scss',
@@ -94,6 +97,14 @@ export class MovementList {
   protected readonly balance = httpResource<Balance>(() =>
     this.ready()
       ? { url: `${MOVEMENTS_URL}/balance`, params: { from: this.from(), to: this.to() } }
+      : undefined,
+  );
+
+  /** El detalle por concepto y categoría se consulta cuando se pide y luego sigue los cambios de fechas. */
+  protected readonly showStatement = signal(false);
+  protected readonly statement = httpResource<Statement>(() =>
+    this.showStatement() && this.ready()
+      ? { url: `${MOVEMENTS_URL}/statement`, params: { from: this.from(), to: this.to() } }
       : undefined,
   );
 
@@ -175,9 +186,17 @@ export class MovementList {
     });
   }
 
+  protected exportStatement(): void {
+    this.api.exportStatement(this.from(), this.to()).subscribe({
+      next: (file) => saveFile(file, `estado-de-resultados-${this.from()}-a-${this.to()}.csv`),
+      error: (error: unknown) => this.notifier.apiError(error),
+    });
+  }
+
   private reload(): void {
     this.movements.reload();
     this.balance.reload();
+    this.statement.reload();
   }
 }
 

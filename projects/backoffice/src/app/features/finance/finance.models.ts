@@ -1,3 +1,5 @@
+import { Concepts } from '../reports/report.models';
+
 /** Contratos de /api/v1/movements (módulo finance del backend). */
 
 export const MOVEMENTS_URL = '/api/v1/movements';
@@ -37,6 +39,23 @@ export interface Balance {
   invoiceCollections: number;
   otherIncome: number;
   expenses: number;
+  balance: number;
+}
+
+/** Los movimientos de una categoría; las que solo difieren en mayúsculas o espacios van juntas. */
+export interface CategoryTotal {
+  category: string;
+  movements: number;
+  amount: number;
+}
+
+/** Estado de resultados del rango. `balance` puede ser negativo. */
+export interface Statement {
+  /** Recaudo de facturas por concepto: suma lo mismo que el recaudo del informe. */
+  invoiceCollections: Concepts;
+  /** Del mayor valor al menor. */
+  otherIncome: { categories: CategoryTotal[]; total: number };
+  expenses: { categories: CategoryTotal[]; total: number };
   balance: number;
 }
 

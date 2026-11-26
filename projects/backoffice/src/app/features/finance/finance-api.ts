@@ -43,4 +43,12 @@ export class FinanceApi {
       responseType: 'blob',
     });
   }
+
+  /** Estado de resultados del rango en CSV para Excel. */
+  exportStatement(from: string, to: string): Observable<Blob> {
+    return this.http.get(`${MOVEMENTS_URL}/statement/export`, {
+      params: { from, to },
+      responseType: 'blob',
+    });
+  }
 }

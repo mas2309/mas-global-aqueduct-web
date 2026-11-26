@@ -76,6 +76,88 @@
         </span>
       </div>
     </dl>
+
+    @if (!showStatement()) {
+      <button mat-stroked-button class="statement-toggle" (click)="showStatement.set(true)">
+        <mat-icon>table_chart</mat-icon>
+        Ver por concepto y categoría
+      </button>
+    } @else if (statement.error()) {
+      <p class="muted" role="alert">
+        No pudimos cargar el estado de resultados.
+        <button mat-button (click)="statement.reload()">Reintentar</button>
+      </p>
+    } @else if (statement.hasValue()) {
+      @let detail = statement.value();
+      <section class="statement" aria-label="Estado de resultados">
+        <div class="statement-header">
+          <h2>Estado de resultados</h2>
+          <button mat-stroked-button (click)="exportStatement()">
+            <mat-icon>download</mat-icon>
+            Estado de resultados para Excel
+          </button>
+        </div>
+        <h3>Recaudo de facturas por concepto</h3>
+        <aq-concept-table
+          [totals]="detail.invoiceCollections"
+          caption="Recaudo de facturas por concepto"
+        />
+        <div class="categories">
+          <section>
+            <h3>Otros ingresos por categoría</h3>
+            @if (detail.otherIncome.categories.length === 0) {
+              <p class="muted">No se registraron otros ingresos en estas fechas.</p>
+            } @else {
+              <ul>
+                @for (category of detail.otherIncome.categories; track category.category) {
+                  <li>
+                    <span>
+                      {{ category.category }}
+                      <span class="muted">({{ category.movements }})</span>
+                    </span>
+                    <span class="amount">
+                      {{ category.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                    </span>
+                  </li>
+                }
+                <li class="total">
+                  <span>Total</span>
+                  <span class="amount">
+                    {{ detail.otherIncome.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                  </span>
+                </li>
+              </ul>
+            }
+          </section>
+          <section>
+            <h3>Gastos por categoría</h3>
+            @if (detail.expenses.categories.length === 0) {
+              <p class="muted">No se registraron gastos en estas fechas.</p>
+            } @else {
+              <ul>
+                @for (category of detail.expenses.categories; track category.category) {
+                  <li>
+                    <span>
+                      {{ category.category }}
+                      <span class="muted">({{ category.movements }})</span>
+                    </span>
+                    <span class="amount">
+                      {{ category.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                    </span>
+                  </li>
+                }
+                <li class="total">
+                  <span>Total</span>
+                  <span class="amount">
+                    {{ detail.expenses.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                  </span>
+                </li>
+              </ul>
+            }
+          </section>
+        </div>
+      </section>
+    }
   }
 
   @if (movements.isLoading()) {

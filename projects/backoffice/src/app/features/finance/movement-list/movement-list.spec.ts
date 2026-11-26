@@ -8,7 +8,7 @@ import { click, PageTestContext, settle, setUpPage, textOf, type } from '../../.
 import { OrganizationRole } from '../../../core/auth/auth.models';
 import { Page } from '../../organizations/organization.models';
 import { isoDate } from '../../reports/report.models';
-import { Balance, Movement, MOVEMENTS_URL, MovementType } from '../finance.models';
+import { Balance, Movement, MOVEMENTS_URL, MovementType, Statement } from '../finance.models';
 import { MovementDialog } from '../movement-dialog/movement-dialog';
 import { MovementList } from './movement-list';
 
@@ -39,6 +39,34 @@ const BALANCE: Balance = {
   invoiceCollections: 2000000,
   otherIncome: 500000,
   expenses: 800000,
+  balance: 1700000,
+};
+
+const STATEMENT_URL = `${MOVEMENTS_URL}/statement`;
+
+const STATEMENT: Statement = {
+  invoiceCollections: {
+    fixedCharge: 800000,
+    consumption: 1300000,
+    subsidies: -100000,
+    contributions: 0,
+    lateFees: 0,
+    otherCharges: 0,
+    installments: 0,
+    disputed: 0,
+    total: 2000000,
+  },
+  otherIncome: {
+    categories: [{ category: 'Aportes', movements: 1, amount: 500000 }],
+    total: 500000,
+  },
+  expenses: {
+    categories: [
+      { category: 'Mantenimiento', movements: 2, amount: 600000 },
+      { category: 'Insumos', movements: 1, amount: 200000 },
+    ],
+    total: 800000,
+  },
   balance: 1700000,
 };
 
@@ -248,6 +276,59 @@ describe('MovementList', () => {
     expect(downloads).toHaveLength(2);
   });
 
+  it('muestra y descarga el estado de resultados solo cuando se pide', async () => {
+    await open('VIEWER');
+    await load([movement()]);
+    context.http.expectNone((request) => request.url === STATEMENT_URL);
+    const downloads = captureDownloads();
+
+    [...element.querySelectorAll<HTMLButtonElement>('button')]
+      .find((candidate) => textOf(candidate).includes('Ver por concepto y categoría'))
+      ?.click();
+    await settle();
+    context.http
+      .expectOne(
+        (request) =>
+          request.url === STATEMENT_URL &&
+          request.params.get('from') === FIRST_OF_MONTH &&
+          request.params.get('to') === TODAY,
+      )
+      .flush(STATEMENT);
+    await settle();
+    const text = textOf(element);
+
+    expect(text).toContain('Estado de resultados');
+    expect(text).toContain('Cargo fijo $800,000');
+    expect(text).toContain('Consumo $1,300,000');
+    expect(text).toContain('Subsidios -$100,000');
+    // Los conceptos en cero no se muestran
+    expect(text).not.toContain('Contribuciones');
+    expect(text).toContain('Total $2,000,000');
+    expect(text).toContain('Aportes (1) $500,000');
+    expect(text).toContain('Mantenimiento (2) $600,000');
+    expect(text).toContain('Insumos (1) $200,000');
+    expect(text).toContain('Total $800,000');
+
+    [...element.querySelectorAll<HTMLButtonElement>('button')]
+      .find((candidate) => textOf(candidate).includes('Estado de resultados para Excel'))
+      ?.click();
+    context.http
+      .expectOne((request) => request.url === `${STATEMENT_URL}/export`)
+      .flush(new Blob(['csv']));
+    expect(downloads).toEqual([`estado-de-resultados-${FIRST_OF_MONTH}-a-${TODAY}.csv`]);
+
+    // Al cambiar las fechas se vuelve a consultar
+    actions.changeRange('2026-09-01', '2026-09-30');
+    await settle();
+    expectMovements({ from: '2026-09-01' }).flush(page([]));
+    context.http.expectOne((request) => request.url === BALANCE_URL).flush(BALANCE);
+    context.http
+      .expectOne((request) => request.url === STATEMENT_URL)
+      .flush(null, { status: 400, statusText: 'Bad Request' });
+    await settle();
+    expect(textOf(element)).toContain('No pudimos cargar el estado de resultados');
+  });
+
   it('informa si los movimientos o el saldo no cargan', async () => {
     await open();
     await load([movement()], null);
@@ -260,10 +341,12 @@ describe('MovementDialog', () => {
   const dialogRef = { close: vi.fn() };
   let context: PageTestContext;
   let element: HTMLElement;
+  let dialog: { categories: () => string[] };
 
   afterEach(() => context.http.verify());
 
-  async function render(current: Movement | null): Promise<void> {
+  /** @param used las categorías que el prestador ya usa en gastos */
+  async function render(current: Movement | null, used: string[] = []): Promise<void> {
     dialogRef.close.mockReset();
     context = setUpPage({
       providers: [
@@ -271,9 +354,38 @@ describe('MovementDialog', () => {
         { provide: MAT_DIALOG_DATA, useValue: current },
       ],
     });
-    element = TestBed.createComponent(MovementDialog).nativeElement;
+    const fixture = TestBed.createComponent(MovementDialog);
+    element = fixture.nativeElement;
+    dialog = fixture.componentInstance as unknown as { categories: () => string[] };
+    await settle();
+    context.http
+      .expectOne(
+        (request) =>
+          request.url === `${MOVEMENTS_URL}/categories` &&
+          request.params.get('type') === (current?.type ?? 'EXPENSE'),
+      )
+      .flush(used);
     await settle();
   }
+
+  it('sugiere primero las categorías ya usadas, sin repetirlas, y filtra por lo escrito', async () => {
+    await render(null, ['Reparaciones', 'mantenimiento']);
+
+    const suggestions = dialog.categories();
+    expect(suggestions.slice(0, 3)).toEqual([
+      'Reparaciones',
+      'mantenimiento',
+      'Insumos y químicos',
+    ]);
+    // «Mantenimiento» de las sugeridas no se repite: ya está escrita como la usa el prestador
+    expect(suggestions.filter((category) => category.toLowerCase() === 'mantenimiento')).toEqual([
+      'mantenimiento',
+    ]);
+
+    type(element, 'input[formcontrolname=category]', 'REPA');
+    await settle();
+    expect(dialog.categories()).toEqual(['Reparaciones']);
+  });
 
   function choose(file: File): void {
     const input = element.querySelector<HTMLInputElement>('input[type=file]')!;

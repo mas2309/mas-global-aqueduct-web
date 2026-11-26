@@ -3,6 +3,7 @@ import { HttpClient, httpResource } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -19,8 +20,10 @@ import { SERVICE_TYPES, ServiceType } from '../../organizations/organization.mod
 import { periodLabel } from '../../readings/reading.models';
 import { METERED_SERVICES } from '../../subscribers/subscriber.models';
 import { unitOf } from '../../tariffs/tariff.models';
+import { ConceptColumn, ConceptTable } from '../concept-table/concept-table';
 import {
   CollectionEntry,
+  ConceptReport,
   ConsumptionRange,
   Debtor,
   Collections,
@@ -47,6 +50,8 @@ import {
     MatInputModule,
     MatProgressBarModule,
     MatSelectModule,
+    MatButtonToggleModule,
+    ConceptTable,
   ],
   templateUrl: './collections-report.html',
   styleUrl: './collections-report.scss',
@@ -95,6 +100,42 @@ export class CollectionsReport {
     this.showDebtors() && this.session.organization()?.organizationId
       ? `${REPORTS_URL}/top-debtors`
       : undefined,
+  );
+
+  /**
+   * Por concepto: lo recaudado en las fechas de arriba o lo facturado en un periodo. Se consulta cuando se pide y
+   * luego sigue los cambios de fechas, periodo o prestador.
+   */
+  protected readonly conceptBasis = signal<ConceptBasis>('COLLECTED');
+  protected readonly conceptMonth = signal(isoDate(new Date()).slice(0, 7));
+  protected readonly showConcepts = signal(false);
+  protected readonly conceptsReady = computed(() =>
+    this.conceptBasis() === 'COLLECTED'
+      ? this.validRange()
+      : yearMonth(this.conceptMonth()) !== null,
+  );
+  protected readonly concepts = httpResource<ConceptReport>(() => {
+    if (!this.showConcepts() || !this.session.organization()?.organizationId) {
+      return undefined;
+    }
+    if (this.conceptBasis() === 'COLLECTED') {
+      return this.validRange()
+        ? {
+            url: `${REPORTS_URL}/collected-by-concept`,
+            params: { from: this.from(), to: this.to() },
+          }
+        : undefined;
+    }
+    const period = yearMonth(this.conceptMonth());
+    return period ? { url: `${REPORTS_URL}/billed-by-concept`, params: period } : undefined;
+  });
+  protected readonly conceptColumns = computed<ConceptColumn[]>(() =>
+    this.concepts.hasValue()
+      ? this.concepts.value().services.map((service) => ({
+          label: SERVICE_LABELS[service.serviceType],
+          concepts: service.concepts,
+        }))
+      : [],
   );
 
   /** Consumo por rango de tarifa: se consulta cuando se pide, para el mes y el servicio elegidos. */
@@ -170,6 +211,23 @@ export class CollectionsReport {
     );
   }
 
+  protected downloadConcepts(): void {
+    if (this.conceptBasis() === 'COLLECTED') {
+      this.download(
+        `${REPORTS_URL}/collected-by-concept/export?from=${this.from()}&to=${this.to()}`,
+        `recaudo-por-concepto-${this.from()}-a-${this.to()}.csv`,
+      );
+      return;
+    }
+    const period = yearMonth(this.conceptMonth());
+    if (period) {
+      this.download(
+        `${REPORTS_URL}/billed-by-concept/export?year=${period.year}&month=${period.month}`,
+        `facturado-por-concepto-${this.conceptMonth()}.csv`,
+      );
+    }
+  }
+
   protected downloadDebts(): void {
     this.download(`${REPORTS_URL}/debts/export`, `cartera-${isoDate(new Date())}.csv`);
   }
@@ -180,4 +238,12 @@ export class CollectionsReport {
       error: (error: unknown) => this.notifier.apiError(error),
     });
   }
+}
+
+type ConceptBasis = 'COLLECTED' | 'BILLED';
+
+/** Año y mes de un campo `yyyy-MM`, o `null` si está vacío. */
+function yearMonth(value: string): { year: number; month: number } | null {
+  const [year, month] = value.split('-').map(Number);
+  return year && month ? { year, month } : null;
 }

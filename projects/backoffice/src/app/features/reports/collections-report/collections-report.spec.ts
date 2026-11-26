@@ -3,7 +3,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WritableSignal } from '@angular/core';
 import { INVOICE_ID } from '../../../../testing/billing-fixtures';
 import { PageTestContext, settle, setUpPage, textOf } from '../../../../testing/setup';
-import { CollectionEntry, Collections, isoDate, REPORTS_URL } from '../report.models';
+import {
+  CollectionEntry,
+  Collections,
+  ConceptReport,
+  Concepts,
+  isoDate,
+  REPORTS_URL,
+} from '../report.models';
 import { CollectionsReport } from './collections-report';
 
 const COLLECTIONS_URL = `${REPORTS_URL}/collections`;
@@ -33,7 +40,59 @@ function report(payments: CollectionEntry[]): Collections {
   return { cash: sum('CASH'), bank: sum('BANK'), total: sum('CASH') + sum('BANK'), payments };
 }
 
+function concepts(overrides: Partial<Concepts> = {}): Concepts {
+  const values = {
+    fixedCharge: 0,
+    consumption: 0,
+    subsidies: 0,
+    contributions: 0,
+    lateFees: 0,
+    otherCharges: 0,
+    installments: 0,
+    disputed: 0,
+    ...overrides,
+  };
+  const total = Object.values(values).reduce((sum, value) => sum + value, 0);
+  return { ...values, total };
+}
+
+/** Acueducto con varios conceptos y alcantarillado solo con cargo fijo y consumo. */
+function conceptReport(): ConceptReport {
+  return {
+    invoices: 3,
+    services: [
+      {
+        serviceType: 'WATER',
+        invoices: 2,
+        concepts: concepts({
+          fixedCharge: 16000,
+          consumption: 15000,
+          subsidies: -1000,
+          otherCharges: 2000,
+          installments: 10000,
+        }),
+      },
+      {
+        serviceType: 'SEWERAGE',
+        invoices: 1,
+        concepts: concepts({ fixedCharge: 6000, consumption: 3000 }),
+      },
+    ],
+    totals: concepts({
+      fixedCharge: 22000,
+      consumption: 18000,
+      subsidies: -1000,
+      otherCharges: 2000,
+      installments: 10000,
+    }),
+    otherCharges: [{ description: 'Reconexión', amount: 2000 }],
+    installments: [{ description: 'Medidor nuevo', amount: 10000 }],
+  };
+}
+
 interface Actions {
+  conceptBasis: WritableSignal<string>;
+  conceptMonth: WritableSignal<string>;
   from: WritableSignal<string>;
   to: WritableSignal<string>;
   rangesMonth: WritableSignal<string>;
@@ -331,6 +390,66 @@ describe('CollectionsReport', () => {
       .flush(null, { status: 500, statusText: 'Server Error' });
     await settle();
     expect(textOf(element)).toContain('No pudimos cargar los pagos reversados');
+  });
+
+  it('muestra lo recaudado y lo facturado por concepto solo cuando se pide', async () => {
+    await open();
+    expectCollections(TODAY, TODAY).flush(report([]));
+    await settle();
+    context.http.expectNone((request) => request.url.includes('by-concept'));
+    const downloads = captureDownloads();
+
+    button('Ver por concepto')?.click();
+    await settle();
+    context.http
+      .expectOne(
+        (request) =>
+          request.url === `${REPORTS_URL}/collected-by-concept` &&
+          request.params.get('from') === TODAY &&
+          request.params.get('to') === TODAY,
+      )
+      .flush(conceptReport());
+    await settle();
+    const text = textOf(element);
+
+    // Una columna por servicio y el total; los conceptos en cero no se muestran
+    expect(text).toContain('ConceptoAcueductoAlcantarilladoTotal');
+    expect(text).toContain('Cargo fijo $16,000 $6,000 $22,000');
+    expect(text).toContain('Subsidios -$1,000 $0 -$1,000');
+    expect(text).not.toContain('Contribuciones');
+    expect(text).toContain('Total $42,000 $9,000 $51,000');
+    expect(text).toContain('Reconexión $2,000');
+    expect(text).toContain('Medidor nuevo $10,000');
+    expect(text).toContain('igual al recaudo de arriba');
+
+    button('Por concepto para Excel')?.click();
+    context.http
+      .expectOne(`${REPORTS_URL}/collected-by-concept/export?from=${TODAY}&to=${TODAY}`)
+      .flush(new Blob(['csv']));
+
+    // Lo facturado se pide por periodo
+    actions.conceptBasis.set('BILLED');
+    actions.conceptMonth.set('2026-10');
+    await settle();
+    context.http
+      .expectOne(
+        (request) =>
+          request.url === `${REPORTS_URL}/billed-by-concept` &&
+          request.params.get('year') === '2026' &&
+          request.params.get('month') === '10',
+      )
+      .flush({ ...conceptReport(), invoices: 0, services: [] });
+    await settle();
+    expect(textOf(element)).toContain('No hay facturas en ese periodo');
+
+    button('Por concepto para Excel')?.click();
+    context.http
+      .expectOne(`${REPORTS_URL}/billed-by-concept/export?year=2026&month=10`)
+      .flush(new Blob(['csv']));
+    expect(downloads.names).toEqual([
+      `recaudo-por-concepto-${TODAY}-a-${TODAY}.csv`,
+      'facturado-por-concepto-2026-10.csv',
+    ]);
   });
 
   it('descarga el recaudo y la cartera para Excel', async () => {

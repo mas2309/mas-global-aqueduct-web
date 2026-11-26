@@ -121,6 +121,109 @@
     }
   }
 
+  <h2 class="section-title reversals-title">Por concepto</h2>
+  <div class="filters">
+    <mat-button-toggle-group
+      [value]="conceptBasis()"
+      (change)="conceptBasis.set($event.value)"
+      aria-label="Qué separar por concepto"
+    >
+      <mat-button-toggle value="COLLECTED">Recaudado en estas fechas</mat-button-toggle>
+      <mat-button-toggle value="BILLED">Facturado en un periodo</mat-button-toggle>
+    </mat-button-toggle-group>
+    @if (conceptBasis() === 'BILLED') {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Periodo</mat-label>
+        <input
+          matInput
+          type="month"
+          name="conceptMonth"
+          [ngModel]="conceptMonth()"
+          (ngModelChange)="conceptMonth.set($event)"
+        />
+      </mat-form-field>
+    }
+    @if (!showConcepts()) {
+      <button mat-stroked-button [disabled]="!conceptsReady()" (click)="showConcepts.set(true)">
+        <mat-icon>table_chart</mat-icon>
+        Ver por concepto
+      </button>
+    } @else {
+      <button mat-stroked-button [disabled]="!conceptsReady()" (click)="downloadConcepts()">
+        <mat-icon>download</mat-icon>
+        Por concepto para Excel
+      </button>
+    }
+  </div>
+  @if (showConcepts()) {
+    @if (concepts.error()) {
+      <p class="muted" role="alert">
+        No pudimos cargar el informe por concepto.
+        <button mat-button (click)="concepts.reload()">Reintentar</button>
+      </p>
+    } @else if (conceptsReady() && concepts.hasValue()) {
+      @let byConcept = concepts.value();
+      @if (byConcept.invoices === 0) {
+        <p class="muted">
+          {{
+            conceptBasis() === 'COLLECTED'
+              ? 'No se recaudó nada en estas fechas.'
+              : 'No hay facturas en ese periodo.'
+          }}
+        </p>
+      } @else {
+        <aq-concept-table
+          [columns]="conceptColumns()"
+          [totals]="byConcept.totals"
+          caption="Valores por concepto y servicio"
+        />
+        @if (byConcept.otherCharges.length > 0 || byConcept.installments.length > 0) {
+          <div class="concept-details">
+            @if (byConcept.otherCharges.length > 0) {
+              <section>
+                <h3>Otros cobros</h3>
+                <ul>
+                  @for (detail of byConcept.otherCharges; track detail.description) {
+                    <li>
+                      <span>{{ detail.description ?? 'Sin descripción' }}</span>
+                      <span class="amount">
+                        {{ detail.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+            @if (byConcept.installments.length > 0) {
+              <section>
+                <h3>Cuotas de financiación</h3>
+                <ul>
+                  @for (detail of byConcept.installments; track detail.description) {
+                    <li>
+                      <span>{{ detail.description ?? 'Sin descripción' }}</span>
+                      <span class="amount">
+                        {{ detail.amount | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                      </span>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </div>
+        }
+        <p class="muted">
+          @if (conceptBasis() === 'COLLECTED') {
+            Cuando un pago salda facturas anteriores, cada una suma sus propios conceptos: el total
+            es lo que entró, igual al recaudo de arriba.
+          } @else {
+            Lo liquidado en el periodo, sin la deuda que venía de periodos anteriores.
+          }
+          Los subsidios y el valor en reclamo restan.
+        </p>
+      }
+    }
+  }
+
   <h2 class="section-title reversals-title">Consumo por rango de tarifa</h2>
   <div class="filters">
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
