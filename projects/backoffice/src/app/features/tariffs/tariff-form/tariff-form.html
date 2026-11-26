@@ -96,9 +96,18 @@
         <mat-card-title>Subsidios y contribuciones (opcional)</mat-card-title>
         <mat-card-subtitle>
           Lo que se descuenta o se suma según el uso y el estrato del predio. Un subsidio puede ser
-          un porcentaje o un valor fijo en pesos al mes.
+          un porcentaje o un valor fijo en pesos al mes, y cada uno dice qué cubre.
         </mat-card-subtitle>
       </mat-card-header>
+      @if (metered()) {
+        <mat-card-content>
+          <p class="muted hint">
+            «Solo el cargo fijo»: el consumo se cobra completo y un subsidio en pesos no puede pasar
+            del cargo fijo. «Cargo fijo y consumo básico»: si el prestador no tiene consumo básico,
+            cubre todo el consumo.
+          </p>
+        </mat-card-content>
+      }
       <mat-card-content formArrayName="adjustments">
         @for (adjustment of adjustments.controls; track adjustment; let index = $index) {
           <div class="row" [formGroupName]="index">
@@ -152,6 +161,19 @@
                 />
               </mat-form-field>
             }
+            @if (choosesBase(adjustment)) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="base">
+                <mat-label>Cubre</mat-label>
+                <mat-select
+                  formControlName="base"
+                  [attr.aria-label]="'Qué cubre el subsidio ' + (index + 1)"
+                >
+                  @for (base of subsidyBases; track base) {
+                    <mat-option [value]="base">{{ subsidyBaseLabels[base] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            }
             <button
               mat-icon-button
               type="button"
@@ -170,25 +192,6 @@
           Agregar subsidio o contribución
         </button>
       </mat-card-content>
-      @if (metered() && hasSubsidies()) {
-        <mat-card-content>
-          <mat-form-field appearance="outline" class="base">
-            <mat-label>El subsidio cubre</mat-label>
-            <mat-select formControlName="subsidyBase">
-              @for (base of subsidyBases; track base) {
-                <mat-option [value]="base">{{ subsidyBaseLabels[base] }}</mat-option>
-              }
-            </mat-select>
-            <mat-hint>
-              @if (form.controls.subsidyBase.value === 'FIXED_CHARGE') {
-                El consumo se cobra completo. Un subsidio en pesos no puede pasar del cargo fijo.
-              } @else {
-                Si el prestador no tiene consumo básico, el subsidio cubre todo el consumo.
-              }
-            </mat-hint>
-          </mat-form-field>
-        </mat-card-content>
-      }
     </mat-card>
 
     <mat-card appearance="outlined">

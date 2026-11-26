@@ -42,7 +42,7 @@ mat-card-content {
 }
 
 .base {
-  width: 280px;
+  width: 240px;
 }
 
 .row-error {
@@ -50,6 +50,7 @@ mat-card-content {
   margin: 0;
 }
 
+.hint,
 .warning {
   margin: 4px 0 8px;
 }

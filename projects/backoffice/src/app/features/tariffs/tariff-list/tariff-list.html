@@ -225,12 +225,9 @@
   @if (tariff.adjustments.length > 0) {
     <ul class="adjustments" aria-label="Subsidios y contribuciones">
       @for (adjustment of tariff.adjustments; track $index) {
-        <li>{{ adjustmentLabel(adjustment) }}</li>
+        <li>{{ adjustmentLabel(adjustment, tariff) }}</li>
       }
     </ul>
-    @if (hasSubsidies(tariff) && tariff.blocks.length > 0) {
-      <p class="muted">El subsidio cubre: {{ subsidyBaseLabel(tariff).toLowerCase() }}.</p>
-    }
   }
   @if (tariff.invoiceDiscounts?.length > 0) {
     <ul class="adjustments" aria-label="Subsidios sobre el total de la factura">

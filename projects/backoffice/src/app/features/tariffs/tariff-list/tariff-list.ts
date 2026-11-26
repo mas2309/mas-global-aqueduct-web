@@ -154,29 +154,28 @@ export class TariffList {
     return METERED_SERVICES.has(service);
   }
 
-  protected adjustmentLabel(adjustment: TariffAdjustment): string {
+  /**
+   * «Estrato 1: subsidio del 10 % · solo el cargo fijo». Lo que cubre se indica en los subsidios de un servicio
+   * medido: sin medidor solo hay cargo fijo.
+   */
+  protected adjustmentLabel(adjustment: TariffAdjustment, tariff: Tariff): string {
     const target = targetLabel(adjustment);
+    const coverage =
+      tariff.blocks.length > 0
+        ? ` · ${SUBSIDY_BASE_LABELS[adjustment.base ?? 'FIXED_CHARGE_AND_BASIC_CONSUMPTION'].toLowerCase()}`
+        : '';
     const amount = adjustment.amount ?? null;
     if (amount !== null) {
-      return `${target}: subsidio de $${PESOS.format(Math.abs(amount))} al mes`;
+      return `${target}: subsidio de $${PESOS.format(Math.abs(amount))} al mes${coverage}`;
     }
     const percent = adjustment.percent ?? 0;
-    const kind = percent < 0 ? 'subsidio' : 'contribución';
-    return `${target}: ${kind} del ${Math.abs(percent)} %`;
+    return percent < 0
+      ? `${target}: subsidio del ${Math.abs(percent)} %${coverage}`
+      : `${target}: contribución del ${percent} %`;
   }
 
   protected invoiceDiscountLabel(discount: InvoiceDiscount): string {
     return `${targetLabel(discount)}: ${discount.percent} % sobre el total de la factura`;
-  }
-
-  protected subsidyBaseLabel(tariff: Tariff): string {
-    return SUBSIDY_BASE_LABELS[tariff.subsidyBase ?? 'FIXED_CHARGE_AND_BASIC_CONSUMPTION'];
-  }
-
-  protected hasSubsidies(tariff: Tariff): boolean {
-    return tariff.adjustments.some(
-      (adjustment) => (adjustment.amount ?? null) !== null || (adjustment.percent ?? 0) < 0,
-    );
   }
 
   protected simulate(): void {

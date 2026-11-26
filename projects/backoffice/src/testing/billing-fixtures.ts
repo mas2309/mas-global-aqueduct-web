@@ -19,10 +19,14 @@ export function tariff(overrides: Partial<Tariff> = {}): Tariff {
       { upTo: null, pricePerUnit: 2500 },
     ],
     adjustments: [
-      { usage: 'RESIDENTIAL', stratum: 1, percent: -50 },
+      {
+        usage: 'RESIDENTIAL',
+        stratum: 1,
+        percent: -50,
+        base: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+      },
       { usage: 'COMMERCIAL', stratum: null, percent: 20 },
     ],
-    subsidyBase: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
     invoiceDiscounts: [],
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides,

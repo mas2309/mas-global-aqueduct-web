@@ -52,7 +52,8 @@ describe('TariffForm', () => {
     expect(textOf(element)).toContain('Nueva tarifa de acueducto');
     expect(element.querySelectorAll('input[formcontrolname=upTo]')).toHaveLength(1);
     expect(element.querySelectorAll('input[formcontrolname=value]')).toHaveLength(2);
-    expect(textOf(element)).toContain('El subsidio cubre');
+    // Solo el subsidio elige qué cubre; la contribución va sobre todo lo facturado
+    expect(element.querySelectorAll('mat-select[formcontrolname=base]')).toHaveLength(1);
     type(element, 'input[formcontrolname=validFrom]', '2027-01-01');
     type(element, 'input[formcontrolname=fixedCharge]', '9000');
     await submit();
@@ -68,10 +69,14 @@ describe('TariffForm', () => {
         { upTo: null, pricePerUnit: 2500 },
       ],
       adjustments: [
-        { usage: 'RESIDENTIAL', stratum: 1, percent: -50 },
+        {
+          usage: 'RESIDENTIAL',
+          stratum: 1,
+          percent: -50,
+          base: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+        },
         { usage: 'COMMERCIAL', stratum: null, percent: 20 },
       ],
-      subsidyBase: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
       invoiceDiscounts: [],
     });
     request.flush(tariff({ validFrom: '2027-01-01', inEffect: false }));
@@ -83,8 +88,9 @@ describe('TariffForm', () => {
     });
   });
 
-  it('copia y envía subsidios en pesos, qué cubren y el subsidio sobre el total', async () => {
-    // Chiquinquirá: valor por estrato con 40 m³ incluidos; Cucaita: 10 % sobre toda la factura
+  it('copia y envía subsidios en pesos, qué cubre cada uno y el subsidio sobre el total', async () => {
+    // Chiquinquirá: valor por estrato con 40 m³ incluidos; Cucaita: el estrato 2 subsidia solo el cargo
+    // fijo y además el 10 % de toda la factura; el estrato 3, el cargo fijo y el consumo básico
     await open([
       tariff({
         fixedCharge: 20000,
@@ -93,15 +99,21 @@ describe('TariffForm', () => {
           { upTo: null, pricePerUnit: 1000 },
         ],
         adjustments: [
-          { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000 },
-          { usage: 'RESIDENTIAL', stratum: 2, percent: -50 },
+          { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000, base: 'FIXED_CHARGE' },
+          { usage: 'RESIDENTIAL', stratum: 2, percent: -50, base: 'FIXED_CHARGE' },
+          {
+            usage: 'RESIDENTIAL',
+            stratum: 3,
+            percent: -15,
+            base: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+          },
         ],
-        subsidyBase: 'FIXED_CHARGE',
         invoiceDiscounts: [{ usage: 'RESIDENTIAL', stratum: 2, percent: 10 }],
       }),
     ]);
 
-    expect(textOf(element)).toContain('El consumo se cobra completo');
+    expect(element.querySelectorAll('mat-select[formcontrolname=base]')).toHaveLength(3);
+    expect(textOf(element)).toContain('Solo el cargo fijo');
     expect(textOf(element)).toContain('quien no paga recibe el descuento otra vez');
     expect(element.querySelectorAll('input[formcontrolname=percent]')).toHaveLength(1);
     await submit();
@@ -109,13 +121,31 @@ describe('TariffForm', () => {
     const request = context.http.expectOne(TARIFFS_URL);
     expect(request.request.body).toMatchObject({
       adjustments: [
-        { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000 },
-        { usage: 'RESIDENTIAL', stratum: 2, percent: -50 },
+        { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000, base: 'FIXED_CHARGE' },
+        { usage: 'RESIDENTIAL', stratum: 2, percent: -50, base: 'FIXED_CHARGE' },
+        {
+          usage: 'RESIDENTIAL',
+          stratum: 3,
+          percent: -15,
+          base: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+        },
       ],
-      subsidyBase: 'FIXED_CHARGE',
       invoiceDiscounts: [{ usage: 'RESIDENTIAL', stratum: 2, percent: 10 }],
     });
     request.flush(tariff());
+  });
+
+  it('un servicio sin medidor no pregunta qué cubre el subsidio', async () => {
+    await open([tariff({ serviceType: 'SANITATION', blocks: [] })], 'SANITATION');
+
+    expect(element.querySelectorAll('mat-select[formcontrolname=base]')).toHaveLength(0);
+    await submit();
+    expect(context.http.expectOne(TARIFFS_URL).request.body.adjustments[0]).toEqual({
+      usage: 'RESIDENTIAL',
+      stratum: 1,
+      percent: -50,
+      base: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+    });
   });
 
   it('un porcentaje no pasa de 100, un valor en pesos sí', async () => {
@@ -136,7 +166,13 @@ describe('TariffForm', () => {
     adjustment.patchValue({ kind: 'SUBSIDY_AMOUNT', value: 5000 });
     await submit();
     expect(context.http.expectOne(TARIFFS_URL).request.body.adjustments).toEqual([
-      { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -5000 },
+      {
+        usage: 'RESIDENTIAL',
+        stratum: 1,
+        percent: null,
+        amount: -5000,
+        base: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+      },
     ]);
   });
 

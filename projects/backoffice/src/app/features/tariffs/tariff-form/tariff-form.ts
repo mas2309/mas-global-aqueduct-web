@@ -62,13 +62,17 @@ function blockGroup(fb: NonNullableFormBuilder, upTo: number | null, pricePerUni
   });
 }
 
-/** @param value porcentaje, o pesos al mes en un subsidio en pesos; siempre positivo en el formulario */
+/**
+ * @param value porcentaje, o pesos al mes en un subsidio en pesos; siempre positivo en el formulario
+ * @param base  lo que cubre el subsidio; en una contribución no se usa
+ */
 function adjustmentGroup(
   fb: NonNullableFormBuilder,
   usage: PropertyUsage,
   stratum: number,
   kind: AdjustmentKind,
   value: number,
+  base: SubsidyBase = 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
 ) {
   return fb.group(
     {
@@ -76,6 +80,7 @@ function adjustmentGroup(
       stratum: [stratum],
       kind: [kind],
       value: [value, [Validators.required, Validators.min(0.01)]],
+      base: [base],
     },
     { validators: percentAtMostHundred },
   );
@@ -171,7 +176,6 @@ export class TariffForm {
     blocks: this.fb.array<BlockGroup>([]),
     lastPrice: [0, [Validators.required, Validators.min(0)]],
     adjustments: this.fb.array<AdjustmentGroup>([]),
-    subsidyBase: ['FIXED_CHARGE_AND_BASIC_CONSUMPTION' as SubsidyBase],
     invoiceDiscounts: this.fb.array<InvoiceDiscountGroup>([]),
   });
   protected readonly saving = signal(false);
@@ -239,9 +243,12 @@ export class TariffForm {
     this.changeDetector.markForCheck();
   }
 
-  /** Hay algún subsidio: entonces importa qué cubre. */
-  protected hasSubsidies(): boolean {
-    return this.adjustments.controls.some((group) => group.controls.kind.value !== 'CONTRIBUTION');
+  /**
+   * La fila es un subsidio de un servicio medido: entonces importa qué cubre. Sin medidor solo hay cargo fijo, y la
+   * contribución siempre va sobre todo lo facturado.
+   */
+  protected choosesBase(adjustment: AdjustmentGroup): boolean {
+    return this.metered() && adjustment.controls.kind.value !== 'CONTRIBUTION';
   }
 
   /** Desde qué consumo aplica el rango: el límite del anterior. */
@@ -276,17 +283,23 @@ export class TariffForm {
         : [],
       adjustments: value.adjustments.map((adjustment) => {
         const stratum = adjustment.usage === 'RESIDENTIAL' ? adjustment.stratum : null;
+        // Un servicio sin medidor solo tiene cargo fijo: el subsidio no puede cubrir más
+        const base = this.metered() ? adjustment.base : 'FIXED_CHARGE_AND_BASIC_CONSUMPTION';
         switch (adjustment.kind) {
           case 'SUBSIDY_AMOUNT':
-            return { usage: adjustment.usage, stratum, percent: null, amount: -adjustment.value };
+            return {
+              usage: adjustment.usage,
+              stratum,
+              percent: null,
+              amount: -adjustment.value,
+              base,
+            };
           case 'SUBSIDY':
-            return { usage: adjustment.usage, stratum, percent: -adjustment.value };
+            return { usage: adjustment.usage, stratum, percent: -adjustment.value, base };
           case 'CONTRIBUTION':
             return { usage: adjustment.usage, stratum, percent: adjustment.value };
         }
       }),
-      // Un servicio sin medidor solo tiene cargo fijo: el subsidio no puede cubrir más
-      subsidyBase: this.metered() ? value.subsidyBase : 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
       invoiceDiscounts: value.invoiceDiscounts.map((discount) => ({
         usage: discount.usage,
         stratum: discount.usage === 'RESIDENTIAL' ? discount.stratum : null,
@@ -325,12 +338,16 @@ export class TariffForm {
     tariff.adjustments.forEach((adjustment) => {
       const { kind, value } = kindAndValue(adjustment);
       this.adjustments.push(
-        adjustmentGroup(this.fb, adjustment.usage, adjustment.stratum ?? 1, kind, value),
+        adjustmentGroup(
+          this.fb,
+          adjustment.usage,
+          adjustment.stratum ?? 1,
+          kind,
+          value,
+          adjustment.base ?? 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+        ),
       );
     });
-    this.form.controls.subsidyBase.setValue(
-      tariff.subsidyBase ?? 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
-    );
     (tariff.invoiceDiscounts ?? []).forEach((discount) =>
       this.invoiceDiscounts.push(
         invoiceDiscountGroup(this.fb, discount.usage, discount.stratum ?? 1, discount.percent),

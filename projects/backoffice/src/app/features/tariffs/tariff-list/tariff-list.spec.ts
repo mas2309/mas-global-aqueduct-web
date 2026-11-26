@@ -114,18 +114,25 @@ describe('TariffList', () => {
     expect(text).toContain('Simulador');
   });
 
-  it('muestra subsidios en pesos, qué cubren y el subsidio sobre el total', async () => {
+  it('muestra subsidios en pesos, qué cubre cada uno y el subsidio sobre el total', async () => {
     await open([
       tariff({
-        adjustments: [{ usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000 }],
-        subsidyBase: 'FIXED_CHARGE',
+        adjustments: [
+          { usage: 'RESIDENTIAL', stratum: 1, percent: null, amount: -12000, base: 'FIXED_CHARGE' },
+          {
+            usage: 'RESIDENTIAL',
+            stratum: 2,
+            percent: -20,
+            base: 'FIXED_CHARGE_AND_BASIC_CONSUMPTION',
+          },
+        ],
         invoiceDiscounts: [{ usage: 'RESIDENTIAL', stratum: 2, percent: 10 }],
       }),
     ]);
     const text = textOf(element);
 
-    expect(text).toContain('Estrato 1: subsidio de $12.000 al mes');
-    expect(text).toContain('El subsidio cubre: solo el cargo fijo');
+    expect(text).toContain('Estrato 1: subsidio de $12.000 al mes · solo el cargo fijo');
+    expect(text).toContain('Estrato 2: subsidio del 20 % · cargo fijo y consumo básico');
     expect(text).toContain('Estrato 2: 10 % sobre el total de la factura');
   });
 
