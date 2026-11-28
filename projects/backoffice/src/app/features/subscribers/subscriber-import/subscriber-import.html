@@ -27,6 +27,10 @@
           <strong>deuda_anterior</strong> se cobra completa en la primera factura;
           <strong>financiación_saldo</strong> se reparte en las cuotas indicadas.
         </li>
+        <li>
+          Si una persona tiene varios predios, repite su fila con el mismo
+          <strong>documento</strong> y nombre: se crea un solo suscriptor con todos sus predios.
+        </li>
         <li>Si una fila tiene un error, no se importa ninguna: corrige el archivo y vuelve.</li>
         <li>
           Importar dos veces el mismo archivo duplica los suscriptores que no tengan documento.
